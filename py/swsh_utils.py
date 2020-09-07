@@ -5,6 +5,4 @@
 #
 
 from swsh_utils_py import solve as solve_py
-from swsh_utils_cy import solve as solve_cy
-# import other implementations of swsh_utils here
-# to make them all available from swsh_utils
+#from swsh_utils_cy import solve as solve_cy
