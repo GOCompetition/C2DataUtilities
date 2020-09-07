@@ -517,7 +517,7 @@ class Evaluation:
 
         # todo transformer impedance correction
         self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if xfmrs[ind].tab1 > 0]
-        self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 0]
+        self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 not in [1,3]]
         self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 1]
         self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 3]
         self.xfmr_index_imp_corr_var_tap_ratio = sorted(
