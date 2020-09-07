@@ -9,4 +9,4 @@ try:
     from swsh_utils_cy import solve as solve_cy
 except Exception as e:
     print('could not import swsh_utils_cy. try "python setup.py build_ext --inplace"')
-    raise e
+    #raise e
