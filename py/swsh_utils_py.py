@@ -44,10 +44,12 @@ def solve(btar, n, b, x, br, br_abs, tol):
     bmin = np.cumsum(bmin[:,::-1], axis=1)[:,::-1]
 
     # run version of solve() with sorted arguments
-    solve_sorted(btar, n_sorted, b_sorted, x_sorted, br, br_abs, bmax, bmin, tol)
+    #solve_sorted(btar, n_sorted, b_sorted, x_sorted, br, br_abs, bmax, bmin, tol)
 
     # put the solution back in the original order
     np.put_along_axis(x, indices, x_sorted, axis=1)
+
+'''
 
 # version of solve with sorted arguments
 def solve_sorted(
@@ -123,3 +125,5 @@ def solve_h_rec(
 
     brt[0] = brt_old[at_old]
     at -= 1
+'''
+
