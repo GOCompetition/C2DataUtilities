@@ -32,7 +32,7 @@ except ImportError:
 from data_json import Sup
 import inspect
 
-from swsh_utils import solve_cy as swsh_solve
+from swsh_utils import solve_py as swsh_solve
 from xfmr_utils import compute_xfmr_position
 
 # init_defaults_in_unused_field = True # do this anyway - it is not too big
@@ -951,7 +951,7 @@ class Raw:
 
         for r in self.get_switched_shunts():
             r.check()
-        self.check_switched_shunts_binit_feas()
+        #self.check_switched_shunts_binit_feas()
 
     @timeit
     def check_switched_shunts_binit_feas(self):
@@ -2701,7 +2701,7 @@ class Transformer:
 
         check_two_char_id_str(self.ckt)
         self.check_ckt_len_1_or_2()
-        self.check_cod1_013()
+        #self.check_cod1_013() # COD1 can be any integer value now
         self.check_r12_x12_nonzero()
         if do_check_rate_pos:
             self.check_rata1_pos()
@@ -2734,8 +2734,13 @@ class Transformer:
     def check_tau_theta_init_feas(self):
 
         x = compute_xfmr_position(self)
+        position = x[0]
         oper_val = x[1]
+        oper_val_resulting = x[2]
         resid = x[3]
+        mid_val = x[4]
+        step_size = x[5]
+        max_position = x[6]
         if abs(resid) > xfmr_tau_theta_init_tol * abs(oper_val):
             alert(
                 {'data_type': 'Transformer',
@@ -2746,7 +2751,17 @@ class Transformer:
                      'k': self.k,
                      'ckt': self.k,
                      'cod1': self.cod1,
-                     'stat': self.stat}})
+                     'stat': self.stat,
+                     'ntp1': self.ntp1,
+                     'rma1': self.rma1,
+                     'rmi1': self.rmi1,
+                     'max_position': max_position,
+                     'position': position,
+                     'oper_val': oper_val,
+                     'oper_val_resulting': oper_val_resulting,
+                     'resid': resid,
+                     'mid_val': mid_val,
+                     'step_size': step_size}})
         
     def check_k_0(self):
 
