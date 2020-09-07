@@ -25,7 +25,7 @@ except ImportError:
 
 # GOComp modules - this should be visible on the GOComp evaluation system
 import data
-from swsh_utils import solve_cy as swsh_solve
+from swsh_utils import solve_py as swsh_solve
 from xfmr_utils import compute_xfmr_position
 
 swsh_binit_tol = 1e-4
