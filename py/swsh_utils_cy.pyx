@@ -42,7 +42,7 @@ def solve(btar, n, b, x, br, br_abs, tol):
     bmin = np.take_along_axis(bmin, indices, axis=1)
     bmax = np.cumsum(bmax[:,::-1], axis=1)[:,::-1]
     bmin = np.cumsum(bmin[:,::-1], axis=1)[:,::-1]
-    br_concat = np.column_stack((br, br_abs)) # todo - add a dimension to br, br_abs, and pass them through the cython functions
+    br_concat = np.column_stack((br, br_abs))
 
     # make memviews
     cdef double[:] btar_v = btar

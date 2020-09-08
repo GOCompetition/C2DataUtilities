@@ -38,6 +38,7 @@ def solve(btar, n, b, x, br, br_abs, tol):
     n_sorted = np.take_along_axis(n, indices, axis=1)
     b_sorted = np.take_along_axis(b, indices, axis=1)
     x_sorted = np.take_along_axis(x, indices, axis=1)
+    br_concat = np.column_stack((br, br_abs))
     bmax = np.take_along_axis(bmax, indices, axis=1)
     bmin = np.take_along_axis(bmin, indices, axis=1)
     bmax = np.cumsum(bmax[:,::-1], axis=1)[:,::-1]
@@ -45,15 +46,18 @@ def solve(btar, n, b, x, br, br_abs, tol):
 
     # run version of solve() with sorted arguments
     #solve_sorted(btar, n_sorted, b_sorted, x_sorted, br, br_abs, bmax, bmin, tol)
+    #solve_sorted(btar, n_sorted, b_sorted, x_sorted, br_col, br_abs_col, bmax, bmin, tol)
+    solve_sorted(btar, n_sorted, b_sorted, x_sorted, br_concat, bmax, bmin, tol)
 
     # put the solution back in the original order
     np.put_along_axis(x, indices, x_sorted, axis=1)
+    br[:] = br_concat[:,0]
+    br_abs[:] = br_concat[:,1]
 
-'''
 
 # version of solve with sorted arguments
 def solve_sorted(
-        btar, n, b, x, br, br_abs, bmax, bmin, tol):
+        btar, n, b, x, br, bmax, bmin, tol):
 
     numh = x.shape[0]
     numa = x.shape[1]
@@ -63,67 +67,81 @@ def solve_sorted(
     at = 0
     brt_old = np.zeros(shape=(numa,), dtype=float)
     brt = np.zeros(shape=(2,), dtype=float)
-    xt = np.zeros(shape=(numa), dtype=int)
+    xt = np.zeros(shape=(numa,), dtype=int)
     #cdef Py_ssize_t a = 0
     a = 0
 
     for h in range(numh):
         # not sure we cannot just call solve_h_rec here
-        solve_h(numa, btar[h], n[h,:], b[h,:], x[h,:], br[h,:], br_abs[h,:], at, brt_old, brt, xt, a, bmax[h,:], bmin[h,:], tol)
+        solve_h(numa, btar[h], n[h,:], b[h,:], x[h,:], br[h,:], at, brt_old, brt, xt, a, bmax[h,:], bmin[h,:], tol)
+        #print('c11', br, x)
 
 # call on a single switched shunt
 def solve_h(
-        numa, btar, n, b, x, br, br_abs,
+        numa, btar, n, b, x, br,
         at, brt_old, brt, xt, a, bmax, bmin, tol):
 
     # clear out old stuff - not sure we need to
     br[0] = btar
-    br_abs[0] = np.abs(br[0])
+    br[1] = np.abs(br[0])
     at = 0
     brt[0] = btar
-    brt[1] = np.abs(br[0])
-    for a in range(numa):
-        brt_old[a] = 0.0
-        xt[a] = 0
+    #print(brt.shape)
+    brt[1] = np.abs(brt[0])
+    brt_old[:] = 0.0
+    xt[:] = 0
+    #print('b00', x, br, brt, xt)
     solve_h_rec(numa, btar, n, b, x, br, at, brt_old, brt, xt, a, bmax, bmin, tol);
+    #print('b01', x, br, brt, xt)
+    #br[:] = 5.55
+    #x[:] = 3
+    #print('b11', x, br, brt, xt)
 
 # recursive
 def solve_h_rec(
-        numa, btar, n, b, x, br, br_abs,
+        numa, btar, n, b, x, br,
         at, brt_old, brt, xt, a, bmax, bmin, tol):
 
-    cdef Py_ssize_t i
-    
+    #print('a01', numa, at, 0)
+
     # check solution if complete and update incumbent if improved
     if at >= numa:
-        np.abs(brt, out=brt_abs)
-        if brt_abs[0] < br_abs[0]:
-            x[:] = xt
-            br[:] = brt
-            br_abs[:] = brt_abs
+        brt[1] = np.abs(brt[0])
+        #print('here2, br:{}, brt:{}, btar:{}, n:{}, b:{}, x:{}, xt:{}'.format(br, brt, btar, n, b, x, xt))
+        if brt[1] < br[1]:
+            #print('here1')
+            x[:] = xt[:]
+            br[:] = brt[:]
         return
 
     # check bounds and prune if possible
-    if br_abs[0] <= tol * np.abs(btar):
+    if br[1] <= tol * np.abs(btar):
         return
-    if br_abs[0] <= brt[0] - bmax[at] + tol * np.abs(btar[0]):
+    if br[1] <= brt[0] - bmax[at] + tol * np.abs(btar):
         return
-    if br_abs[0] <= bmin[at] - brt[0] + tol * np.abs(btar[0]):
+    if br[1] <= bmin[at] - brt[0] + tol * np.abs(btar):
         return
 
     at_old = at
     brt_old[at_old] = brt[0]
 
+    #print('x', at, at_old)
     at += 1
+    #print('x', at, at_old)
 
     xt[at_old] = 0
-    solve_h_rec(numa, btar, n, b, x, br, br_abs, at, brt_old, brt, xt, a, bmax, bmin, tol)
+    #print('a11', numa, at, at_old, 0, x)
+    solve_h_rec(numa, btar, n, b, x, br, at, brt_old, brt, xt, a, bmax, bmin, tol)
+    #print('a21', numa, at, at_old, 0, x)
     for i in range(n[at_old]):
+        #print('a31', numa, at, at_old, i+1, x, b, brt)
         xt[at_old] += 1
         brt[0] -= b[at_old]
-        solve_h_rec(numa, btar, n, b, x, br, br_abs, at, brt_old, brt, xt, a, bmax, bmin, tol)
+        solve_h_rec(numa, btar, n, b, x, br, at, brt_old, brt, xt, a, bmax, bmin, tol)
+        #print('a41', numa, at, at_old, i+1, x, b, brt)
+        #print('here3, br:{}, brt:{}, btar:{}, n:{}, b:{}, x:{}, xt:{}'.format(br, brt, btar, n, b, x, xt))
 
     brt[0] = brt_old[at_old]
     at -= 1
-'''
+    #print('here4, br:{}, brt:{}, btar:{}, n:{}, b:{}, x:{}, xt:{}'.format(br, brt, btar, n, b, x, xt))
 

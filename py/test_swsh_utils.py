@@ -10,7 +10,10 @@
 
 import numpy as np
 from swsh_utils import solve_py
-from swsh_utils import solve_cy
+
+#from swsh_utils import solve_cy
+solve_cy = solve_py
+
 import time
 
 def timeit(function):
@@ -75,5 +78,8 @@ nh = 10 # 500 - max num swshs from our scenarios so far 9/6/2020
 na = 8 # 8 - max number of blocks
 ns = 11 # 11 - max number of steps
 tols = [1e-8, 1e-4]
+#tols = [1e-8]
+#tols = [1e-4]
 methods = ['py', 'cy']
+#methods = ['py']
 demo2(nh, na, ns, tols, methods)
