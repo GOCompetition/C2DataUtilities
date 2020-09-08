@@ -7,11 +7,14 @@
 #
 #   $ python setup.py build_ext --inplace
 #
+# currently a little slower than swsh_utils_py.py
+# might need to try the c version
 
 import numpy as np
 
 # import this from python
 def solve(btar, n, b, x, br, br_abs, tol):
+    #print('hello world from swsh_utils_cy.solve')
 
     # check conditions
     numh = n.shape[0]
