@@ -951,7 +951,7 @@ class Raw:
 
         for r in self.get_switched_shunts():
             r.check()
-        #self.check_switched_shunts_binit_feas()
+        self.check_switched_shunts_binit_feas()
 
     @timeit
     def check_switched_shunts_binit_feas(self):
