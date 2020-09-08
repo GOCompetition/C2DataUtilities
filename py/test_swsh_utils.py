@@ -10,8 +10,11 @@
 
 import numpy as np
 from swsh_utils import solve_py
-from swsh_utils import solve_cy
-#solve_cy = solve_py
+try:
+    from swsh_utils import solve_cy
+except:
+    print('cannot import solve_cy. using solve_py instead')
+    solve_cy = solve_py
 import time
 
 def timeit(function):
@@ -78,6 +81,6 @@ ns = 11 # 11 - max number of steps
 tols = [1e-8, 1e-4]
 #tols = [1e-8]
 #tols = [1e-4]
-methods = ['py', 'cy']
-#methods = ['py']
+#methods = ['py', 'cy']
+methods = ['py']
 demo2(nh, na, ns, tols, methods)
