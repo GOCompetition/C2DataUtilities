@@ -13,7 +13,7 @@ main_dir=/pic/dtn/go/Steve/C2/sandbox/
 #network_dir=C2S1N04229/
 #network_dir=C2S1N09459/
 #network_dir=C2S1N09462/
-network_dir=C2S1N11152/
+#network_dir=C2S1N11152/
 scenario=01
 case_dir=${main_dir}${network_dir}scenario_${scenario}/
 
