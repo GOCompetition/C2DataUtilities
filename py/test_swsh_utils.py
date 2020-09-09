@@ -77,7 +77,7 @@ def demo2(nh, na, ns, tols, methods):
 
 nh = 10 # 500 - max num swshs from our scenarios so far 9/6/2020
 na = 8 # 8 - max number of blocks
-ns = 11 # 11 - max number of steps
+ns = 9 # 9 - max number of steps
 tols = [1e-8, 1e-4]
 #tols = [1e-8]
 #tols = [1e-4]

@@ -74,7 +74,6 @@ def solve_sorted(
     for h in range(numh):
         # not sure we cannot just call solve_h_rec here
         solve_h(numa, btar[h], n[h,:], b[h,:], x[h,:], br[h,:], at, brt_old, brt, xt, a, bmax[h,:], bmin[h,:], tol)
-        #print('c11', br, x)
 
 # call on a single switched shunt
 def solve_h(
@@ -86,30 +85,20 @@ def solve_h(
     br[1] = np.abs(br[0])
     at = 0
     brt[0] = btar
-    #print(brt.shape)
     brt[1] = np.abs(brt[0])
     brt_old[:] = 0.0
     xt[:] = 0
-    #print('b00', x, br, brt, xt)
     solve_h_rec(numa, btar, n, b, x, br, at, brt_old, brt, xt, a, bmax, bmin, tol);
-    #print('b01', x, br, brt, xt)
-    #br[:] = 5.55
-    #x[:] = 3
-    #print('b11', x, br, brt, xt)
 
 # recursive
 def solve_h_rec(
         numa, btar, n, b, x, br,
         at, brt_old, brt, xt, a, bmax, bmin, tol):
 
-    #print('a01', numa, at, 0)
-
     # check solution if complete and update incumbent if improved
     if at >= numa:
         brt[1] = np.abs(brt[0])
-        #print('here2, br:{}, brt:{}, btar:{}, n:{}, b:{}, x:{}, xt:{}'.format(br, brt, btar, n, b, x, xt))
         if brt[1] < br[1]:
-            #print('here1')
             x[:] = xt[:]
             br[:] = brt[:]
         return
@@ -125,23 +114,15 @@ def solve_h_rec(
     at_old = at
     brt_old[at_old] = brt[0]
 
-    #print('x', at, at_old)
     at += 1
-    #print('x', at, at_old)
 
     xt[at_old] = 0
-    #print('a11', numa, at, at_old, 0, x)
     solve_h_rec(numa, btar, n, b, x, br, at, brt_old, brt, xt, a, bmax, bmin, tol)
-    #print('a21', numa, at, at_old, 0, x)
     for i in range(n[at_old]):
-        #print('a31', numa, at, at_old, i+1, x, b, brt)
         xt[at_old] += 1
         brt[0] -= b[at_old]
         solve_h_rec(numa, btar, n, b, x, br, at, brt_old, brt, xt, a, bmax, bmin, tol)
-        #print('a41', numa, at, at_old, i+1, x, b, brt)
-        #print('here3, br:{}, brt:{}, btar:{}, n:{}, b:{}, x:{}, xt:{}'.format(br, brt, btar, n, b, x, xt))
 
     brt[0] = brt_old[at_old]
     at -= 1
-    #print('here4, br:{}, brt:{}, btar:{}, n:{}, b:{}, x:{}, xt:{}'.format(br, brt, btar, n, b, x, xt))
 

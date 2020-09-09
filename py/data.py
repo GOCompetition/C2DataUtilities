@@ -70,7 +70,7 @@ do_fix_binit = True
 pg_qg_stat_mode = 1 # 0: do not scrub, 1: set pg=0 and qg=0, 2: set stat=1
 swsh_binit_feas_tol = 1e-4
 #num_swsh_to_test = 194 # 193 195 # problem with 11152/01
-max_swsh_n = 11 # maximum number of steps in each switched shunt block
+max_swsh_n = 9 # maximum number of steps in each switched shunt block
 xfmr_tau_theta_init_tol = 1e-4
 EMERGENCY_CAPACITY_FACTOR = 0.1
 EMERGENCY_MARGINAL_COST_FACTOR = 5.0
