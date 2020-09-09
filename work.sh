@@ -26,10 +26,10 @@ refresh_data=1
 check_data=1
 scrub_data=1
 check_scrubbed_data=1
-make_new_sol=0
-eval_sol=0
-do_submission=1
-eval_submission=1
+make_new_sol=1
+eval_sol=1
+do_submission=0
+eval_submission=0
 division=1
 num_proc=1
 

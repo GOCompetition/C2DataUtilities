@@ -3332,6 +3332,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     global log_fileobject
 
     active_solution_path = solution_path
+    eval_out_path = solution_path
 
     if(process_rank == 0):
         log_fileobject = open(f'{active_solution_path}/{active_case}.eval.log', "w")
