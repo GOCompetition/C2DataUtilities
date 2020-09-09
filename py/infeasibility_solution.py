@@ -143,6 +143,10 @@ class Solver():
         load_key = [(self.load_i[i], self.load_id[i]) for i in range(self.num_load)]
         load_map = {load_key[i]:i for i in range(self.num_load)}
         sup_load = self.data.sup.get_loads()
+        sup_load_key_map = {(r['bus'], r['id']):r for r in sup_load}
+        sup_load_key = sup_load_key_map.keys()
+        sup_load_key = list(set(sup_load_key).intersection(set(load_key)))
+        sup_load = [sup_load_key_map[k] for k in sup_load_key]
         sup_load_index = [load_map[r['bus'], r['id']] for r in sup_load]
         self.load_tmin = np.zeros(shape=(self.num_load,))
         self.load_tmin[sup_load_index] = np.array([r['tmin'] for r in sup_load])
@@ -296,7 +300,7 @@ class Solver():
                 r.ckt, # id
                 r.stat, # x
                 #0] # xst
-                compute_xfmr_position(r)] # xst
+                compute_xfmr_position(r)[0]] # xst
             for r in self.data.raw.transformers.values()}
         self.sol1['switched shunts'] = {
             self.swsh_i[i]: (
@@ -355,6 +359,7 @@ class Solver():
     def write_sol(self, sol_dir):
 
         start_time = time.time()
+        #print(self.data)
         self.construct_arrays()
         self.construct_sol1_bus()
         self.construct_sol2_bus()
