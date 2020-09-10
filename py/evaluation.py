@@ -247,6 +247,7 @@ class Evaluation:
 
     def __init__(self):
 
+        self.check_contingencies = True # set to false to check only the base case and then return
         self.line_switching_allowed = True
         self.xfmr_switching_allowed = True
         self.summary = {}
@@ -3314,8 +3315,9 @@ class CaseSolution:
 # todo extract this to another module
 # e.g. evaluate_solution.py, evaluate_solution_serial.py, evaluate_solution_mpi.py, etc.
 @timeit
-def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary_name=None, detail_name=None, line_switching_allowed=None, xfmr_switching_allowed=None):
+def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary_name=None, detail_name=None, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
 
+    print('check_contingencies: ', check_contingencies)
     print('line_switching_allowed: ', line_switching_allowed)
     print('xfmr_switching_allowed: ', xfmr_switching_allowed)
 
@@ -3387,13 +3389,16 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         print_info('solution_path is invalid')
         return True
 
-    solutions_exist = False
+    solutions_exist = True
     if not os.path.exists(f'{solution_path}/solution_BASECASE.txt'):
+        solutions_exist = False
         print_info(f'{solution_path}/solution_BASECASE.txt could not be found')
         return (None,  1,solutions_exist)
 
     # set up evaluation
     e = Evaluation()
+    if check_contingencies is not None:
+        e.check_contingencies = check_contingencies
     if line_switching_allowed is not None:
         e.line_switching_allowed = line_switching_allowed
     if xfmr_switching_allowed is not None:
@@ -3455,6 +3460,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
             'BASECASE', case_end_time - case_start_time))
 
     #CHALLENGE2 - return here if solution1 validation is requested
+    if not e.check_contingencies:
+        return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist)
 
     #if ctg_name is None:
     #    return True
@@ -3723,7 +3730,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist)
 
 
-def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None):
+def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
     global active_solution_path
     global eval_out_path
     global USE_MPI
@@ -3763,7 +3770,7 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
     print(f'Setting solution path to {solution_basepath}')
 
     try:
-        run(raw_name, con_name, sup_name,solution_basepath, ctg_name, summary_name, detail_name, line_switching_allowed, xfmr_switching_allowed)
+        run(raw_name, con_name, sup_name,solution_basepath, ctg_name, summary_name, detail_name, line_switching_allowed, xfmr_switching_allowed, check_contingencies)
     except:
         var = traceback.format_exc()
         traceback.print_exc()
@@ -3789,8 +3796,9 @@ def main():
 
     line_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
     xfmr_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
+    check_contingencies = True # set to False to check just the base case
 
-    run_main(arg_datapath, arg_basepath, line_switching_allowed, xfmr_switching_allowed)
+    run_main(arg_datapath, arg_basepath, line_switching_allowed, xfmr_switching_allowed, check_contingencies)
 
 if __name__ == "__main__":
     main()
