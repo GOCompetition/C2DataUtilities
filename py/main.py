@@ -39,7 +39,7 @@ process_rank = comm.Get_rank()
 print(f'main.py process rank: {process_rank}')
 
 
-MAXOBJ = -9876543210.0
+MAXOBJ = 9876543210.0
 MAXVIOL = 9876543210.0
 
 
@@ -176,11 +176,11 @@ def run():
             if solutions_exist == False:
                 raise Exception( "All solutions do not exist")
 
-            if obj > slack_objective and infeas == 0:   #smaller than slack and feasible
+            if obj < slack_objective #and infeas == 0:   #larger than slack and feasible
                 print("obj > slack_objective and infeas == 0")
                 score = obj
-            if abs(slack_objective - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
-                print("slack_objective - 9876543210 < 1 i.e. there is slack available to set worst score")
+            if abs(abs(slack_objective) - MAXOBJ)) < 1:       #slack objective is not available, capture worst case score
+                print("infeasible score not available")
                 score = obj
             if obj == float('nan'):
                 score = slack_objective
