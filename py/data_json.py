@@ -195,6 +195,45 @@ class Sup:
     def scrub_load_prdmaxctg_nonneg(self, scrub_info):
         scrub_info["load"]['prdmaxctg'] = 0.0
 
+    def remove_loads(self, keys):
+        json_map = {(r["bus"], r["id"]):r for r in self.sup_jsonobj['loads']}
+        json_keys = json_map.keys()
+        json_keys = set(json_keys).difference(set(keys))
+        json_vals = [json_map[k] for k in json_keys]
+        self.sup_jsonobj['loads'] = json_vals
+        self.init_loads()
+        self.load_ids = []
+        self.get_load_ids()
+
+    def remove_generators(self, keys):
+        json_map = {(r["bus"], r["id"]):r for r in self.sup_jsonobj['generators']}
+        json_keys = json_map.keys()
+        json_keys = set(json_keys).difference(set(keys))
+        json_vals = [json_map[k] for k in json_keys]
+        self.sup_jsonobj['generators'] = json_vals
+        self.init_generators()
+        self.generator_ids = []
+        self.get_generator_ids()
+
+    def remove_lines(self, keys):
+        json_map = {(r["origbus"], r["destbus"], r["id"]):r for r in self.sup_jsonobj['lines']}
+        json_keys = json_map.keys()
+        json_keys = set(json_keys).difference(set(keys))
+        json_vals = [json_map[k] for k in json_keys]
+        self.sup_jsonobj['lines'] = json_vals
+        self.init_lines()
+        self.line_ids = []
+        self.get_line_ids()
+
+    def remove_transformers(self, keys):
+        json_map = {(r["origbus"], r["destbus"], r["id"]):r for r in self.sup_jsonobj['transformers']}
+        json_keys = json_map.keys()
+        json_keys = set(json_keys).difference(set(keys))
+        json_vals = [json_map[k] for k in json_keys]
+        self.sup_jsonobj['transformers'] = json_vals
+        self.init_transformers()
+        self.transformer_ids = []
+        self.get_transformer_ids()
 
     ### Checks Start Here #######################
 
@@ -582,7 +621,7 @@ class Sup:
 
     def init_transformers(self):
             #CHALLENGE2 REVIEW: id == ckt ?
-        self.transformers = { (g['origbus'], g['destbus'], 0, g['id']): g  for g in self.sup_jsonobj["transformers"] }
+        self.transformers = { (g['origbus'], g['destbus'], g['id']): g  for g in self.sup_jsonobj["transformers"] }
         self.xfmr_count = len(self.transformers)
 
     def  convert_generator_cblock_units(self,base_mva):
