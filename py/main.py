@@ -130,7 +130,7 @@ def run():
             args_summary = "{}/GOCFeasibility_base.csv".format(output_path)
             args_detail = "{}/{}_DetailedSolution_base.csv".format(output_path, args.model_scenario_number)
             
-            evaluation.run(args_raw, args_con, args_sup,  args_sol1, None, args_summary, args_detail, line_switching_allowed, xfmr_switching_allowed)
+            evaluation.run(args_raw, args_con, args_sup,  args_sol1, None, args_summary, args_detail, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
         except:
             traceback.print_exc()
             errfile_path = output_path + '/solution_BASECASE.err'
@@ -168,7 +168,7 @@ def run():
     try:
 
         #if solutions_exist:
-        (obj, infeas, solutions_exist) = evaluation.run(args_raw, args_con, args_sup, args_sol1, args_sol2, args_summary, args_detail, line_switching_allowed, xfmr_switching_allowed)
+        (obj, infeas, solutions_exist) = evaluation.run(args_raw, args_con, args_sup, args_sol1, args_sol2, args_summary, args_detail, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
 
 
         if process_rank == 0:
