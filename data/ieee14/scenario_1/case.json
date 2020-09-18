@@ -197,6 +197,22 @@
 		    "c": 8000.0
 		}
 	    ]
+	},
+	{
+	    "bus": 42,
+	    "id": "1",
+	    "tmin": 0.0,
+	    "tmax": 1.0,
+	    "prumax": 100.0,
+	    "prdmax": 100.0,
+	    "prumaxctg": 100.0,
+	    "prdmaxctg": 100.0,
+	    "cblocks": [
+		{
+		    "pmax": 1000.0,
+		    "c": 8000.0
+		}
+	    ]
 	}
     ],
     "generators": [
@@ -298,6 +314,27 @@
 	},
 	{
 	    "bus": 8,
+	    "id": "1",
+	    "suqual": 1,
+	    "sdqual": 1,
+	    "suqualctg": 1,
+	    "sdqualctg": 1,
+	    "prumax": 100.0,
+	    "prdmax": 100.0,
+	    "prumaxctg": 100.0,
+	    "prdmaxctg": 100.0,
+	    "oncost": 100.0,
+	    "sucost": 100.0,
+	    "sdcost": 100.0,
+	    "cblocks": [
+		{
+		    "pmax": 100000.0,
+		    "c": 100.0
+		}
+	    ]
+	},
+	{
+	    "bus": 42,
 	    "id": "1",
 	    "suqual": 1,
 	    "sdqual": 1,
@@ -437,6 +474,13 @@
 	    "id": "1",
 	    "swqual": 0,
 	    "csw": 100.0
+	},
+	{
+	    "origbus": 13,
+	    "destbus": 42,
+	    "id": "1",
+	    "swqual": 0,
+	    "csw": 100.0
 	}
     ],
     "transformers": [
@@ -456,6 +500,13 @@
 	},
 	{
 	    "origbus": 5,
+	    "destbus": 6,
+	    "id": "1",
+	    "swqual": 1,
+	    "csw": 100.0
+	},
+	{
+	    "origbus": 42,
 	    "destbus": 6,
 	    "id": "1",
 	    "swqual": 1,

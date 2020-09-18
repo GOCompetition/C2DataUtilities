@@ -312,12 +312,16 @@ class Data:
         #self.sup.scrub()
         #if gen_cost_revise:
         #    self.check_gen_cost_revise()
-        self.scrub_gen_costs()
+        #self.scrub_gen_costs()
         #self.remove_contingencies_with_offline_generators()
         #self.remove_contingencies_with_offline_lines()
         #self.remove_contingencies_with_offline_transformers()
         self.remove_contingencies_with_generators_not_in_raw()
         self.remove_contingencies_with_branches_not_in_raw()
+        self.remove_loads_in_sup_not_in_raw()
+        self.remove_lines_in_sup_not_in_raw()
+        self.remove_transformers_in_sup_not_in_raw()
+        self.remove_generators_in_sup_not_in_raw()
         self.sup.check(scrub_mode=True)
 
     def convert_to_offline(self):
@@ -359,6 +363,24 @@ class Data:
                   'gens': [
                       {'gen i': g[0], 'gen id': g[1]}
                       for g in cost_gen_not_gen]}})
+
+    def remove_generators_in_sup_not_in_raw(self):
+
+        gen_set = set([(g.i, g.id) for g in self.raw.get_generators()])
+        cost_gen_set = self.sup.get_generator_ids()     #you will get a unique set
+        cost_gen_not_gen = cost_gen_set.difference(gen_set)
+        if len(cost_gen_not_gen) > 0:
+            alert(
+                {'data_type':
+                 'Data',
+                 'error_message':
+                 'Removing generators from the JSON SUP file that are not in the RAW file.',
+                 'diagnostics':
+                 {'num gens': len(cost_gen_not_gen),
+                  'gens': [
+                      {'gen i': g[0], 'gen id': g[1]}
+                      for g in cost_gen_not_gen]}})
+            self.sup.remove_generators(cost_gen_not_gen)
 
     def check_generator_base_case_ramp_constraints_feasible(self):
 
@@ -435,6 +457,24 @@ class Data:
                   'loads': [
                       {'i': r[0], 'id': r[1]}
                       for r in sup_not_raw_load_set]}})
+
+    def remove_loads_in_sup_not_in_raw(self):
+
+        raw_load_set = set([(r.i, r.id) for r in self.raw.get_loads()])
+        sup_load_set = self.sup.get_load_ids()     #you will get a unique set
+        sup_not_raw_load_set = sup_load_set.difference(raw_load_set)
+        if len(sup_not_raw_load_set) > 0:
+            alert(
+                {'data_type':
+                 'Data',
+                 'error_message':
+                 'Removing loads from JSON SUP file that are not in the RAW file.',
+                 'diagnostics':
+                 {'num loads sup not raw ': len(sup_not_raw_load_set),
+                  'loads': [
+                      {'i': r[0], 'id': r[1]}
+                      for r in sup_not_raw_load_set]}})
+            self.sup.remove_loads(sup_not_raw_load_set)
         
     def check_no_loads_in_raw_not_in_sup(self):
 
@@ -470,6 +510,24 @@ class Data:
                       {'i': r[0], 'j': r[1], 'id': r[2]}
                       for r in diff_set]}})
 
+    def remove_lines_in_sup_not_in_raw(self):
+
+        raw_set = set([(r.i, r.j, r.ckt) for r in self.raw.get_nontransformer_branches()])
+        sup_set = self.sup.get_line_ids()     #you will get a unique set
+        diff_set = sup_set.difference(raw_set)
+        if len(diff_set) > 0:
+            alert(
+                {'data_type':
+                 'Data',
+                 'error_message':
+                 'Removing lines from the JSON SUP file that are not in the RAW file.',
+                 'diagnostics':
+                 {'num lines sup not raw ': len(diff_set),
+                  'lines': [
+                      {'i': r[0], 'j': r[1], 'id': r[2]}
+                      for r in diff_set]}})
+            self.sup.remove_lines(diff_set)
+
     def check_no_lines_in_raw_not_in_sup(self):
 
         raw_set = set([(r.i, r.j, r.ckt) for r in self.raw.get_nontransformer_branches()])
@@ -503,6 +561,24 @@ class Data:
                   'transformers': [
                       {'i': r[0], 'j': r[1], 'id': r[2]}
                       for r in diff_set]}})
+
+    def remove_transformers_in_sup_not_in_raw(self):
+
+        raw_set = set([(r.i, r.j, r.ckt) for r in self.raw.get_transformers()])
+        sup_set = self.sup.get_transformer_ids()     #you will get a unique set
+        diff_set = sup_set.difference(raw_set)
+        if len(diff_set) > 0:
+            alert(
+                {'data_type':
+                 'Data',
+                 'error_message':
+                 'Removing transformers from the JSON SUP file that are not in the RAW file.',
+                 'diagnostics':
+                 {'num transformers sup not raw ': len(diff_set),
+                  'transformers': [
+                      {'i': r[0], 'j': r[1], 'id': r[2]}
+                      for r in diff_set]}})
+            self.sup.remove_transformers(diff_set)
 
     def check_no_transformers_in_raw_not_in_sup(self):
 
@@ -860,10 +936,13 @@ class Raw:
 
     def scrub(self):
 
-        self.scrub_switched_shunts()
+        self.scrub_buses()
+        self.scrub_loads()
+        self.scrub_fixed_shunts()
         self.scrub_nontransformer_branches()
         self.scrub_transformers()
         self.scrub_generators()
+        self.scrub_switched_shunts()
 
     def check(self):
 
@@ -874,7 +953,7 @@ class Raw:
         self.check_generators()
         self.check_nontransformer_branches()
         self.check_transformers()
-        self.check_areas()
+        #self.check_areas()
         self.check_switched_shunts()
         self.check_unique_branch_per_i_j_ckt()
         # todo: check buses > 0, bus fields of loads, fixed shunts, generators, nontransformer branches, transformers, areas, switched shunts are in the set of buses
@@ -890,18 +969,87 @@ class Raw:
 
     def scrub_switched_shunts(self):
 
+        self.check_switched_shunts_bus_exists(scrub_mode=True)
         for r in self.get_switched_shunts():
             r.scrub()
 
+    def check_nontransformer_branches(self):
+
+        self.check_nontransformer_branches_buses_exist(scrub_mode=False)
+        for r in self.get_nontransformer_branches():
+            r.check()
+
     def scrub_nontransformer_branches(self):
 
+        self.check_nontransformer_branches_buses_exist(scrub_mode=True)
         for r in self.get_nontransformer_branches():
             r.scrub()
 
+    def check_nontransformer_branches_buses_exist(self, scrub_mode=False):
+
+        buses = self.get_buses()
+        buses_id = set([r.i for r in buses])
+        components = self.get_nontransformer_branches()
+        component_buses_id = set([r.i for r in components] + [r.j for r in components])
+        bus_id_component_map = {i:[] for i in component_buses_id.union(buses_id)}
+        for r in components:
+            bus_id_component_map[r.i].append(r)
+            bus_id_component_map[r.j].append(r)
+        buses_id_to_remove = component_buses_id.difference(buses_id)
+        components_to_remove = [
+            r for i in buses_id_to_remove
+            for r in bus_id_component_map[i]]
+        components_to_remove_key = [
+            (r.i, r.j, r.ckt) for r in components_to_remove]
+        for k in components_to_remove_key:
+            alert(
+                {'data_type':
+                     'Raw',
+                 'error_message':
+                     '{} line with nonexistent bus'.format('removing' if scrub_mode else 'found'),
+                 'diagnostics':
+                     {'key': k}})
+            if scrub_mode:
+                del self.nontransformer_branches[k]
+
+    def check_transformers(self):
+
+        self.check_transformers_buses_exist(scrub_mode=False)
+        for r in self.get_transformers():
+            r.check()
+
     def scrub_transformers(self):
 
+        self.check_transformers_buses_exist(scrub_mode=True)
         for r in self.get_transformers():
             r.scrub()
+
+    def check_transformers_buses_exist(self, scrub_mode=False):
+
+        buses = self.get_buses()
+        buses_id = set([r.i for r in buses])
+        components = self.get_transformers()
+        component_buses_id = set([r.i for r in components] + [r.j for r in components])
+        bus_id_component_map = {i:[] for i in component_buses_id.union(buses_id)}
+        for r in components:
+            bus_id_component_map[r.i].append(r)
+            bus_id_component_map[r.j].append(r)
+        buses_id_to_remove = component_buses_id.difference(buses_id)
+        components_to_remove = [
+            r for i in buses_id_to_remove
+            for r in bus_id_component_map[i]]
+        components_to_remove_key = [
+            (r.i, r.j, r.ckt) for r in components_to_remove]
+        for k in components_to_remove_key:
+            alert(
+                {'data_type':
+                     'Raw',
+                 'error_message':
+                     '{} transformer with nonexistent bus'.format('removing' if scrub_mode else 'found'),
+                 'diagnostics':
+                     {'key': k}})
+            if scrub_mode:
+                del self.transformers[k]
 
     def check_case_identification(self):
         
@@ -912,46 +1060,189 @@ class Raw:
         for r in self.get_buses():
             r.check()
 
+    def scrub_buses(self):
+
+        self.remove_buses_with_ide_eq_4()
+        for r in self.get_buses():
+            r.scrub()
+
+    def remove_buses_with_ide_eq_4(self):
+
+        buses = self.get_buses()
+        buses_id_to_remove = [r.i for r in buses if r.ide == 4]
+        for i in buses_id_to_remove:
+            alert(
+                {'data_type':
+                     'Raw',
+                 'error_message':
+                     'removing bus with ide == 4',
+                 'diagnostics':
+                     {'bus id': i}})
+            del self.buses[i]
+
     def check_loads(self):
 
+        self.check_loads_bus_exists(scrub_mode=False)
         for r in self.get_loads():
             r.check()
 
+    def scrub_loads(self):
+
+        self.check_loads_bus_exists(scrub_mode=True)
+        for r in self.get_loads():
+            r.scrub()
+
+    def check_loads_bus_exists(self, scrub_mode=False):
+
+        buses = self.get_buses()
+        buses_id = set([r.i for r in buses])
+        components = self.get_loads()
+        component_buses_id = set([r.i for r in components])
+        bus_id_component_map = {i:[] for i in component_buses_id.union(buses_id)}
+        for r in components:
+            bus_id_component_map[r.i].append(r)
+        buses_id_to_remove = component_buses_id.difference(buses_id)
+        components_to_remove = [
+            r for i in buses_id_to_remove
+            for r in bus_id_component_map[i]]
+        components_to_remove_key = [
+            (r.i, r.id) for r in components_to_remove]
+        for k in components_to_remove_key:
+            alert(
+                {'data_type':
+                     'Raw',
+                 'error_message':
+                     '{} load with nonexistent bus'.format('removing' if scrub_mode else 'found'),
+                 'diagnostics':
+                     {'key': k}})
+            if scrub_mode:
+                del self.loads[k]
+
     def check_fixed_shunts(self):
 
+        self.check_fixed_shunts_bus_exists(scrub_mode=False)
         for r in self.get_fixed_shunts():
             r.check()
 
+    def check_fixed_shunts_bus_exists(self, scrub_mode=False):
+
+        buses = self.get_buses()
+        buses_id = set([r.i for r in buses])
+        components = self.get_fixed_shunts()
+        component_buses_id = set([r.i for r in components])
+        bus_id_component_map = {i:[] for i in component_buses_id.union(buses_id)}
+        for r in components:
+            bus_id_component_map[r.i].append(r)
+        buses_id_to_remove = component_buses_id.difference(buses_id)
+        components_to_remove = [
+            r for i in buses_id_to_remove
+            for r in bus_id_component_map[i]]
+        components_to_remove_key = [
+            (r.i, r.id) for r in components_to_remove]
+        for k in components_to_remove_key:
+            alert(
+                {'data_type':
+                     'Raw',
+                 'error_message':
+                     '{} fixed_shunt with nonexistent bus'.format('removing' if scrub_mode else 'found'),
+                 'diagnostics':
+                     {'key': k}})
+            if scrub_mode:
+                del self.fixed_shunts[k]
+
+    def scrub_fixed_shunts(self):
+
+        self.check_fixed_shunts_bus_exists(scrub_mode=True)
+        for r in self.get_fixed_shunts():
+            r.scrub()
+
     def check_generators(self):
 
+        self.check_generators_bus_exists(scrub_mode=False)
         for r in self.get_generators():
             r.check()
 
     def scrub_generators(self):
 
+        self.check_generators_bus_exists(scrub_mode=True)
         for r in self.get_generators():
             r.scrub()
 
-    def check_nontransformer_branches(self):
+    def check_generators_bus_exists(self, scrub_mode=False):
 
-        for r in self.get_nontransformer_branches():
-            r.check()
+        buses = self.get_buses()
+        buses_id = set([r.i for r in buses])
+        components = self.get_generators()
+        component_buses_id = set([r.i for r in components])
+        bus_id_component_map = {i:[] for i in component_buses_id.union(buses_id)}
+        for r in components:
+            bus_id_component_map[r.i].append(r)
+        buses_id_to_remove = component_buses_id.difference(buses_id)
+        components_to_remove = [
+            r for i in buses_id_to_remove
+            for r in bus_id_component_map[i]]
+        components_to_remove_key = [
+            (r.i, r.id) for r in components_to_remove]
+        for k in components_to_remove_key:
+            alert(
+                {'data_type':
+                     'Raw',
+                 'error_message':
+                     '{} generator with nonexistent bus'.format('removing' if scrub_mode else 'found'),
+                 'diagnostics':
+                     {'key': k}})
+            if scrub_mode:
+                del self.generators[k]
 
-    def check_transformers(self):
+    # def check_nontransformer_branches(self):
 
-        for r in self.get_transformers():
-            r.check()
+    #     self.check_nontransformer_branches_buses_exist()
+    #     for r in self.get_nontransformer_branches():
+    #         r.check()
 
-    def check_areas(self):
+    # def check_transformers(self):
 
-        for r in self.get_areas():
-            r.check()
+    #     for r in self.get_transformers():
+    #         r.check()
+
+    # def check_areas(self):
+
+    #     for r in self.get_areas():
+    #         r.check()
 
     def check_switched_shunts(self):
 
+        self.check_switched_shunts_bus_exists(scrub_mode=False)
         for r in self.get_switched_shunts():
             r.check()
         self.check_switched_shunts_binit_feas()
+
+    def check_switched_shunts_bus_exists(self, scrub_mode=False):
+
+        #print('here')
+        buses = self.get_buses()
+        buses_id = set([r.i for r in buses])
+        components = self.get_switched_shunts()
+        component_buses_id = set([r.i for r in components])
+        bus_id_component_map = {i:[] for i in component_buses_id.union(buses_id)}
+        for r in components:
+            bus_id_component_map[r.i].append(r)
+        buses_id_to_remove = component_buses_id.difference(buses_id)
+        components_to_remove = [
+            r for i in buses_id_to_remove
+            for r in bus_id_component_map[i]]
+        components_to_remove_key = [
+            (r.i,) for r in components_to_remove]
+        for k in components_to_remove_key:
+            alert(
+                {'data_type':
+                     'Raw',
+                 'error_message':
+                     '{} switched_shunt with nonexistent bus'.format('removing' if scrub_mode else 'found'),
+                 'diagnostics':
+                     {'key': k}})
+            if scrub_mode:
+                del self.switched_shunts[k]
 
     @timeit
     def check_switched_shunts_binit_feas(self):
@@ -1577,7 +1868,7 @@ class Raw:
                 transformer.i,
                 transformer.j,
                 #transformer.k,
-                0,
+                #0, # leave k out
                 transformer.ckt)] = transformer
             row_num += (num_rows - 1)
         while True: # areas - for now just make a set of areas based on bus info
@@ -1949,8 +2240,13 @@ class Bus:
         self.evhi = 1.1
         self.evlo = 0.9
 
+    def scrub(self):
+
+        pass
+
     def check(self):
 
+        self.check_ide_ne_4()
         self.check_i_pos()
         self.check_area_pos()
         self.check_vm_pos()
@@ -1968,6 +2264,16 @@ class Bus:
     def clean_name(self):
 
         self.name = ''
+
+    def check_ide_ne_4(self):
+
+        if self.ide == 4:
+            alert(
+                {'data_type': 'Bus',
+                 'error_message': 'fails ide != 4. Please ensure that the ide field of every bus is not equal to 4',
+                 'diagnostics': {
+                     'i': self.i,
+                     'ide': self.ide}})
 
     def check_i_pos(self):
 
@@ -2128,6 +2434,10 @@ class Load:
         self.check_id_len_1_or_2()
         # need to check i in buses
 
+    def scrub(self):
+
+        pass
+
     def check_id_len_1_or_2(self):
 
         if not(len(self.id) in [1, 2]):
@@ -2177,6 +2487,10 @@ class FixedShunt:
 
         self.check_id_len_1_or_2()
         # need to check i in buses
+
+    def scrub(self):
+
+        pass
 
     def check_id_len_1_or_2(self):
 
@@ -2510,7 +2824,7 @@ class NontransformerBranch:
                  'diagnostics': {
                      'i': self.i,
                      'j': self.j,
-                     'ckt': self.k}})
+                     'ckt': self.ckt}})
 
     def check_i_ne_j(self):
 
@@ -2521,7 +2835,7 @@ class NontransformerBranch:
                  'diagnostics': {
                      'i': self.i,
                      'j': self.j,
-                     'ckt': self.k}})
+                     'ckt': self.ckt}})
         
     def check_ckt_len_1_or_2(self):
 
@@ -2727,7 +3041,7 @@ class Transformer:
                      'i': self.i,
                      'j': self.j,
                      'k': self.k,
-                     'ckt': self.k,
+                     'ckt': self.ckt,
                      'cod1': self.cod1}})
 
 
@@ -2749,7 +3063,7 @@ class Transformer:
                      'i': self.i,
                      'j': self.j,
                      'k': self.k,
-                     'ckt': self.k,
+                     'ckt': self.ckt,
                      'cod1': self.cod1,
                      'stat': self.stat,
                      'ntp1': self.ntp1,
@@ -2773,7 +3087,7 @@ class Transformer:
                      'i': self.i,
                      'j': self.j,
                      'k': self.k,
-                     'ckt': self.k}})
+                     'ckt': self.ckt}})
         
     def check_i_lt_j(self):
 
@@ -2784,7 +3098,7 @@ class Transformer:
                  'diagnostics': {
                      'i': self.i,
                      'j': self.j,
-                     'ckt': self.k}})
+                     'ckt': self.ckt}})
 
     def check_i_ne_j(self):
 
@@ -2795,7 +3109,7 @@ class Transformer:
                  'diagnostics': {
                      'i': self.i,
                      'j': self.j,
-                     'ckt': self.k}})
+                     'ckt': self.ckt}})
 
     def check_ckt_len_1_or_2(self):
 
@@ -3835,419 +4149,6 @@ class SwitchedShunt:
             if ni is None or bi is None or ni == 0 or bi == 0.0:
                 self.swsh_susc_count = i-1
                 break
-            
-"""
-class PiecewiseLinearCostFunction():
-
-    def __init__(self):
-
-        self.ltbl = None # no default value allowed
-        self.label = ''
-        self.npairs = None # no default value allowed
-        self.points = [] # no default value allowed
-
-    def add_emergency_cost_point(self):
-        '''add one more cost point
-        for study 1
-        add one more cost point
-        so that the last segment has MC = 5x the MC of the second to last segment
-        which originally was the last segment'''
-
-        n = self.npairs
-        xy_n = self.points[n - 1]
-        xy_n_minus = self.points[n - 2]
-        x_n = xy_n.x
-        y_n = xy_n.y
-        x_n_minus = xy_n_minus.x
-        y_n_minus = xy_n_minus.y
-        mc_n = (y_n - y_n_minus)/(x_n - x_n_minus)
-        mc_n_plus = EMERGENCY_MARGINAL_COST_FACTOR * abs(mc_n)
-        x_n_plus = x_n + EMERGENCY_CAPACITY_FACTOR * abs(x_n)
-        y_n_plus = y_n + mc_n_plus * (x_n_plus - x_n)
-        xy_n_plus = Point()
-        xy_n_plus.x = x_n_plus
-        xy_n_plus.y = y_n_plus
-        self.npairs += 1
-        self.points.append(xy_n_plus)
-
-    def discard_cost_data(self, pmin, pmax):
-
-        x = [p.x for p in self.points]
-        xmin = min(x + [pmin, pmax]) - gen_cost_x_bounds_margin - 1.0
-        xmax = max(x + [pmin, pmax]) + gen_cost_x_bounds_margin + 1.0
-        self.points = [Point(), Point()]
-        self.points[0].x = xmin
-        self.points[1].x = xmax
-        for p in self.points:
-            p.y = gen_cost_default_marginal_cost * p.x
-        self.npairs = 2
-
-    def scrub(self, pmin, pmax):
-
-        self.scrub_label()
-        self.sort_points_by_x()
-        self.remove_near_duplicate_points_by_x()
-        self.remove_nonconvex_points()
-        self.extend_x_to_p_min_max(pmin, pmax)
-        self.update_npairs()
-        self.shift_marginal_cost()
-
-    def update_npairs(self):
-
-        self.npairs = len(self.points)
-
-    def sort_points_by_x(self):
-
-        self.points = sorted(self.points, key=(lambda p: p.x))
-
-    def remove_near_duplicate_points_by_x(self):
-
-        num_points = len(self.points)
-        points_to_remove = []
-        x = [p.x for p in self.points]
-        for i in range(1, num_points - 1):
-            if x[i] < x[i - 1] + gen_cost_dx_margin:
-                alert(
-                    {'data_type': 'PiecewiseLinearCostFunction',
-                     'error_message': 'fails dx margin (sufficient increase in x). removing point i',
-                     'diagnostics': {
-                         'ltbl': self.ltbl,
-                         'i': i,
-                         'x[i - 1]': x[i - 1],
-                         'x[i]': x[i],
-                         'x[i] - x[i - 1]': x[i] - x[i - 1]}})
-                points_to_remove.append(i)
-        for i in range(num_points - 2, num_points - 1):
-            if x[i + 1] < x[i] + gen_cost_dx_margin:
-                alert(
-                    {'data_type': 'PiecewiseLinearCostFunction',
-                     'error_message': 'fails dx margin (sufficient increase in x). removing point i',
-                     'diagnostics': {
-                         'ltbl': self.ltbl,
-                         'i': i,
-                         'x[i + 1]': x[i + 1],
-                         'x[i]': x[i],
-                         'x[i + 1] - x[i]': x[i + 1] - x[i]}})
-                points_to_remove.append(i)
-        points_to_keep = sorted(list(set(range(num_points)) - set(points_to_remove)))
-        self.points = [self.points[i] for i in points_to_keep]
-        self.npairs = len(self.points)
-
-    def remove_nonconvex_points(self):
-
-        num_points = len(self.points)
-        done = False
-        while num_points > 2 and not done:
-            self.remove_nonconvex_points_local()
-            num_points_old = num_points
-            num_points = len(self.points)
-            if num_points == num_points_old:
-                done = True
-
-    def remove_nonconvex_points_local(self):
-
-        num_points = len(self.points)
-        points_to_remove = []
-        x = [p.x for p in self.points]
-        y = [p.y for p in self.points]
-        if num_points > 1:
-            dx = [x[i + 1] - x[i] for i in range(num_points - 1)]
-            dy = [y[i + 1] - y[i] for i in range(num_points - 1)]
-            dydx = [dy[i] / dx[i] for i in range(num_points - 1)]
-            for i in range(1, num_points - 1):
-                if dydx[i] < dydx[i - 1] + gen_cost_ddydx_margin:
-                    alert(
-                        {'data_type': 'PiecewiseLinearCostFunction',
-                         'error_message': 'fails ddydx margin (sufficient convexity). removing point i',
-                         'diagnostics': {
-                             'ltbl': self.ltbl,
-                             'i': i,
-                             'x[i - 1]': x[i - 1],
-                             'x[i]': x[i],
-                             'x[i + 1]': x[i + 1],
-                             'y[i - 1]': y[i - 1],
-                             'y[i]': y[i],
-                             'y[i + 1]': y[i + 1],
-                             'dydx[i, i + 1] - dydx[i - 1, i]': dydx[i] - dydx[i - 1]}})
-                    points_to_remove.append(i)
-                    #break # only remove the first 1?
-            points_to_keep = sorted(list(set(range(num_points)) - set(points_to_remove)))
-            self.points = [self.points[i] for i in points_to_keep]
-            self.npairs = len(self.points)
-
-    def extend_x_to_p_min_max(self, pmin, pmax):
-
-        num_points = len(self.points)
-        if num_points < 2:
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fails fails num_points >= 2. Rewriting cost function entirely.',
-                 'diagnostics': {
-                     'ltbl': self.ltbl,
-                     'len(points)': len(self.points)}})
-            self.discard_cost_data(pmin, pmax)
-        else:
-            x = [p.x for p in self.points]
-            y = [p.y for p in self.points]
-            dx = [x[i + 1] - x[i] for i in range(num_points - 1)]
-            dy = [y[i + 1] - y[i] for i in range(num_points - 1)]
-            dydx = [dy[i] / dx[i] for i in range(num_points - 1)]
-            xb = min(x + [pmin, pmax]) - gen_cost_x_bounds_margin - 1.0
-            xt = max(x + [pmin, pmax]) + gen_cost_x_bounds_margin + 1.0
-            # y = y0 + dydx * (x - x0)
-            yb = y[0] + dydx[0] * (xb - x[0])
-            yt = y[num_points - 1] + dydx[num_points - 2] * (xt - x[num_points - 1])
-            self.points[0].x = xb
-            self.points[0].y = yb
-            self.points[num_points - 1].x = xt
-            self.points[num_points - 1].y = yt
-        self.npairs = len(self.points)
-
-    def scrub_label(self):
-
-        self.label = self.label.replace(',', '') # remove commas
-
-    def check(self):
-
-        #self.check_ltbl_pos()
-        #self.check_npairs_eq_len_points()
-        #self.check_at_least_two_points()
-        #self.check_dx_margin()
-        #self.check_ddydx_margin()
-        #self.check_marginal_cost()
-        pass
-
-    def check_marginal_cost(self):
-
-        x = [p.x for p in self.points]
-        y = [p.y for p in self.points]
-        n = len(self.points)
-        if (n < 2):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fails at least 2 points.',
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-            return
-        min_y = min(y)
-        if (min_y < gen_cost_y_min):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fails y >= min, min = %f' % gen_cost_y_min,
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-            return
-        dx = [x[i + 1] - x[i] for i in range(n - 1)]
-        min_dx = min(dx)
-        if (min_dx < gen_cost_dx_margin):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fails dx >= tol, tol = %f' % gen_cost_dx_margin,
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-            return
-        dy = [y[i + 1] - y[i] for i in range(n - 1)]
-        dydx = [(dy[i] / dx[i]) for i in range(n - 1)]
-        min_dydx = min(dydx)
-        if (min_dydx < gen_cost_dydx_min):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fails dydx >= min, min = %f' % gen_cost_dydx_min,
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-            return
-            
-    def shift_marginal_cost(self):
-
-        x = [p.x for p in self.points]
-        y = [p.y for p in self.points]
-        n = len(self.points)
-        if (n < 2):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fails at least 2 points.',
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-            return
-        min_y = min(y)
-        if (min_y < gen_cost_y_min):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fixing y >= min, min = %f' % gen_cost_y_min,
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-            for p in self.points:
-                p.y += gen_cost_y_min - min_y + 1.0e-6
-            y = [p.y for p in self.points]
-        dx = [x[i + 1] - x[i] for i in range(n - 1)]
-        min_dx = min(dx)
-        if (min_dx < gen_cost_dx_margin):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fails dx >= tol, tol = %f' % gen_cost_dx_margin,
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-            return
-        dy = [y[i + 1] - y[i] for i in range(n - 1)]
-        dydx = [(dy[i] / dx[i]) for i in range(n - 1)]
-        min_dydx = min(dydx)
-        if (min_dydx < gen_cost_dydx_min):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fixing dydx >= min, min = %f' % gen_cost_dydx_min,
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-            dydx_fixed = [dydx[i] + gen_cost_dydx_min - min_dydx + 1.0e-6 for i in range(n - 1)]
-            y_fixed = [0.0 for i in range(n)]
-            y_fixed[0] = y[0]
-            for i in range(n - 1):
-                y_new = y_fixed[i] + dydx_fixed[i] * dx[i]
-                y_fixed[i + 1] = y_new
-            for i in range(n):
-                self.points[i].y = y_fixed[i]
-        # aim for week of Jan 6
-
-    def check_ltbl_pos(self):
-
-        if not (self.ltbl > 0):
-            alert(
-                {'data_type': 'PiecewiseLinearCostFunction',
-                 'error_message': 'fails ltbl positivity. Please ensure that the ltbl field of every piecewise linear cost function is a positive integer',
-                 'diagnostics': {
-                     'ltbl': self.ltbl}})
-
-    def check_npairs_eq_len_points(self):
-
-        num_points = len(self.points)
-        if not (self.npairs == num_points):
-            alert(
-                {'data_type':'PiecewiseLinearCostFunction',
-                 'error_message':'fails npairs exactly equal to number of points. Please ensure that for each piecewise linear cost function, the npairs field is an integer equal to the number of points provided.',
-                 'diagnostics':{
-                     'ltbl': self.ltbl,
-                     'npairs': self.npairs,
-                     'nx': num_points}})            
-
-    def check_at_least_two_points(self):
-
-        num_points = len(self.points)
-        if num_points < 2:
-            alert(
-                {'data_type':'PiecewiseLinearCostFunction',
-                 'error_message':'fails to have at least 2 points. Please provide at least 2 sample points for each piecewise linear cost function',
-                 'diagnostics':{
-                     'ltbl': self.ltbl,
-                     'nx': num_points}})
-
-    def check_dx_margin(self):
-
-        num_points = len(self.points)
-        x = [self.points[i].x for i in range(num_points)]
-        dx = [x[i + 1] - x[i] for i in range(num_points - 1)]
-        for i in range(num_points - 1):
-            if dx[i] < gen_cost_dx_margin:
-                alert(
-                    {'data_type':'PiecewiseLinearCostFunction',
-                     'error_message':(
-                         'fails dx margin at points (i, i + 1). Please ensure that the sample points on each piecewise linear cost function are listed in order of increasing x coordinate, with each consecutive pair of x points differing by at least: %10.2e (MW)' %
-                         gen_cost_dx_margin),
-                     'diagnostics':{
-                         'ltbl': self.ltbl,
-                         'i': i,
-                         'dx[i]': dx[i],
-                         'x[i]': x[i],
-                         'x[i + 1]': x[i + 1]}})
-
-    def check_ddydx_margin(self):
-
-        num_points = len(self.points)
-        x = [self.points[i].x for i in range(num_points)]
-        y = [self.points[i].y for i in range(num_points)]
-        dx = [x[i + 1] - x[i] for i in range(num_points - 1)]
-        dx = [(d if abs(d) > 0 else 1.0) for d in dx]
-        dy = [y[i + 1] - y[i] for i in range(num_points - 1)]
-        dydx = [dy[i] / dx[i] for i in range(num_points - 1)]
-        ddydx = [dydx[i + 1] - dydx[i] for i in range(num_points - 2)]
-        for i in range(num_points - 2):
-            if ddydx[i] < gen_cost_ddydx_margin:
-                alert(
-                    {'data_type':'PiecewiseLinearCostFunction',
-                     'error_message':(
-                         'fails ddydx margin at points (i, i + 1, i + 2). Please ensure that the sample points on each piecewise linear cost function have increasing slopes, with each consecutive pair of slopese differing by at least: %10.2e (USD/MW-h)' %
-                         gen_cost_ddydx_margin),
-                     'diagnostics':{
-                         'ltbl': self.ltbl,
-                         'i': i,
-                         'ddydx[i]': ddydx[i],
-                         'dydx[i]': dydx[i],
-                         'dydx[i + 1]': dydx[i + 1],
-                         'x[i]': x[i],
-                         'x[i + 1]': x[i + 1],
-                         'x[i + 2]': x[i + 2],
-                         'y[i]': y[i],
-                         'y[i + 1]': y[i + 1],
-                         'y[i + 2]': y[i + 2]}})
-
-    def check_x_min_margin(self, pmin):
-
-        num_points = len(self.points)
-        x = [self.points[i].x for i in range(num_points)]
-        xmin = min(x)
-        if pmin - xmin < gen_cost_x_bounds_margin:
-            alert(
-                {'data_type':'PiecewiseLinearCostFunction',
-                 'error_message':(
-                     'fails x min margin. Please ensure that for each piecewise linear cost function f for a generator g, the x coordinate of at least one of the sample points of f is less than pmin of g by at least: %10.2e (MW)' %
-                     gen_cost_x_bounds_margin),
-                 'diagnostics':{
-                     'ltbl': self.ltbl,
-                     'pmin - xmin': (pmin - xmin),
-                     'pmin': pmin,
-                     'xmin': xmin}})
-
-    def check_x_max_margin(self, pmax):
-
-        num_points = len(self.points)
-        x = [self.points[i].x for i in range(num_points)]
-        xmax = max(x)
-        if xmax - pmax < gen_cost_x_bounds_margin:
-            alert(
-                {'data_type':'PiecewiseLinearCostFunction',
-                 'error_message':(
-                    'fails x max margin. Please ensure that for each piecewise linear cost function f for a generator g, the x coordinate of at least one of the sample points of f is greater than pmax of g by at least: %10.2e (MW)' %
-                    gen_cost_x_bounds_margin),
-                 'diagnostics':{
-                     'ltbl': self.ltbl,
-                     'xmax - pmax': (xmax - pmax),
-                     'pmax': pmax,
-                     'xmax': xmax}})
-
-    def read_from_row(self, row):
-
-        self.ltbl = parse_token(row[0], int, default=None)
-        self.npairs = parse_token(row[2], int, default=None)
-        for i in range(self.npairs):
-            point = Point()
-            point.read_from_row(
-                row[(3 + 2*i):(5 + 2*i)])
-            self.points.append(point)
-        if read_unused_fields:
-            self.label = parse_token(row[1], str, '').strip()
-
-    def get_num_rows_from_row(self, row):
-
-        num_rows = parse_token(row[2], int, 0) + 1
-        return num_rows
-
-    def flatten_rows(self, rows):
-
-        row = [t for r in rows for t in r]
-        return row
-
-    def read_from_rows(self, rows):
-
-        self.read_from_row(self.flatten_rows(rows))
-"""
 
 class Contingency:
 
