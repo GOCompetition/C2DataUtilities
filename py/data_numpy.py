@@ -263,10 +263,10 @@ class Data:
         self.xfmr_i = [r.i for r in xfmrs]
         self.xfmr_j = [r.j for r in xfmrs]
         self.xfmr_ckt = [r.ckt for r in xfmrs]
-        self.xfmr_key = [(r.i, r.j, 0, r.ckt) for r in xfmrs] # do we really need the '0'?
+        self.xfmr_key = [(r.i, r.j, r.ckt) for r in xfmrs] # do we really need the '0'?
         self.xfmr_orig_bus = [self.bus_map[self.xfmr_i[i]] for i in range(self.num_xfmr)]
         self.xfmr_dest_bus = [self.bus_map[self.xfmr_j[i]] for i in range(self.num_xfmr)]
-        self.xfmr_map = {(self.xfmr_i[i], self.xfmr_j[i], 0, self.xfmr_ckt[i]):i for i in range(self.num_xfmr)}
+        self.xfmr_map = {(self.xfmr_i[i], self.xfmr_j[i], self.xfmr_ckt[i]):i for i in range(self.num_xfmr)}
 
         # closed-open status in operating point prior to base case
         self.xfmr_xsw_0 = np.array([r.stat for r in xfmrs])
