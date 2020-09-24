@@ -462,10 +462,10 @@ class Evaluation:
         self.xfmr_i = [r.i for r in xfmrs]
         self.xfmr_j = [r.j for r in xfmrs]
         self.xfmr_ckt = [r.ckt for r in xfmrs]
-        self.xfmr_key = [(r.i, r.j, 0, r.ckt) for r in xfmrs] # do we really need the '0'?
+        self.xfmr_key = [(r.i, r.j, r.ckt) for r in xfmrs] # do we really need the '0'? - not anymore
         self.xfmr_orig_bus = [self.bus_map[self.xfmr_i[i]] for i in range(self.num_xfmr)]
         self.xfmr_dest_bus = [self.bus_map[self.xfmr_j[i]] for i in range(self.num_xfmr)]
-        self.xfmr_map = {(self.xfmr_i[i], self.xfmr_j[i], 0, self.xfmr_ckt[i]):i for i in range(self.num_xfmr)}
+        self.xfmr_map = {(self.xfmr_i[i], self.xfmr_j[i], self.xfmr_ckt[i]):i for i in range(self.num_xfmr)}
 
         # closed-open status in operating point prior to base case
         self.xfmr_xsw_0 = np.array([r.stat for r in xfmrs])
@@ -582,7 +582,7 @@ class Evaluation:
             r.label:set([(e.i, e.j, e.ckt) for e in r.branch_out_events])
             for r in ctgs}
         ctg_branch_xfmr_keys_out = {
-            r.label:set([(e.i, e.j, 0, e.ckt) for e in r.branch_out_events])
+            r.label:set([(e.i, e.j, e.ckt) for e in r.branch_out_events])
             for r in ctgs}
 
         ctg_line_keys_out = {k:(v & line_keys) for k,v in ctg_branch_keys_out.items()}
@@ -1018,7 +1018,7 @@ class Evaluation:
         sol_xfmr_iorig = solution1.xfmr_df.iorig.values
         sol_xfmr_idest = solution1.xfmr_df.idest.values
         sol_xfmr_id = map(clean_string, list(solution1.xfmr_df.id.values))
-        sol_xfmr_key = zip(sol_xfmr_iorig, sol_xfmr_idest, [0]*len(sol_xfmr_iorig), sol_xfmr_id)  #CHALLENGE2
+        sol_xfmr_key = zip(sol_xfmr_iorig, sol_xfmr_idest, sol_xfmr_id)  #CHALLENGE2
         self.base_xfmr_map = dict(zip(sol_xfmr_key, list(range(self.num_xfmr))))
         #xfmr_permutation =  [self.base_xfmr_map[k] for k in self.data.raw.transformers.keys()] 
         xfmr_permutation =  [self.base_xfmr_map[k] for k in self.xfmr_key] 
@@ -1460,7 +1460,7 @@ class Evaluation:
         sol_xfmr_iorig = solution2.xfmr_df.iorig.values
         sol_xfmr_idest = solution2.xfmr_df.idest.values
         sol_xfmr_id = map(clean_string, list(solution2.xfmr_df.id.values))
-        sol_xfmr_key = zip(sol_xfmr_iorig, sol_xfmr_idest, [0]*len(sol_xfmr_iorig) , sol_xfmr_id)
+        sol_xfmr_key = zip(sol_xfmr_iorig, sol_xfmr_idest, sol_xfmr_id)
         self.ctg_xfmr_map = dict(zip(sol_xfmr_key, list(range(self.num_xfmr))))
         xfmr_permutation = [self.ctg_xfmr_map[k] for k in self.xfmr_key]
 
@@ -2689,7 +2689,7 @@ class CaseSolution:
         xfmr_idest = list(self.xfmr_df.idest.values)
         #xfmr_id = map(clean_string, list(self.xfmr_df.id.values))
         xfmr_id = list(self.xfmr_df.id.values)
-        xfmr_key = zip(xfmr_iorig, xfmr_idest, [0]*len(xfmr_iorig), xfmr_id)
+        xfmr_key = zip(xfmr_iorig, xfmr_idest, xfmr_id)
         xfmr_index = [self.xfmr_map[k] for k in xfmr_key]
         self.xfmr_xsw[:] = 0.0
         self.xfmr_xsw[xfmr_index] = self.xfmr_df.x.values

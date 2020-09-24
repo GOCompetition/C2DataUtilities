@@ -294,7 +294,7 @@ class Solver():
                 r.st] # x
             for r in self.data.raw.nontransformer_branches.values()}
         self.sol1['transformers'] = {
-            (r.i, r.j, r.k, r.ckt): [
+            (r.i, r.j, r.ckt): [
                 r.i, # iorig
                 r.j, # idest
                 r.ckt, # id
@@ -324,7 +324,7 @@ class Solver():
             self.data.raw.generators.keys()).difference(generators_out))
         branches_out = set([(e.i, e.j, e.ckt) for e in contingency.branch_out_events])
         lines_out = branches_out
-        transformers_out = set([(b[0], b[1], 0, b[2]) for b in branches_out])
+        transformers_out = set([(b[0], b[1], b[2]) for b in branches_out]) # todo do we need this line now?
         lines_in = list(set(
             self.data.raw.nontransformer_branches.keys()).difference(lines_out))
         transformers_in = list(set(

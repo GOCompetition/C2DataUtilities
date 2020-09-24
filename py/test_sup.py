@@ -19,20 +19,14 @@ import sys
 
 basepath = '/pic/dtn/go/UWMAD_GO2/Sandbox072020'
 basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/Sandbox072020'
-basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/Sandbox072020_04'
-
-basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Aug6_07'
-
-
 #basepath = "/pic/dtn/go/Terrence/sandbox"
-#basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Terrence/sandbox/Aug10_01"
 #basepath = "/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/C2Eval/data/ieee14/scenario_1"
-
-#basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Jesse/14_bus"
-
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Globus"
-
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform"
+basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Terrence/sandbox/Sep6_01"
+basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/Sandbox072020_05'
+basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Jesse/14_bus_Sep7/"
+basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Sep9_01'
 
 
 schema_path = Path( ".") / "sup_schema.json"

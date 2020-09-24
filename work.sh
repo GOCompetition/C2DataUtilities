@@ -2,8 +2,8 @@
 
 # select data
 main_dir=/pic/dtn/go/Steve/C2/sandbox/
-#network_dir=C2S1N00014/
-network_dir=C2S1N00015/
+network_dir=C2S2N00014/
+#network_dir=C2S1N00015/
 #network_dir=C2S1N00594/
 #network_dir=C2S1N02000/
 #network_dir=C2S1N02044/
@@ -15,10 +15,11 @@ network_dir=C2S1N00015/
 #network_dir=C2S1N09462/
 #network_dir=C2S1N11152/
 scenario=01
+#scenario=1
 case_dir=${main_dir}${network_dir}scenario_${scenario}/
 
 # override data selection
-#case_dir=./data/ieee14/scenario_1/
+case_dir=./data/ieee14/scenario_1/
 
 # set options
 strict_names=0
