@@ -154,6 +154,18 @@ class Sup:
                 scrub_info['handler'](scrub_info)
             return False
 
+    # def scrub_cblock(self, scrub_info):
+    #     if 
+    #     scrub_info['cblock']
+    #     #pqs = 'p', 'q', or 's', or ''
+    #     max_prefix = scrub_info['pqs']
+    #     #pqs_new = ('t' if pqs == 's' else pqs)
+    #     #cblocks_string = pqs + 'cblocks'
+    #     max_string = max_prefix + 'max'
+    #     #cblocks = self.sup_jsonobj[cblocks_string]
+    #     cblocks += [{'c': cost_function_default_cost, max_string: (cost_function_min_range + 1.0)}]
+    #     self.sup_jsonobj[cblocks_string] = cblocks
+
     def scrub_pqscblocks(self, scrub_info):
         #pqs = 'p', 'q', or 's'
         pqs = scrub_info['pqs']
@@ -377,7 +389,9 @@ class Sup:
 
             # cblocks
             if key == "cblocks":
-                pass
+                for b in load[key]:
+                    #print(b)
+                    self.check_cblock(b, max_prefix='p', cblock_prefix='')
 
         # tmin && tmax
         if "tmin" in keys and "tmax" in keys:
@@ -465,47 +479,69 @@ class Sup:
                 message = context + "{key} must be either 0 or 1".format(key=key)
                 self.assert_continue(condition, message)
 
-    def check_pcblock(self, pcblock):
-        context = "pcblock"
-        keys = ["pmax", "c"]
-        keys = parse_keys(keys, pcblock, context)
+    def check_cblock(self, cblock, max_prefix=None, cblock_prefix=None):
+        context = ("" if cblock_prefix is None else cblock_prefix) + "cblock"
+        max_str = ("" if max_prefix is None else max_prefix) + "max"
+        keys = [max_str, "c"]
+        keys = parse_keys(keys, cblock, context)
 
         for key in keys:
-            if key == "pmax":
-                condition = (pcblock[key] >= 0.0)
-                message = context + " {key} must be >= 0.0: {cblock}".format(key=key, cblock=str(pcblock))
+            if key == max_str:
+                condition = (cblock[key] >= 0.0)
+                message = context + " {key} must be >= 0.0: {cblock}".format(key=key, cblock=str(cblock))
                 self.assert_continue(condition, message)
             if key == "c":
                 condition = None
                 message = ""
+        if self.scrub_mode:
+            if not(cblock[max_str] >= 0.0):
+                print('scrubbing {} {}. setting {} to 0.0'.format(context, str(cblock), max_str))
+                cblock[max_str] = 0.0
+
+    def check_pcblock(self, pcblock):
+        self.check_cblock(pcblock, max_prefix='p', cblock_prefix='p')
+        # context = "pcblock"
+        # keys = ["pmax", "c"]
+        # keys = parse_keys(keys, pcblock, context)
+
+        # for key in keys:
+        #     if key == "pmax":
+        #         condition = (pcblock[key] >= 0.0)
+        #         message = context + " {key} must be >= 0.0: {cblock}".format(key=key, cblock=str(pcblock))
+        #         self.assert_continue(condition, message)
+        #     if key == "c":
+        #         condition = None
+        #         message = ""
 
     def check_qcblock(self, qcblock):
-        context = "qcblock"
-        keys = ["qmax", "c"]
-        keys = parse_keys(keys, qcblock, context)
+        self.check_cblock(qcblock, max_prefix='q', cblock_prefix='q')
+        # context = "qcblock"
+        # keys = ["qmax", "c"]
+        # keys = parse_keys(keys, qcblock, context)
 
-        for key in keys:
-            if key == "qmax":
-                condition = (qcblock[key] >= 0.0)
-                message = context + " {key} must be >= 0.0: {cblock}".format(key=key, cblock=str(qcblock))
-                self.assert_continue(condition, message)
-            if key == "c":
-                condition = None
-                message = ""
+        # for key in keys:
+        #     if key == "qmax":
+        #         condition = (qcblock[key] >= 0.0)
+        #         message = context + " {key} must be >= 0.0: {cblock}".format(key=key, cblock=str(qcblock))
+        #         self.assert_continue(condition, message)
+        #     if key == "c":
+        #         condition = None
+        #         message = ""
 
     def check_scblock(self, scblock):
-        context = "scblock"
-        keys = ["tmax", "c"]
-        keys = parse_keys(keys, scblock, context)
+        self.check_cblock(scblock, max_prefix='t', cblock_prefix='s')
+        # context = "scblock"
+        # keys = ["tmax", "c"]
+        # keys = parse_keys(keys, scblock, context)
 
-        for key in keys:
-            if key == "tmax":
-                condition = (scblock[key] >= 0.0)
-                message = context + " {key} must be >= 0.0: {cblock}".format(key=key, cblock=str(scblock))
-                self.assert_continue(condition, message)
-            if key == "c":
-                condition = None
-                message = ""
+        # for key in keys:
+        #     if key == "tmax":
+        #         condition = (scblock[key] >= 0.0)
+        #         message = context + " {key} must be >= 0.0: {cblock}".format(key=key, cblock=str(scblock))
+        #         self.assert_continue(condition, message)
+        #     if key == "c":
+        #         condition = None
+        #         message = ""
 
     #<<<<<<< valid_aug
     def check_pqscblocks(self, cblocks, pqs):
