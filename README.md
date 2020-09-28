@@ -14,8 +14,6 @@ This uses the setup.py and setup.cfg files here. Then you can import from data_u
     from data_utilities.data import Data
     from data_utilities.evaluation import Evaluation
 
-Also you can import the modules directly by ensuring that the data_utilities/ directory is on your Python path.
-
 # File structure
 
 data_utilities/
