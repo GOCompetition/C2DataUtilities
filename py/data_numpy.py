@@ -115,6 +115,10 @@ class Data:
             ([1.0 for i in range(self.num_load)],
              (self.load_bus, list(range(self.num_load)))),
             (self.num_bus, self.num_load))
+        self.bus_loads = [[] for i in range(self.num_bus)]
+        for j in range(self.num_load):
+            self.bus_loads[self.load_bus[j]].append(j)
+        self.bus_num_load = [len(self.bus_loads[i]) for i in range(self.num_bus)]
 
     @timeit
     def set_data_load_cost_params(self, data):
@@ -156,6 +160,10 @@ class Data:
         #self.bus_fxsh_adm_imag = self.bus_fxsh_matrix.dot(self.fxsh_adm_imag)
         #print_info('fxsh_adm_imag:')
         #print_info(self.fxsh_adm_imag)
+        self.bus_fxshs = [[] for i in range(self.num_bus)]
+        for j in range(self.num_fxsh):
+            self.bus_fxshs[self.fxsh_bus[j]].append(j)
+        self.bus_num_fxsh = [len(self.bus_fxshs[i]) for i in range(self.num_bus)]
 
     @timeit
     def set_data_gen_params(self, data):
@@ -195,6 +203,10 @@ class Data:
             ([1.0 for i in range(self.num_gen)],
              (self.gen_bus, list(range(self.num_gen)))),
             (self.num_bus, self.num_gen))
+        self.bus_gens = [[] for i in range(self.num_bus)]
+        for j in range(self.num_gen):
+            self.bus_gens[self.gen_bus[j]].append(j)
+        self.bus_num_gen = [len(self.bus_gens[i]) for i in range(self.num_bus)]
 
     @timeit
     def set_data_gen_cost_params(self, data):
@@ -254,6 +266,33 @@ class Data:
         #else:
         #    self.line_sw_qual = np.zeros(shape=(self.num_line))
         self.line_service_status = np.ones(shape=(self.num_line,))
+        self.bus_lines_orig = [[] for i in range(self.num_bus)]
+        self.bus_lines_dest = [[] for i in range(self.num_bus)]
+        for j in range(self.num_line):
+            self.bus_lines_orig[self.line_orig_bus[j]].append(j)
+            self.bus_lines_dest[self.line_dest_bus[j]].append(j)
+        self.bus_num_line_orig = [len(self.bus_lines_orig[i]) for i in range(self.num_bus)]
+        self.bus_num_line_dest = [len(self.bus_lines_dest[i]) for i in range(self.num_bus)]
+
+    # @timeit
+    # def set_data_line_cost_params(self, data):
+        
+    #     self.num_line_cost_block = len(data.sup.scblocks)
+    #     self.line_num_cost_block = np.array(
+    #         [self.num_line_cost_block for k in self.line_key],
+    #         dtype=int)
+    #     self.line_cost_block_max_quantity = np.array(
+    #         shape=(self.num_line, self.num_line_cost_block))
+    #     self.line_cost_block_marginal = np.zeros(
+    #         shape=(self.num_line, self.num_line_cost_block))
+    #     for i in range(self.num_line):
+    #         k = self.line_key[i]
+    #         self.line_cost_block_max_quantity[i, 0:self.line_num_cost_block[i]] = [
+    #             b['pmax'] for b in data.sup.lines[k]['cblocks']]
+    #         self.line_cost_block_marginal[i, 0:self.line_num_cost_block[i]] = [
+    #             b['c'] for b in data.sup.lines[k]['cblocks']]
+    #     self.line_cost_block_max_quantity /= self.base_mva
+    #     self.line_cost_block_marginal *= self.base_mva
 
     @timeit
     def set_data_xfmr_params(self, data):
@@ -330,6 +369,13 @@ class Data:
         self.xfmr_index_imp_corr_var_phase_shift = sorted(
             list(set(self.xfmr_index_imp_corr).intersection(
                     set(self.xfmr_index_var_phase_shift))))
+        self.bus_xfmrs_orig = [[] for i in range(self.num_bus)]
+        self.bus_xfmrs_dest = [[] for i in range(self.num_bus)]
+        for j in range(self.num_xfmr):
+            self.bus_xfmrs_orig[self.xfmr_orig_bus[j]].append(j)
+            self.bus_xfmrs_dest[self.xfmr_dest_bus[j]].append(j)
+        self.bus_num_xfmr_orig = [len(self.bus_xfmrs_orig[i]) for i in range(self.num_bus)]
+        self.bus_num_xfmr_dest = [len(self.bus_xfmrs_dest[i]) for i in range(self.num_bus)]
 
     @timeit
     def set_data_swsh_params(self, data):
@@ -352,6 +398,10 @@ class Data:
             ([1.0 for i in range(self.num_swsh)],
              (self.swsh_bus, list(range(self.num_swsh)))),
             (self.num_bus, self.num_swsh))
+        self.bus_swshs = [[] for i in range(self.num_bus)]
+        for j in range(self.num_swsh):
+            self.bus_swshs[self.swsh_bus[j]].append(j)
+        self.bus_num_swsh = [len(self.bus_swshs[i]) for i in range(self.num_bus)]
 
     # @timeit
     # def set_data_gen_cost_params(self, data):
@@ -420,9 +470,9 @@ class Data:
         self.set_data_swsh_params(data)
         self.set_data_load_cost_params(data)
         self.set_data_gen_cost_params(data)
+        self.set_data_system_cost_params(data)
         #self.set_data_line_cost_params(data)
         #self.set_data_xfmr_cost_params(data)
-        self.set_data_system_cost_params(data)
         #self.set_data_ctg_params(data)
 
     @timeit
@@ -438,6 +488,11 @@ class Data:
             [b['qmax'] for b in data.sup.sup_jsonobj['qcblocks']]) / self.base_mva
         self.cost_block_q_marginal = np.array(
             [b['c'] for b in data.sup.sup_jsonobj['qcblocks']]) * self.base_mva
+        self.num_cost_block_s = len(data.sup.sup_jsonobj['scblocks'])
+        self.cost_block_s_max_quantity = np.array(
+            [b['tmax'] for b in data.sup.sup_jsonobj['scblocks']]) # note no need to deal with base_mva here
+        self.cost_block_s_marginal = np.array(
+            [b['c'] for b in data.sup.sup_jsonobj['scblocks']]) * self.base_mva
         
     @timeit
     def set_cost_evaluators(self, data):
