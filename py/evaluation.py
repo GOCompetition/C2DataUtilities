@@ -117,6 +117,25 @@ def summarize(values, keys=None, tol=None, evaluation=None):
         print_alert('fcn: {}, key: {}, val: {}'.format(calframe[1][3], key, val), check_passed=(not infeas), evaluation=evaluation)
     return out
 
+def flatten_summary(summary):
+
+    flat = flatten_dict(summary)
+    keys = flat.keys()
+    keys = sorted(list(keys))
+    values = [flat[k] for k in keys]
+    return {'keys':keys, 'values':values}
+    #return summary
+    #return flatten_dict(summary)
+
+# source:
+# https://www.geeksforgeeks.org/python-convert-nested-dictionary-into-flattened-dictionary/
+# accessed 2020-09-28
+def flatten_dict(dd, separator ='_', prefix =''): 
+    return { prefix + separator + k if prefix else k : v 
+             for kk, vv in dd.items() 
+             for k, v in flatten_dict(vv, separator, kk).items() 
+             } if isinstance(dd, dict) else { prefix : dd }
+
 def uncaught_exception_handler(exc_type, exc_value, exc_traceback):
     # Do not print exception when user cancels the program
     if issubclass(exc_type, KeyboardInterrupt):
@@ -1719,7 +1738,7 @@ class Evaluation:
         #with open(det_name, 'w', newline='') as out:
         #with open(det_name, 'w', newline='', encoding='utf-8') as out:
         #with open(det_name, 'wb') as out:
-            csv_writer = csv.writer(out, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csv_writer = csv.writer(out, delimiter=',', quotechar="'", quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(
                 ['ctg', # contingency label for the current contingency, empty if base case
                  'infeas', # binary indicator of infeasibility for the base case or contingency of the current row - 1 indicates infeasible
@@ -1768,7 +1787,7 @@ class Evaluation:
         with open(det_name, 'a') as out:
         #with open(det_name, 'a', newline='') as out:
         #with open(det_name, 'ab') as out:
-            csv_writer = csv.writer(out, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csv_writer = csv.writer(out, delimiter=',', quotechar="'", quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(
                 ['', self.infeas, self.obj, self.cost, self.obj,
                  self.max_bus_volt_mag_max_viol[0],
@@ -1816,7 +1835,7 @@ class Evaluation:
         with open(det_name, 'a') as out:
         #with open(det_name, 'a', newline='') as out:
         #with open(det_name, 'ab') as out:
-            csv_writer = csv.writer(out, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csv_writer = csv.writer(out, delimiter=',', quotechar="'", quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(
                 [self.ctg_label[self.ctg_current], self.ctg_infeas, self.ctg_obj, 0.0, self.obj,
                  self.ctg_max_bus_volt_mag_max_viol[0],
@@ -3453,6 +3472,21 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     #with open(f'eval_out_{active_case}.json', 'w') as outfile:
     with open(f'{eval_out_path}/eval_detail_{active_case}.json', 'w') as outfile:
         json.dump(e.summary, outfile, indent=4, sort_keys=True)
+    if USE_MPI:
+        # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
+        # with header row in eval_detail.csv
+        # then add the case rows to eval_detail.csv after evaluation is complete
+        with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
+            detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
+        with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file: # write
+            detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
+    else:
+        with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
+            detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
+            detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
 
     case_end_time = time.time()
     print_info(
@@ -3588,6 +3622,9 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
             #with open(f'eval_out_{active_case}.json', 'w') as outfile:
             with open(f'{eval_out_path}/eval_detail_{active_case}.json', 'w') as outfile:
                 json.dump(e.summary, outfile, indent=4, sort_keys=True)
+            with open(f'{eval_out_path}/eval_detail.csv', mode='a') as detail_csv_file: # write append
+                detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
             case_end_time = time.time()
             print_info(
                 "done evaluating case. label: {}, time: {}".format(
@@ -3686,6 +3723,9 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                     #with open(f'eval_out_{active_case}.json', 'w') as outfile:
                     with open(f'{eval_out_path}/eval_detail_{active_case}.json', 'w') as outfile:
                         json.dump(e.summary, outfile, indent=4, sort_keys=True)
+                    with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file:
+                        detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                        detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
 
                 except:
                     e.infeas = 1
@@ -3722,6 +3762,10 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                  'infeas_all_cases': e.infeas_all_cases,
                  'obj_all_cases': e.obj_all_cases},
                 outfile, indent=4, sort_keys=False)
+        #with open(f'{eval_out_path}/eval_summary.csv', mode='w') as summary_csv_file: # write
+        #    summary_csv_writer = csv.writer(summary_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #    summary_csv_writer.writerow(flatten_summary(e.summary)['keys'])
+        #    summary_csv_writer.writerow(flatten_summary(e.summary)['values'])
 
         print("obj: {}".format(e.obj_cumulative))
         print("infeas: {}".format(e.infeas_cumulative))    
