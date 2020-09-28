@@ -28,7 +28,7 @@ import sys
 import time
 import traceback
 
-import evaluation
+import data_utilities.evaluation as evaluation
 from mpi4py import MPI
 
 comm = MPI.COMM_WORLD

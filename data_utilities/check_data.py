@@ -16,7 +16,7 @@ import argparse
 import time
 
 # gocomp imports
-import data
+import data_utilities.data as data
     
 def main():
 

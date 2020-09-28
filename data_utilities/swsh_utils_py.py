@@ -3,10 +3,6 @@
 # author: Jesse Holzer
 # date: 2020-09-06
 #
-# to compile use
-#
-#   $ python setup.py build_ext --inplace
-#
 
 import numpy as np
 

@@ -1,8 +1,24 @@
 # C2DataUtilities
+
 GO Competition Challenge 2 Utility Codes.
 Routines to process input and solution files for dataset checking and solution scoring
 
-py/
+# data_utilities Python package
+
+To make the Python modules in data_utilities/ available as a package "data_utilities", do:
+
+    $ python -m pip install -e .
+
+This uses the setup.py and setup.cfg files here. Then you can import from data_utilities, as in:
+
+    from data_utilities.data import Data
+    from data_utilities.evaluation import Evaluation
+
+Also you can import the modules directly by ensuring that the data_utilities/ directory is on your Python path.
+
+# File structure
+
+data_utilities/
 python code files
 
   data.py
@@ -51,4 +67,4 @@ MyPython1.py
 timed portion of the submission
 
 MyPython2.py
-(essentially) untimed portion of the submission
+loosely timed portion of the submission

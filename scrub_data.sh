@@ -1,6 +1,6 @@
 #!/bin/sh
 
-py_dir=./py/
+py_dir=./data_utilities/
 case_dir=./data/ieee14/scenario_1/
 raw1="${case_dir}case.raw"
 sup1="${case_dir}case.json"

@@ -2,24 +2,24 @@
 
 # select data
 main_dir=/pic/dtn/go/Steve/C2/sandbox/
-network_dir=C2S2N00014/
+#network_dir=C2S2N00014/
 #network_dir=C2S1N00015/
 #network_dir=C2S1N00594/
 #network_dir=C2S1N02000/
 #network_dir=C2S1N02044/
-#network_dir=C2S1N02380/
+network_dir=C2S1N02380/
 #network_dir=C2S1N02742/
 #network_dir=C2S1N04225/
 #network_dir=C2S1N04229/
 #network_dir=C2S1N09459/
 #network_dir=C2S1N09462/
 #network_dir=C2S1N11152/
-scenario=01
+scenario=04
 #scenario=1
 case_dir=${main_dir}${network_dir}scenario_${scenario}/
 
 # override data selection
-case_dir=./data/ieee14/scenario_1/
+#case_dir=./data/ieee14/scenario_1/
 
 # set options
 strict_names=0
@@ -27,14 +27,14 @@ refresh_data=1
 check_data=1
 scrub_data=1
 check_scrubbed_data=1
-make_new_sol=1
-eval_sol=1
+make_new_sol=0
+eval_sol=0
 do_submission=0
 eval_submission=0
 division=1
 num_proc=1
 
-py_dir=./py/
+py_dir=./data_utilities/
 work_dir=./tmp/
 raw1="${work_dir}/case.raw"
 raw2="${work_dir}/case.scrubbed.raw"

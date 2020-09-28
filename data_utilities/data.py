@@ -29,11 +29,11 @@ try:
 except ImportError:
     from io import StringIO
 
-from py.data_json import Sup
+from data_utilities.data_json import Sup
 import inspect
 
-from py.swsh_utils import solve_py as swsh_solve
-from py.xfmr_utils import compute_xfmr_position
+from data_utilities.swsh_utils import solve_py as swsh_solve
+from data_utilities.xfmr_utils import compute_xfmr_position
 
 # init_defaults_in_unused_field = True # do this anyway - it is not too big
 read_unused_fields = True

@@ -1,9 +1,9 @@
-#from py.data_json import Sup
-#from py.data import Data
+#from data_utilities.data_json import Sup
+#from data_utilities.data import Data
 
-from data_json import Sup
-from data import Data
-import evaluation
+from data_utilities.data_json import Sup
+from data_utilities.data import Data
+import data_utilities.evaluation as evaluation
 
 
 from pathlib import Path

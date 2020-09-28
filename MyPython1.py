@@ -12,6 +12,7 @@ import sys, os
 
 # modules for this code
 # better way to make this visible?
+# use a startup script to run setup.py to make data_utilities available as a package
 sys.path.append(os.path.normpath('.'))
 sys.path.append(os.path.normpath('./py'))
 from infeasibility_solution import Solver
