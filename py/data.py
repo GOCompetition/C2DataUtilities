@@ -66,7 +66,8 @@ do_check_swrem_zero = False #True # fixed by scrubber
 do_check_binit_in_integer_set = False # this will be difficult and generally requires MIP
 do_check_bmin_le_binit_le_bmax = True # this is doable
 #do_combine_switched_shunt_blocks_steps = True # generally want this to be false
-do_fix_binit = True
+do_fix_swsh_binit = True # now this sets binit to the closest feasible value of binit
+do_fix_xfmr_tau_theta_init = True # sets windv1/windv2 or ang1 to closest feasible value if cod1 == 1 or == 3
 pg_qg_stat_mode = 1 # 0: do not scrub, 1: set pg=0 and qg=0, 2: set stat=1
 swsh_binit_feas_tol = 1e-4
 #num_swsh_to_test = 194 # 193 195 # problem with 11152/01
@@ -972,6 +973,7 @@ class Raw:
         self.check_switched_shunts_bus_exists(scrub_mode=True)
         for r in self.get_switched_shunts():
             r.scrub()
+        self.check_switched_shunts_binit_feas(scrub_mode=True)
 
     def check_nontransformer_branches(self):
 
@@ -1215,7 +1217,7 @@ class Raw:
         self.check_switched_shunts_bus_exists(scrub_mode=False)
         for r in self.get_switched_shunts():
             r.check()
-        self.check_switched_shunts_binit_feas()
+        self.check_switched_shunts_binit_feas(scrub_mode=False)
 
     def check_switched_shunts_bus_exists(self, scrub_mode=False):
 
@@ -1245,7 +1247,7 @@ class Raw:
                 del self.switched_shunts[k]
 
     @timeit
-    def check_switched_shunts_binit_feas(self):
+    def check_switched_shunts_binit_feas(self, scrub_mode=False):
 
         swsh = [r for r in self.get_switched_shunts()]
         #swsh = swsh[:num_swsh_to_test] # todo remove this line
@@ -1276,22 +1278,31 @@ class Raw:
         swsh_nmax_index = np.argmax(swsh_nmax)
         nmax = np.amax(n)
         if nmax <= max_swsh_n:
-            swsh_solve(btar, n, b, x, br, br_abs, tol)
-            br_abs_argmax = np.argmax(br_abs)
-            br_abs_max = br_abs[br_abs_argmax]
-            if br_abs_max > tol * abs(btar[br_abs_argmax]):
-                alert(
-                    {'data_type': 'Raw',
-                     'error_message': 'swsh binit not feasible, up to tolerance',
-                     'diagnostics':
-                         {'i': i[br_abs_argmax],
-                          'binit': btar[br_abs_argmax],
-                          'ni': n[br_abs_argmax, :].flatten().tolist(),
-                          'bi': b[br_abs_argmax, :].flatten().tolist(),
-                          'tol': tol,
-                          'x': x[br_abs_argmax, :].flatten().tolist(),
-                          'resid': br[br_abs_argmax],
-                          'abs resid': br_abs[br_abs_argmax]}})
+            if scrub_mode:
+                if do_fix_swsh_binit:
+                    print('scrubbing all swsh binit values')
+                    swsh_solve(btar, n, b, x, br, br_abs, tol)
+                    #br = btar - bnew
+                    bnew = btar - br
+                    for index in range(len(swsh)):
+                        swsh[index].binit = bnew[index]
+            else:
+                swsh_solve(btar, n, b, x, br, br_abs, tol)
+                br_abs_argmax = np.argmax(br_abs)
+                br_abs_max = br_abs[br_abs_argmax]
+                if br_abs_max > tol * abs(btar[br_abs_argmax]):
+                    alert(
+                        {'data_type': 'Raw',
+                         'error_message': 'swsh binit not feasible, up to tolerance',
+                         'diagnostics':
+                             {'i': i[br_abs_argmax],
+                              'binit': btar[br_abs_argmax],
+                              'ni': n[br_abs_argmax, :].flatten().tolist(),
+                              'bi': b[br_abs_argmax, :].flatten().tolist(),
+                              'tol': tol,
+                              'x': x[br_abs_argmax, :].flatten().tolist(),
+                              'resid': br[br_abs_argmax],
+                              'abs resid': br_abs[br_abs_argmax]}})
         else:
             alert(
                 {'data_type': 'Raw',
@@ -3010,6 +3021,7 @@ class Transformer:
                      'ratc1': self.ratc1}})
             ''' 
             self.ratc1 = self.rata1
+        self.check_tau_theta_init_feas(scrub_mode=True)
 
     def check(self):
 
@@ -3029,7 +3041,7 @@ class Transformer:
             self.check_i_lt_j()
         self.check_i_ne_j()
         # need to check i, j in buses
-        self.check_tau_theta_init_feas()
+        self.check_tau_theta_init_feas(scrub_mode=False)
 
     def check_cod1_013(self):
 
@@ -3045,7 +3057,7 @@ class Transformer:
                      'cod1': self.cod1}})
 
 
-    def check_tau_theta_init_feas(self):
+    def check_tau_theta_init_feas(self, scrub_mode=False):
 
         x = compute_xfmr_position(self)
         position = x[0]
@@ -3076,7 +3088,15 @@ class Transformer:
                      'resid': resid,
                      'mid_val': mid_val,
                      'step_size': step_size}})
-        if abs(resid) > xfmr_tau_theta_init_tol * abs(oper_val):
+        if scrub_mode:
+            if do_fix_xfmr_tau_theta_init:
+                print('scrubbing xfmr tau/theta init value')
+                if self.cod1 == 1:
+                    self.windv1 = oper_val_resulting
+                    self.windv2 = 1.0
+                elif self.cod1 == 3:
+                    self.ang1 = oper_val_resulting
+        elif abs(resid) > xfmr_tau_theta_init_tol * abs(oper_val):
             alert(
                 {'data_type': 'Transformer',
                  'error message': 'tau/theta init is infeasible.',
@@ -3632,8 +3652,8 @@ class SwitchedShunt:
     def scrub(self):
 
         self.scrub_swrem()
-        if do_fix_binit:
-            self.scrub_binit()
+        #if do_fix_binit:
+        #    self.scrub_binit()
 
     def scrub_binit(self):
 
