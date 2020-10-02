@@ -7,7 +7,7 @@ def compute_xfmr_position(r):
         resid = 0.0
         mid_val = 0.0
         step_size = 0.0
-        max_position = 0.0
+        max_position = 0
     else:
         mid_val = 0.5 * (r.rma1 + r.rmi1)
         step_size = (r.rma1 - r.rmi1) / (r.ntp1 - 1.0)

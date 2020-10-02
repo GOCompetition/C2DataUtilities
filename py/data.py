@@ -74,7 +74,7 @@ max_swsh_n = 9 # maximum number of steps in each switched shunt block
 xfmr_tau_theta_init_tol = 1e-4
 EMERGENCY_CAPACITY_FACTOR = 0.1
 EMERGENCY_MARGINAL_COST_FACTOR = 5.0
-
+debug_check_tau_theta_init_feas = False
 ratec_ratea_2=False   #report error only once
 ratc1_rata1 = False
 
@@ -3055,6 +3055,27 @@ class Transformer:
         mid_val = x[4]
         step_size = x[5]
         max_position = x[6]
+        if debug_check_tau_theta_init_feas:
+            alert(
+                {'data_type': 'Transformer',
+                 'error message': 'printing tau/theta init info for debugging.',
+                 'diagnostics': {
+                     'i': self.i,
+                     'j': self.j,
+                     'k': self.k,
+                     'ckt': self.ckt,
+                     'cod1': self.cod1,
+                     'stat': self.stat,
+                     'ntp1': self.ntp1,
+                     'rma1': self.rma1,
+                     'rmi1': self.rmi1,
+                     'max_position': max_position,
+                     'position': position,
+                     'oper_val': oper_val,
+                     'oper_val_resulting': oper_val_resulting,
+                     'resid': resid,
+                     'mid_val': mid_val,
+                     'step_size': step_size}})
         if abs(resid) > xfmr_tau_theta_init_tol * abs(oper_val):
             alert(
                 {'data_type': 'Transformer',
