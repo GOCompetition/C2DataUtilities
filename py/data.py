@@ -1023,6 +1023,8 @@ class Raw:
     def scrub_transformers(self):
 
         self.check_transformers_buses_exist(scrub_mode=True)
+        if do_fix_xfmr_tau_theta_init:
+            print('scrubbing all xfmr tau/theta init values')
         for r in self.get_transformers():
             r.scrub()
 
@@ -1277,17 +1279,18 @@ class Raw:
         swsh_nmax = np.amax(n, axis=1)
         swsh_nmax_index = np.argmax(swsh_nmax)
         nmax = np.amax(n)
+        swsh_solve_tol = 1e-6
         if nmax <= max_swsh_n:
             if scrub_mode:
                 if do_fix_swsh_binit:
                     print('scrubbing all swsh binit values')
-                    swsh_solve(btar, n, b, x, br, br_abs, tol)
+                    swsh_solve(btar, n, b, x, br, br_abs, swsh_solve_tol)
                     #br = btar - bnew
                     bnew = btar - br
                     for index in range(len(swsh)):
                         swsh[index].binit = bnew[index]
             else:
-                swsh_solve(btar, n, b, x, br, br_abs, tol)
+                swsh_solve(btar, n, b, x, br, br_abs, swsh_solve_tol)
                 br_abs_argmax = np.argmax(br_abs)
                 br_abs_max = br_abs[br_abs_argmax]
                 if br_abs_max > tol * abs(btar[br_abs_argmax]):
@@ -3090,7 +3093,7 @@ class Transformer:
                      'step_size': step_size}})
         if scrub_mode:
             if do_fix_xfmr_tau_theta_init:
-                print('scrubbing xfmr tau/theta init value')
+                #print('scrubbing xfmr tau/theta init value')
                 if self.cod1 == 1:
                     self.windv1 = oper_val_resulting
                     self.windv2 = 1.0
