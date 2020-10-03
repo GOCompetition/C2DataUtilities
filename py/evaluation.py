@@ -3412,7 +3412,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if not os.path.exists(f'{solution_path}/solution_BASECASE.txt'):
         solutions_exist = False
         print_info(f'{solution_path}/solution_BASECASE.txt could not be found')
-        return (None,  1,solutions_exist)
+        return (None,  1,solutions_exist, e.summary_all_cases)
 
     # set up evaluation
     e = Evaluation()
@@ -3495,7 +3495,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     #CHALLENGE2 - return here if solution1 validation is requested
     if not e.check_contingencies:
-        return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist)
+        return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist, e.summary_all_cases)
 
     #if ctg_name is None:
     #    return True
@@ -3531,7 +3531,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         if process_rank == 0:
             print_info(f'Some solution files are missing. Exiting...')
         # todo - which ones? need to check that the solutions found are exactly the ones that are expected
-        return (None,   1,solutions_exist)   
+        return (None,   1,solutions_exist, e.summary_all_cases)   
 
     if log_fileobject is not None:
        log_fileobject.close()
@@ -3771,7 +3771,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         print("infeas: {}".format(e.infeas_cumulative))    
 
 
-    return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist)
+    return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist, e.summary_all_cases)
 
 
 def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
