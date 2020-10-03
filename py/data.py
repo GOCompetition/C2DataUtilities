@@ -70,6 +70,7 @@ do_fix_swsh_binit = True # now this sets binit to the closest feasible value of 
 do_fix_xfmr_tau_theta_init = True # sets windv1/windv2 or ang1 to closest feasible value if cod1 == 1 or == 3
 pg_qg_stat_mode = 1 # 0: do not scrub, 1: set pg=0 and qg=0, 2: set stat=1
 swsh_binit_feas_tol = 1e-4
+swsh_bmin_bmax_tol = 1e-8
 #num_swsh_to_test = 194 # 193 195 # problem with 11152/01
 max_swsh_n = 9 # maximum number of steps in each switched shunt block
 xfmr_tau_theta_init_tol = 1e-4
@@ -971,9 +972,9 @@ class Raw:
     def scrub_switched_shunts(self):
 
         self.check_switched_shunts_bus_exists(scrub_mode=True)
+        self.check_switched_shunts_binit_feas(scrub_mode=True)
         for r in self.get_switched_shunts():
             r.scrub()
-        self.check_switched_shunts_binit_feas(scrub_mode=True)
 
     def check_nontransformer_branches(self):
 
@@ -3655,14 +3656,16 @@ class SwitchedShunt:
     def scrub(self):
 
         self.scrub_swrem()
-        #if do_fix_binit:
-        #    self.scrub_binit()
+        if do_fix_swsh_binit:
+            self.scrub_binit()
 
     def scrub_binit(self):
 
         b_min_max = self.compute_bmin_bmax()
         bmin = b_min_max[0]
         bmax = b_min_max[1]
+        #tolabs = 1e-8
+        #tol = max(abs(self.binit) * tolabs, tolabs)
         if self.binit < bmin:
             self.binit = bmin
         elif self.binit > bmax:
@@ -4105,7 +4108,8 @@ class SwitchedShunt:
         b_min_max = self.compute_bmin_bmax()
         bmin = b_min_max[0]
         bmax = b_min_max[1]
-        if bmin > self.binit:
+        tol = max(abs(self.binit) * swsh_bmin_bmax_tol, swsh_bmin_bmax_tol)
+        if bmin - tol > self.binit:
             alert(
                 {'data_type': 'SwitchedShunt',
                  'error_message': 'fails bmin <= binit. Please ensure that bmin <= binit, where bmin is derived from b1, n1, ..., b8, n8 as described in the formulation.',
@@ -4129,7 +4133,7 @@ class SwitchedShunt:
                      'n7': self.n7,
                      'b8': self.b8,
                      'n8': self.n8}})
-        if self.binit > bmax:
+        if self.binit > bmax + tol:
             alert(
                 {'data_type': 'SwitchedShunt',
                  'error_message': 'fails binit <= bmax. Please ensure that binit <= bmax, where bmin is derived from b1, n1, ..., b8, n8 as described in the formulation.',
