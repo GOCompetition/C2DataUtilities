@@ -89,34 +89,6 @@ active_case = "BASECASE"
 active_solution_path = '.'
 log_fileobject = None
 
-def summarize(values, keys=None, tol=None, evaluation=None):
-    '''returns a dictionary that serves as a summary of
-    a numpy array of constraint violations'''
-    # todo timing?
-
-    infeas = False
-    key = None
-    val = -float('inf')
-    if keys is None:
-        # assume values is a scalar
-        val = values
-    elif values.size > 0:
-        arg_max = np.argmax(values)
-        key = keys[arg_max]
-        val = values[arg_max]
-    if tol is not None:
-        if val > tol:
-            infeas= True
-    out = {
-        'infeas': infeas,
-        'key': key,
-        'val': val}
-    if infeas:
-        curframe = inspect.currentframe()
-        calframe = inspect.getouterframes(curframe, 2)
-        print_alert('fcn: {}, key: {}, val: {}'.format(calframe[1][3], key, val), check_passed=(not infeas), evaluation=evaluation)
-    return out
-
 def flatten_summary(summary):
 
     flat = flatten_dict(summary)
@@ -178,7 +150,10 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
 
     if raise_exception and check_passed != True:
         if evaluation is not None:
-            evaluation.write_summary()
+            #print('hello world')
+            evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
+            evaluation.write_summary(eval_out_path, active_case, detail_json=True)
+            evaluation.write_summary(eval_out_path, '', summary_json=True)
         raise Exception(formatted_message)
 
 def print_info(message):
@@ -277,6 +252,74 @@ class Evaluation:
         self.obj = -float('inf')
         self.obj_cumulative = 0.0
         self.obj_all_cases = {}
+        self.detail_csv_header_done = False
+
+    def write_summary(self, path, case, detail_csv=False, detail_json=False, summary_json=False, summary_all_cases_json=False):
+
+        if detail_csv:
+            if self.detail_csv_header_done:
+                with open('{}/eval_detail.csv'.format(path), mode='a') as detail_csv_file:
+                    detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    detail_csv_writer.writerow([case] + flatten_summary(self.summary)['values'])
+            else:
+                self.detail_csv_header_done = True
+                with open('{}/eval_detail.csv'.format(path), mode='w') as detail_csv_file:
+                    detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    detail_csv_writer.writerow(['case_label'] + flatten_summary(self.summary)['keys'])
+                    detail_csv_writer.writerow([case] + flatten_summary(self.summary)['values'])
+                
+        if detail_json:
+            with open('{}/eval_detail_{}.json'.format(path, case), 'w') as outfile:
+                json.dump(self.summary, outfile, indent=4, sort_keys=True)
+
+        if summary_json:
+            with open('{}/eval_summary.json'.format(path), 'w') as outfile:
+                json.dump(
+                    {'infeas_cumulative': self.infeas_cumulative,
+                     'obj_cumulative': self.obj_cumulative,
+                     'infeas_all_cases': self.infeas_all_cases,
+                     'obj_all_cases': self.obj_all_cases},
+                    outfile, indent=4, sort_keys=False)
+
+        # maybe we can do something better than this for an output file
+        #with open('eval_out.json', 'w') as outfile:
+        #with open(f'{eval_out_path}/eval_out.json', 'w') as outfile:
+        #    json.dump(e.summary_all_cases, outfile, indent=4, sort_keys=True)
+        #with open(f'{eval_out_path}/eval_summary.csv', mode='w') as summary_csv_file: # write
+        #    summary_csv_writer = csv.writer(summary_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #    summary_csv_writer.writerow(flatten_summary(e.summary)['keys'])
+        #    summary_csv_writer.writerow(flatten_summary(e.summary)['values'])
+
+
+    def summarize(self, summary_key, values, keys=None, tol=None):
+
+        '''adds to the evaluation single case summary
+        a dictionary that serves as a summary of
+        a numpy array of constraint violations'''
+        # todo timing?
+
+        infeas = False
+        key = None
+        val = -float('inf')
+        if keys is None:
+            # assume values is a scalar
+            val = values
+        elif values.size > 0:
+            arg_max = np.argmax(values)
+            key = keys[arg_max]
+            val = values[arg_max]
+        if tol is not None:
+            if val > tol:
+                infeas= True
+        out = {
+            'infeas': infeas,
+            'key': key,
+            'val': val}
+        self.summary[summary_key] = out
+        if infeas:
+            curframe = inspect.currentframe()
+            calframe = inspect.getouterframes(curframe, 2)
+            print_alert('fcn: {}, key: {}, val: {}'.format(calframe[1][3], key, val), check_passed=(not infeas), evaluation=self)
 
     @timeit
     def set_data_for_base(self):
@@ -1892,11 +1935,11 @@ class Evaluation:
         #Only generators in Gsu may start up    
         #C2 A1 S6 #85
         np.subtract(self.gen_xsu, self.gen_su_qual, out=self.gen_temp)
-        self.summary['gen_su_qual'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_su_qual', self.gen_temp, self.gen_key, self.epsilon)
         #Only generators in Gsd may shutdown
         #C2 A1 S6 #86
         np.subtract(self.gen_xsd, self.gen_sd_qual, out=self.gen_temp)
-        self.summary['gen_sd_qual'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_sd_qual', self.gen_temp, self.gen_key, self.epsilon)
             
     @timeit
     def eval_gen_xsusd_not_both(self):
@@ -1905,10 +1948,10 @@ class Evaluation:
         #C2 A1 S6 #87 #88
         np.add(self.gen_xsu_prior, self.gen_xsd, out=self.gen_temp)
         np.subtract(self.gen_temp, 1.0, out=self.gen_temp)
-        self.summary['gen_su_sd_not_both'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_su_sd_not_both', self.gen_temp, self.gen_key, self.epsilon)
         np.add(self.gen_xsd_prior, self.gen_xsu, out=self.gen_temp)
         np.subtract(self.gen_temp, 1.0, out=self.gen_temp)
-        self.summary['gen_sd_su_not_both'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_sd_su_not_both', self.gen_temp, self.gen_key, self.epsilon)
             
     @timeit
     def eval_line_xsw_qual(self):
@@ -1922,7 +1965,7 @@ class Evaluation:
         np.absolute(self.line_temp, out=self.line_temp)
         np.multiply(self.line_temp, self.line_service_status, out=self.line_temp)
         np.subtract(self.line_temp, self.line_sw_qual, out=self.line_temp)
-        self.summary['line_sw_qual'] = summarize(self.line_temp, self.line_key, self.epsilon)
+        self.summarize('line_sw_qual', self.line_temp, self.line_key, self.epsilon)
             
     @timeit
     def eval_xfmr_xsw_qual(self):
@@ -1932,34 +1975,34 @@ class Evaluation:
         np.absolute(self.xfmr_temp, out=self.xfmr_temp)
         np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
         np.subtract(self.xfmr_temp, self.xfmr_sw_qual, out=self.xfmr_temp)
-        self.summary['xfmr_sw_qual'] = summarize(self.xfmr_temp, self.xfmr_key, self.epsilon)
+        self.summarize('xfmr_sw_qual', self.xfmr_temp, self.xfmr_key, self.epsilon)
 
     @timeit
     def eval_gen_xon_bounds(self):
         # C2 A1 S4 #77
         
         np.subtract(self.gen_xon, 1.0, out=self.gen_temp)
-        self.summary['gen_xon_max'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_xon_max', self.gen_temp, self.gen_key, self.epsilon)
         np.negative(self.gen_xon, out=self.gen_temp)
-        self.summary['gen_xon_min'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_xon_min', self.gen_temp, self.gen_key, self.epsilon)
 
     @timeit
     def eval_line_xsw_bounds(self):
         # C2 A1 S #44
         
         np.subtract(self.line_xsw, 1.0, out=self.line_temp)
-        self.summary['line_xsw_max'] = summarize(self.line_temp, self.line_key, self.epsilon)
+        self.summarize('line_xsw_max', self.line_temp, self.line_key, self.epsilon)
         np.negative(self.line_xsw, out=self.line_temp)
-        self.summary['line_xsw_min'] = summarize(self.line_temp, self.line_key, self.epsilon)
+        self.summarize('line_xsw_min', self.line_temp, self.line_key, self.epsilon)
 
     @timeit
     def eval_xfmr_xsw_bounds(self):
         # C2 A1 S #55
         
         np.subtract(self.xfmr_xsw, 1.0, out=self.xfmr_temp)
-        self.summary['xfmr_xsw_max'] = summarize(self.xfmr_temp, self.xfmr_key, self.epsilon)
+        self.summarize('xfmr_xsw_max', self.xfmr_temp, self.xfmr_key, self.epsilon)
         np.negative(self.xfmr_xsw, out=self.xfmr_temp)
-        self.summary['xfmr_xsw_min'] = summarize(self.xfmr_temp, self.xfmr_key, self.epsilon)
+        self.summarize('xfmr_xsw_min', self.xfmr_temp, self.xfmr_key, self.epsilon)
             
     @timeit
     def eval_xfmr_xst_bounds(self):
@@ -1967,7 +2010,7 @@ class Evaluation:
         
         np.absolute(self.xfmr_xst, out=self.xfmr_temp)
         np.subtract(self.xfmr_temp, self.xfmr_xst_max, out=self.xfmr_temp)
-        self.summary['xfmr_xst_bounds'] = summarize(self.xfmr_temp, self.xfmr_key, self.epsilon)
+        self.summarize('xfmr_xst_bounds', self.xfmr_temp, self.xfmr_key, self.epsilon)
             
     @timeit
     def eval_swsh_xst_bounds(self):
@@ -1975,10 +2018,10 @@ class Evaluation:
         
         np.subtract(self.swsh_block_xst, self.swsh_block_num_steps, out=self.swsh_block_temp)
         np.amax(self.swsh_block_temp, axis=1, out=self.swsh_temp)
-        self.summary['swsh_xst_max'] = summarize(self.swsh_temp, self.swsh_key, self.epsilon)
+        self.summarize('swsh_xst_max', self.swsh_temp, self.swsh_key, self.epsilon)
         np.negative(self.swsh_block_xst, out=self.swsh_block_temp)
         np.amax(self.swsh_block_temp, axis=1, out=self.swsh_temp)
-        self.summary['swsh_xst_min'] = summarize(self.swsh_temp, self.swsh_key, self.epsilon)
+        self.summarize('swsh_xst_min', self.swsh_temp, self.swsh_key, self.epsilon)
 
     @timeit
     def eval_xfmr_tap(self):
@@ -2043,12 +2086,12 @@ class Evaluation:
         # t max
         np.subtract(self.load_t, self.load_t_max, out=self.load_temp)
         np.clip(self.load_temp, a_min=0.0, a_max=None, out=self.load_temp)
-        self.summary['load_t_max_viol'] = summarize(self.load_temp, self.load_key, self.epsilon)
+        self.summarize('load_t_max_viol', self.load_temp, self.load_key, self.epsilon)
 
         # t min
         np.subtract(self.load_t_min, self.load_t, out=self.load_temp)
         np.clip(self.load_temp, a_min=0.0, a_max=None, out=self.load_temp)
-        self.summary['load_t_min_viol'] = summarize(self.load_temp, self.load_key, self.epsilon)
+        self.summarize('load_t_min_viol', self.load_temp, self.load_key, self.epsilon)
 
     @timeit
     def eval_load_ramp_viol(self):
@@ -2060,7 +2103,7 @@ class Evaluation:
         np.add(self.load_temp, self.load_pow_real_prior, out=self.load_temp)
         np.subtract(self.load_pow_real, self.load_temp, out=self.load_temp)
         np.clip(self.load_temp, a_min=0.0, a_max=None, out=self.load_temp)
-        self.summary['load_ramp_up_max_viol'] = summarize(self.load_temp, self.load_key, self.epsilon)
+        self.summarize('load_ramp_up_max_viol', self.load_temp, self.load_key, self.epsilon)
         
         # p0 - p <= rd * delta_r
         # max(0.0, p0 - p - rd * delta_r) <= 0.0
@@ -2068,7 +2111,7 @@ class Evaluation:
         np.add(self.load_temp, self.load_pow_real, out=self.load_temp)
         np.subtract(self.load_pow_real_prior, self.load_temp, out=self.load_temp)
         np.clip(self.load_temp, a_min=0.0, a_max=None, out=self.load_temp)
-        self.summary['load_ramp_down_max_viol'] = summarize(self.load_temp, self.load_key, self.epsilon)
+        self.summarize('load_ramp_down_max_viol', self.load_temp, self.load_key, self.epsilon)
 
     @timeit
     def eval_load_benefit(self):
@@ -2085,7 +2128,7 @@ class Evaluation:
         # scale by time interval
         np.multiply(self.load_benefit, self.delta, out=self.load_benefit)
 
-        self.summary['load_benefit'] = summarize(self.load_benefit, self.load_key)
+        self.summarize('load_benefit', self.load_benefit, self.load_key)
 
     @timeit
     def eval_gen_ramp_viol(self):
@@ -2098,7 +2141,7 @@ class Evaluation:
         #np.subtract(self.gen_pow_real, self.gen_temp, out=self.gen_temp)
         #np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
         #np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
-        #self.summary['gen_ramp_up_max_viol'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        #self.summarize('gen_ramp_up_max_viol', self.gen_temp, self.gen_key, self.epsilon)
 
         # more accurate version of ramp up constraint
         # p - (p0 + ru * delta_r) * (xon - xsu) - (pmin + ru * delta_r) * xsu <= 0.0
@@ -2113,7 +2156,7 @@ class Evaluation:
         np.subtract(self.gen_pow_real, self.gen_temp, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
         np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
-        self.summary['gen_ramp_up_max_viol'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_ramp_up_max_viol', self.gen_temp, self.gen_key, self.epsilon)
         
         # p0 - p <= rd * delta_r
         # p0 - p - rd * delta_r <= 0.0
@@ -2122,7 +2165,7 @@ class Evaluation:
         #np.subtract(self.gen_pow_real_prior, self.gen_temp, out=self.gen_temp)
         #np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
         #np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
-        #self.summary['gen_ramp_down_max_viol'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        #self.summarize('gen_ramp_down_max_viol', self.gen_temp, self.gen_key, self.epsilon)
 
         # more accurate version of ramp down constraint
         # (p0 - rd * delta_r) * (xon - xsu) - p <= 0.0
@@ -2134,7 +2177,7 @@ class Evaluation:
         np.subtract(self.gen_temp, self.gen_pow_real, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
         np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
-        self.summary['gen_ramp_down_max_viol'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_ramp_down_max_viol', self.gen_temp, self.gen_key, self.epsilon)
 
     @timeit
     def eval_gen_cost(self):
@@ -2158,7 +2201,7 @@ class Evaluation:
         np.multiply(self.gen_sd_cost, self.gen_xsd, out=self.gen_temp)
         np.add(self.gen_cost, self.gen_temp, out=self.gen_cost)
 
-        self.summary['gen_cost'] = summarize(self.gen_cost, self.gen_key)
+        self.summarize('gen_cost', self.gen_cost, self.gen_key)
 
     @timeit
     def eval_line_cost(self):
@@ -2176,7 +2219,7 @@ class Evaluation:
         np.multiply(self.line_sw_cost, self.line_temp, out=self.line_temp)
         np.add(self.line_cost, self.line_temp)
 
-        self.summary['line_cost'] = summarize(self.line_cost, self.line_key)
+        self.summarize('line_cost', self.line_cost, self.line_key)
 
     @timeit
     def eval_xfmr_cost(self):
@@ -2194,7 +2237,7 @@ class Evaluation:
         np.multiply(self.xfmr_sw_cost, self.xfmr_temp, out=self.xfmr_temp)
         np.add(self.xfmr_cost, self.xfmr_temp)
 
-        self.summary['xfmr_cost'] = summarize(self.xfmr_cost, self.xfmr_key)
+        self.summarize('xfmr_cost', self.xfmr_cost, self.xfmr_key)
 
     @timeit
     def eval_bus_cost(self):
@@ -2214,7 +2257,7 @@ class Evaluation:
         # scale by time interval
         np.multiply(self.bus_cost, self.delta, out=self.bus_cost)
 
-        self.summary['bus_cost'] = summarize(self.bus_cost, self.bus_key)
+        self.summarize('bus_cost', self.bus_cost, self.bus_key)
 
     @timeit
     def eval_obj(self):
@@ -2227,12 +2270,12 @@ class Evaluation:
         line_cost = np.sum(self.line_cost)
         xfmr_cost = np.sum(self.xfmr_cost)
         self.obj = - bus_cost + load_benefit - gen_cost - line_cost - xfmr_cost
-        self.summary['total_bus_cost'] = summarize(bus_cost)
-        self.summary['total_load_benefit'] = summarize(load_benefit)
-        self.summary['total_gen_cost'] = summarize(gen_cost)
-        self.summary['total_line_cost'] = summarize(line_cost)
-        self.summary['total_xfmr_cost'] = summarize(xfmr_cost)
-        self.summary['obj'] = summarize(self.obj)
+        self.summarize('total_bus_cost', bus_cost)
+        self.summarize('total_load_benefit', load_benefit)
+        self.summarize('total_gen_cost', gen_cost)
+        self.summarize('total_line_cost', line_cost)
+        self.summarize('total_xfmr_cost', xfmr_cost)
+        self.summarize('obj', self.obj)
 
     @timeit
     def eval_case(self):
@@ -2299,7 +2342,7 @@ class Evaluation:
         self.infeas = any([v['infeas'] for v in self.summary.values()])
         #if self.infeas:
         #    
-        self.summary['infeas'] = summarize(self.infeas, tol=0.0)
+        self.summarize('infeas', self.infeas, tol=0.0)
 
     @timeit
     def eval_bus_volt_mag_viol(self):
@@ -2308,12 +2351,12 @@ class Evaluation:
         # v min
         np.subtract(self.bus_volt_mag_min, self.bus_volt_mag, out=self.bus_temp)
         np.clip(self.bus_temp, a_min=0.0, a_max=None, out=self.bus_temp)
-        self.summary['bus_volt_mag_min_viol'] = summarize(self.bus_temp, self.bus_key, self.epsilon)
+        self.summarize('bus_volt_mag_min_viol', self.bus_temp, self.bus_key, self.epsilon)
 
         # v max
         np.subtract(self.bus_volt_mag, self.bus_volt_mag_max, out=self.bus_temp)
         np.clip(self.bus_temp, a_min=0.0, a_max=None, out=self.bus_temp)
-        self.summary['bus_volt_mag_max_viol'] = summarize(self.bus_temp, self.bus_key, self.epsilon)
+        self.summarize('bus_volt_mag_max_viol', self.bus_temp, self.bus_key, self.epsilon)
 
         #self.bus_volt_mag_min_viol = np.maximum(0.0, self.bus_volt_mag_min - self.bus_volt_mag)
         #self.bus_volt_mag_max_viol = np.maximum(0.0, self.bus_volt_mag - self.bus_volt_mag_max)
@@ -2365,25 +2408,25 @@ class Evaluation:
         np.multiply(self.gen_pow_real_min, self.gen_xon, out=self.gen_temp)
         np.subtract(self.gen_temp, self.gen_pow_real, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
-        self.summary['gen_pow_real_min_viol'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_pow_real_min_viol', self.gen_temp, self.gen_key, self.epsilon)
 
         # p max
         np.multiply(self.gen_pow_real_max, self.gen_xon, out=self.gen_temp)
         np.subtract(self.gen_pow_real, self.gen_temp, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
-        self.summary['gen_pow_real_max_viol'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_pow_real_max_viol', self.gen_temp, self.gen_key, self.epsilon)
 
         # q min
         np.multiply(self.gen_pow_imag_min, self.gen_xon, out=self.gen_temp)
         np.subtract(self.gen_temp, self.gen_pow_imag, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
-        self.summary['gen_pow_imag_min_viol'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_pow_imag_min_viol', self.gen_temp, self.gen_key, self.epsilon)
 
         # q max
         np.multiply(self.gen_pow_imag_max, self.gen_xon, out=self.gen_temp)
         np.subtract(self.gen_pow_imag, self.gen_temp, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
-        self.summary['gen_pow_imag_max_viol'] = summarize(self.gen_temp, self.gen_key, self.epsilon)
+        self.summarize('gen_pow_imag_max_viol', self.gen_temp, self.gen_key, self.epsilon)
 
     # Real and reactive power ﬂows into a line e at the origin and destination buses in a case k 
     # Compute line and transformer real and reactive power ﬂow variables poek, pd ek, qo ek, qd ek, pofk, pdfk, qofk, qd fk
@@ -2523,7 +2566,7 @@ class Evaluation:
         #     self.bus_xfmr_orig_matrix.dot(self.xfmr_orig_pow_real) -
         #     self.bus_xfmr_dest_matrix.dot(self.xfmr_dest_pow_real))
         # np.absolute(self.bus_pow_real_imbalance, out=self.bus_pow_real_imbalance)
-        # self.summary['bus_pow_real_imbalance'] = summarize(self.bus_pow_real_imbalance, self.bus_key)        
+        # self.summarize('bus_pow_real_imbalance', self.bus_pow_real_imbalance, self.bus_key)        
 
         # faster way?
         self.bus_pow_real_imbalance[:] = 0.0
@@ -2535,7 +2578,7 @@ class Evaluation:
         self.bus_pow_real_imbalance[:] -= self.bus_xfmr_orig_matrix.dot(self.xfmr_orig_pow_real)
         self.bus_pow_real_imbalance[:] -= self.bus_xfmr_dest_matrix.dot(self.xfmr_dest_pow_real)
         np.absolute(self.bus_pow_real_imbalance, out=self.bus_pow_real_imbalance)
-        self.summary['bus_pow_real_imbalance'] = summarize(self.bus_pow_real_imbalance, self.bus_key)        
+        self.summarize('bus_pow_real_imbalance', self.bus_pow_real_imbalance, self.bus_key)        
 
         # self.bus_pow_imag_imbalance = (
         #     self.bus_gen_matrix.dot(self.gen_pow_imag) -
@@ -2547,7 +2590,7 @@ class Evaluation:
         #     self.bus_xfmr_dest_matrix.dot(self.xfmr_dest_pow_imag) -
         #     self.bus_swsh_matrix.dot(self.swsh_pow_imag))
         # np.absolute(self.bus_pow_imag_imbalance, out=self.bus_pow_imag_imbalance)
-        # self.summary['bus_pow_imag_imbalance'] = summarize(self.bus_pow_imag_imbalance, self.bus_key)        
+        # self.summarize('bus_pow_imag_imbalance', self.bus_pow_imag_imbalance, self.bus_key)        
 
         # faster way?
         self.bus_pow_imag_imbalance[:] = 0.0
@@ -2560,7 +2603,7 @@ class Evaluation:
         self.bus_pow_imag_imbalance[:] -= self.bus_xfmr_dest_matrix.dot(self.xfmr_dest_pow_imag)
         self.bus_pow_imag_imbalance[:] -= self.bus_swsh_matrix.dot(self.swsh_pow_imag)
         np.absolute(self.bus_pow_imag_imbalance, out=self.bus_pow_imag_imbalance)
-        self.summary['bus_pow_imag_imbalance'] = summarize(self.bus_pow_imag_imbalance, self.bus_key)        
+        self.summarize('bus_pow_imag_imbalance', self.bus_pow_imag_imbalance, self.bus_key)        
 
 class CaseSolution:
     '''In model units, i.e. not the physical units of the data convention (different from C1)'''
@@ -3469,24 +3512,21 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     e.infeas_all_cases['BASECASE'] = e.infeas
     e.summary_all_cases['BASECASE'] = copy.deepcopy(e.summary)
 
-    #with open(f'eval_out_{active_case}.json', 'w') as outfile:
-    with open(f'{eval_out_path}/eval_detail_{active_case}.json', 'w') as outfile:
-        json.dump(e.summary, outfile, indent=4, sort_keys=True)
+    e.write_summary(eval_out_path, active_case, detail_json=True)
     if USE_MPI:
         # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
         # with header row in eval_detail.csv
         # then add the case rows to eval_detail.csv after evaluation is complete
-        with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
-            detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
-        with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file: # write
-            detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
+        # with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
+        #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #     detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
+        # with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file: # write
+        #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #     detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
+        # todo fix this
+        pass
     else:
-        with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
-            detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
-            detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
+        e.write_summary(eval_out_path, active_case, detail_csv=True)
 
     case_end_time = time.time()
     print_info(
@@ -3619,12 +3659,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                 e.infeas_all_cases[clean_string(active_case)] = e.infeas
                 traceback.print_exc()
 
-            #with open(f'eval_out_{active_case}.json', 'w') as outfile:
-            with open(f'{eval_out_path}/eval_detail_{active_case}.json', 'w') as outfile:
-                json.dump(e.summary, outfile, indent=4, sort_keys=True)
-            with open(f'{eval_out_path}/eval_detail.csv', mode='a') as detail_csv_file: # write append
-                detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
+            e.write_summary(eval_out_path, active_case, detail_json=True)
+            e.write_summary(eval_out_path, active_case, detail_csv=True)
             case_end_time = time.time()
             print_info(
                 "done evaluating case. label: {}, time: {}".format(
@@ -3720,12 +3756,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                     if e.infeas == 1:
                         raise Exception(f'Infeasibility dectected in {active_case}')
 
-                    #with open(f'eval_out_{active_case}.json', 'w') as outfile:
-                    with open(f'{eval_out_path}/eval_detail_{active_case}.json', 'w') as outfile:
-                        json.dump(e.summary, outfile, indent=4, sort_keys=True)
-                    with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file:
-                        detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
+                    self.write_summary(eval_out_path, active_case, detail_json=True)
+                    self.write_summary(eval_out_path, active_case, detail_csv=True)
 
                 except:
                     e.infeas = 1
@@ -3751,21 +3783,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     
         # todo : short circuit if infeas
 
-        # maybe we can do something better than this for an output file
-        #with open('eval_out.json', 'w') as outfile:
-        #with open(f'{eval_out_path}/eval_out.json', 'w') as outfile:
-        #    json.dump(e.summary_all_cases, outfile, indent=4, sort_keys=True)
-        with open(f'{eval_out_path}/eval_summary.json', 'w') as outfile:
-            json.dump(
-                {'infeas_cumulative': e.infeas_cumulative,
-                 'obj_cumulative': e.obj_cumulative,
-                 'infeas_all_cases': e.infeas_all_cases,
-                 'obj_all_cases': e.obj_all_cases},
-                outfile, indent=4, sort_keys=False)
-        #with open(f'{eval_out_path}/eval_summary.csv', mode='w') as summary_csv_file: # write
-        #    summary_csv_writer = csv.writer(summary_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        #    summary_csv_writer.writerow(flatten_summary(e.summary)['keys'])
-        #    summary_csv_writer.writerow(flatten_summary(e.summary)['values'])
+        e.write_summary(eval_out_path, '', summary_json=True)
 
         print("obj: {}".format(e.obj_cumulative))
         print("infeas: {}".format(e.infeas_cumulative))    
