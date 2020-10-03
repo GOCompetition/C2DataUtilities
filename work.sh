@@ -21,6 +21,9 @@ case_dir=${main_dir}${network_dir}scenario_${scenario}/
 # override data selection
 case_dir=./data/ieee14/scenario_1/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo10K/tgo10K_0060_7178/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/Sep30_TAMU01/tgo10K/tgo10K_0060_7178/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/Sep30_TAMU01/tgo2000/tgo2000_0100_0289/
 
 # set options
