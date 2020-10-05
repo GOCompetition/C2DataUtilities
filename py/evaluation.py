@@ -3814,7 +3814,7 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
     print(f'Setting solution path to {solution_basepath}')
 
     try:
-        run(raw_name, con_name, sup_name,solution_basepath, ctg_name, summary_name, detail_name, line_switching_allowed, xfmr_switching_allowed, check_contingencies)
+        return run(raw_name, con_name, sup_name,solution_basepath, ctg_name, summary_name, detail_name, line_switching_allowed, xfmr_switching_allowed, check_contingencies)
     except:
         var = traceback.format_exc()
         traceback.print_exc()
