@@ -130,7 +130,10 @@ def run():
             args_summary = "{}/GOCFeasibility_base.csv".format(output_path)
             args_detail = "{}/{}_DetailedSolution_base.csv".format(output_path, args.model_scenario_number)
             
-            evaluation.run(args_raw, args_con, args_sup,  args_sol1, None, args_summary, args_detail, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
+            (obj, infeas, solutions_exist) = evaluation.run_main(scenario_path,  args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
+            if solutions_exist == False or obj == None:
+                raise Exception ("Missing solution or onj is None")
+
         except:
             traceback.print_exc()
             errfile_path = output_path + '/solution_BASECASE.err'
@@ -168,7 +171,7 @@ def run():
     try:
 
         #if solutions_exist:
-        (obj, infeas, solutions_exist) = evaluation.run(args_raw, args_con, args_sup, args_sol1, args_sol2, args_summary, args_detail, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
+        (obj, infeas, solutions_exist) = evaluation.run_main(scenario_path, args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
 
 
         if process_rank == 0:
@@ -176,10 +179,10 @@ def run():
             if solutions_exist == False:
                 raise Exception( "All solutions do not exist")
 
-            if obj < slack_objective #and infeas == 0:   #larger than slack and feasible
+            if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
                 print("obj > slack_objective and infeas == 0")
                 score = obj
-            if abs(abs(slack_objective) - MAXOBJ)) < 1:       #slack objective is not available, capture worst case score
+            if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
                 print("infeasible score not available")
                 score = obj
             if obj == float('nan'):
