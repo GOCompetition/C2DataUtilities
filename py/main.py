@@ -180,7 +180,7 @@ def run():
                 raise Exception( "All solutions do not exist")
 
             if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
-                print("obj > slack_objective and infeas == 0")
+                print("obj < infeasible_score and infeas == 0")
                 score = obj
             if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
                 print("infeasible score not available")
@@ -217,7 +217,7 @@ def run():
 
             if solutions_exist:
                 print("\tModel:{}".format(args.network_model))
-                print("\tSlack Objective:%f"%(slack_objective))
+                print("\tInfeasible Score:%f"%(slack_objective))
                 print("\tObjective:%f"%(obj))
                 print("\tInfeasibility:%d"%(infeas))
                 print("\tEval runtime:%f"%(eval_runtime))
