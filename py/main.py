@@ -182,12 +182,12 @@ def run():
             if obj > slack_objective: #and infeas == 0:   #larger than slack and feasible
                 print("obj > infeasible_score and infeas == 0")
                 score = obj
-            else if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
+            elif abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
                 print("infeasible score not available")
                 score = obj
-            else if obj == float('nan'):
+            elif obj == float('nan'):
                 score = slack_objective
-            else if infeas == 1:
+            elif infeas == 1:
                 score = slack_objective
 
             eval_runtime = time.time() - start_time
