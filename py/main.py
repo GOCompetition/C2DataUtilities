@@ -179,15 +179,15 @@ def run():
             if solutions_exist == False:
                 raise Exception( "All solutions do not exist")
 
-            if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
-                print("obj < infeasible_score and infeas == 0")
+            if obj > slack_objective: #and infeas == 0:   #larger than slack and feasible
+                print("obj > infeasible_score and infeas == 0")
                 score = obj
-            if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
+            else if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
                 print("infeasible score not available")
                 score = obj
-            if obj == float('nan'):
+            else if obj == float('nan'):
                 score = slack_objective
-            if infeas == 1:
+            else if infeas == 1:
                 score = slack_objective
 
             eval_runtime = time.time() - start_time
