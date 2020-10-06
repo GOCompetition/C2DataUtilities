@@ -150,7 +150,6 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
 
     if raise_exception and check_passed != True:
         if evaluation is not None:
-            #print('hello world')
             evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
             evaluation.write_summary(eval_out_path, active_case, detail_json=True)
             evaluation.write_summary(eval_out_path, '', summary_json=True)
@@ -3756,8 +3755,12 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                     if e.infeas == 1:
                         raise Exception(f'Infeasibility dectected in {active_case}')
 
-                    self.write_summary(eval_out_path, active_case, detail_json=True)
-                    self.write_summary(eval_out_path, active_case, detail_csv=True)
+                    # TODO this causes an error. not sure why
+                    #print('trying to write summary files eval_out_path: {}, active_case: {}'.format(eval_out_path, active_case))
+                    #with open(eval_out_path + '/' + active_case + '.tmp', mode='w') as tmp_out_file:
+                    #    tmp_out_file.write('test')
+                    #self.write_summary(eval_out_path, active_case, detail_json=True)
+                    #self.write_summary(eval_out_path, active_case, detail_csv=True)
 
                 except:
                     e.infeas = 1
