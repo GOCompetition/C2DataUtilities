@@ -28,7 +28,12 @@ import sys
 import time
 import traceback
 
-import data_utilities.evaluation as evaluation
+try:
+    import data_utilities.evaluation as evaluation
+except:
+    import evaluation
+
+
 from mpi4py import MPI
 
 comm = MPI.COMM_WORLD
@@ -176,10 +181,10 @@ def run():
             if solutions_exist == False:
                 raise Exception( "All solutions do not exist")
 
-            if obj < slack_objective #and infeas == 0:   #larger than slack and feasible
+            if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
                 print("obj > slack_objective and infeas == 0")
                 score = obj
-            if abs(abs(slack_objective) - MAXOBJ)) < 1:       #slack objective is not available, capture worst case score
+            if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
                 print("infeasible score not available")
                 score = obj
             if obj == float('nan'):

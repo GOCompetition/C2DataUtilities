@@ -4,7 +4,13 @@
 # date: 2020-09-06
 #
 
-from data_utilities.swsh_utils_py import solve as solve_py
+try:
+    from data_utilities.swsh_utils_py import solve as solve_py
+except:
+    from swsh_utils_py import solve as solve_py
+
+
+
 # try:
 #     from data_utilities.swsh_utils_cy import solve as solve_cy
 # except Exception as e:
