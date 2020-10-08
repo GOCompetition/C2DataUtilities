@@ -3404,7 +3404,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if not ( os.path.exists(raw_name) and os.path.exists(con_name) and os.path.exists(sup_name)):
         print('Could not find input data files')
         print(raw_name, con_name, sup_name)
-        sys.exit()
+        return (None, 1, False)
+        #sys.exit()
 
     # read the data files
     start_time = time.time()
@@ -3557,11 +3558,14 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     #   expected = sum('CONTINGENCY' in line for line in f)
 
     found =  len(solution2_files) 
-    if found == e.num_ctg:
-        print_info(f'Expected #contingencies: {e.num_ctg}, Encountered #contingencies: {found}')
-    else:
-        #print_alert(f'Expected #contingencies: {expected}, Encountered #contingencies: {found}', check_passed=(expected==found))
-        print_alert(f'Expected #contingencies: {e.num_ctg}, Encountered #contingencies: {found}', check_passed=(found == e.num_ctg))
+    try:
+        if found == e.num_ctg:
+            print_info(f'Expected #contingencies: {e.num_ctg}, Encountered #contingencies: {found}')
+        else:
+            #print_alert(f'Expected #contingencies: {expected}, Encountered #contingencies: {found}', check_passed=(expected==found))
+            print_alert(f'Expected #contingencies: {e.num_ctg}, Encountered #contingencies: {found}', check_passed=(found == e.num_ctg))
+    except:
+        pass
 
     #solutions_exist = (expected == found)
     solutions_exist = (found == e.num_ctg)
@@ -3826,10 +3830,10 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
     print(f'sup: {sup_name}')
     
 
-    base_name = f"{data_basepath}/solution_BASECASE.txt"
+    base_name = f"{solution_basepath}/solution_BASECASE.txt"
     ctg_name = ""
-    summary_name = f"{data_basepath}/summary.csv"
-    detail_name = f"{data_basepath}/detail.csv"
+    summary_name = f"{solution_basepath}/summary.csv"
+    detail_name = f"{solution_basepath}/detail.csv"
 
     print(f'Setting data path to {data_basepath}')
     print(f'Setting solution path to {solution_basepath}')

@@ -22,11 +22,12 @@ basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_
 #basepath = "/pic/dtn/go/Terrence/sandbox"
 #basepath = "/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/C2Eval/data/ieee14/scenario_1"
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Globus"
-basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform"
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Terrence/sandbox/Sep6_01"
 basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/Sandbox072020_05'
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Jesse/14_bus_Sep7/"
-basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Sep9_01'
+basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Sep17_01'
+basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/"
+basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_02/scrubbed"
 
 
 schema_path = Path( ".") / "sup_schema.json"
@@ -54,7 +55,7 @@ for dirname, subdirList, fileList in os.walk(basepath):
             continue
         if fname.endswith(('.raw','.RAW','.con','.json')) :
             found_case = True
-        if fname.endswith(('raw','RAW')):
+        if  any( ext in fname for ext in ['raw','RAW'] ):
             raw = fname
         elif '.con' in fname:
             con = fname
@@ -70,6 +71,9 @@ for dirname, subdirList, fileList in os.walk(basepath):
 
 
     cases = Data()
+
+    print('File listing before scrub')
+    os.system(f"ls -lt {dirname} > {dirname}/runlog.log")
 
     try:
         print('------Reading case files--------------------------------------------------------------------------')
@@ -117,6 +121,8 @@ for dirname, subdirList, fileList in os.walk(basepath):
         cases = Data()
         cases.read(  f'{dirname}/case.scrubbed.raw',  f'{dirname}/case.scrubbed.json',  f'{dirname}/case.scrubbed.con' )
         cases.check()
+        print('File listing after scrub')
+        os.system(f"ls -lt {dirname} > {dirname}/runlog.log")
     except:
         #print('Error encountered in Checker')
         print('Error encountered in Checker after scrub')
