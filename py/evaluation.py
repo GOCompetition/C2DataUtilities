@@ -3404,7 +3404,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if not ( os.path.exists(raw_name) and os.path.exists(con_name) and os.path.exists(sup_name)):
         print('Could not find input data files')
         print(raw_name, con_name, sup_name)
-        return (None, 1, False)
+        return (None, 1, False, {})
         #sys.exit()
 
     # read the data files
