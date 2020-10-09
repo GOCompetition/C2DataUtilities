@@ -27,7 +27,7 @@ basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Jesse/14_bus_Sep7/"
 basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Sep17_01'
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/"
-basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_02/scrubbed"
+basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Oct8_01/scrubbed"
 
 
 schema_path = Path( ".") / "sup_schema.json"

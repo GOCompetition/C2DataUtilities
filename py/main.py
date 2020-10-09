@@ -239,11 +239,11 @@ def run():
     except Exception as e:
         traceback.print_exc()
         print(e)
-        missing_solution = 'TRUE' if solutions_exist else missing_solution
+        missing_solution = 'TRUE' if not solutions_exist else 'FALSE'
         with open(args_summary, 'w') as summaryfile:
             csvwriter = csv.writer(summaryfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
             csvwriter.writerow(['Scenario','Score', 'Objective',  'Infeasibility','Bad/Missing Solution','Slack Objective', 'Evaluation Duration (sec)', 'Code 1 Duration (sec)', 'Code 2 Duration (sec)','Contingency Count','Seconds per Contingency','Code 2 Runtime Goal (sec)'])
-            csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score,  'N/A', missing_solution, slack_objective,'', code1_runtime, code2_runtime, contingency_count, 'N/A', code2_runtime_goal_sec])
+            csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score, 'N/A',  'N/A', missing_solution, slack_objective,'', code1_runtime, code2_runtime, contingency_count, 'N/A', code2_runtime_goal_sec])
     
     
 if __name__ == '__main__':
