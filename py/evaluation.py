@@ -3455,7 +3455,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if not os.path.exists(f'{solution_path}/solution_BASECASE.txt'):
         solutions_exist = False
         print_info(f'{solution_path}/solution_BASECASE.txt could not be found')
-        return (None,  1,solutions_exist, e.summary_all_cases)
+        return (None,  1,solutions_exist, {})
 
     # set up evaluation
     e = Evaluation()
