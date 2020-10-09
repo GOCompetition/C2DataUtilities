@@ -1,7 +1,3 @@
-#new row length?
-
-
-
 """Data structures and read/write methods for input and output data file formats
 
 Author: Jesse Holzer, jesse.holzer@pnnl.gov
@@ -22,6 +18,7 @@ import sys
 import math
 import time
 import numpy as np
+import networkx as nx
 import traceback
 #from io import StringIO
 try:
@@ -311,6 +308,7 @@ class Data:
         self.check_no_transformers_in_raw_not_in_sup()
         self.check_generator_base_case_ramp_constraints_feasible()
         self.check_load_base_case_ramp_constraints_feasible()
+        self.check_connectedness()
 
     def scrub(self):
         '''modifies certain data elements to meet Grid Optimization Competition assumptions'''
@@ -338,6 +336,89 @@ class Data:
 
         self.raw.set_operating_point_to_offline_solution()
 
+    def check_connectedness(self):
+
+        buses_id = [r.i for r in self.raw.get_buses()]
+        buses_id = sorted(buses_id)
+        num_buses = len(buses_id)
+        lines_id = [(r.i, r.j, r.ckt) for r in self.raw.get_nontransformer_branches() if r.st == 1] # todo check status
+        num_lines = len(lines_id)
+        xfmrs_id = [(r.i, r.j, r.ckt) for r in self.raw.get_transformers() if r.stat == 1] # todo check status
+        num_xfmrs = len(xfmrs_id)
+        branches_id = lines_id + xfmrs_id
+        num_branches = len(branches_id)
+        branches_id = [(r if r[0] < r[1] else (r[1], r[0], r[2])) for r in branches_id]
+        branches_id = sorted(list(set(branches_id)))
+        if len(branches_id) != num_branches:
+            alert(
+                {'data_type':
+                     'Data',
+                 'error_message':
+                     'Repeated branch id on a given pair of buses. this is duplicated by another check and should be caught and reported in more detail there',
+                 'diagnostics': None})
+        ctg_branches_id = [(e.i, e.j, e.ckt) for r in self.con.get_contingencies() for e in r.branch_out_events]
+        ctg_branches_id = [(r if r[0] < r[1] else (r[1], r[0], r[2])) for r in ctg_branches_id]
+        ctg_branches_id = sorted(list(set(ctg_branches_id)))
+        branch_bus_pairs = sorted(list(set([(r[0], r[1]) for r in branches_id])))
+        bus_pair_branches_map = {
+            r:[]
+            for r in branch_bus_pairs}
+        for r in branches_id:
+            bus_pair_branches_map[(r[0], r[1])].append(r)
+        bus_pair_num_branches_map = {
+            k:len(v)
+            for k, v in bus_pair_branches_map.items()}
+        bus_nodes_id = [
+            'node_bus_{}'.format(r) for r in buses_id]
+        extra_nodes_id = [
+            'node_extra_{}_{}_{}'.format(r[0], r[1], r[2])
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] > 1
+            for r in bus_pair_branches_map[k]]
+        branch_edges = [
+            ('node_bus_{}'.format(r[0]), 'node_bus_{}'.format(r[1]))
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] == 1
+            for r in bus_pair_branches_map[k]]
+        branch_edge_branch_map = {
+            ('node_bus_{}'.format(r[0]), 'node_bus_{}'.format(r[1])):r
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] == 1
+            for r in bus_pair_branches_map[k]}            
+        extra_edges_1 = [
+            ('node_bus_{}'.format(r[0]), 'node_extra_{}_{}_{}'.format(r[0], r[1], r[2]))
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] > 1
+            for r in bus_pair_branches_map[k]]
+        extra_edges_2 = [
+            ('node_bus_{}'.format(r[1]), 'node_extra_{}_{}_{}'.format(r[0], r[1], r[2]))
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] > 1
+            for r in bus_pair_branches_map[k]]
+        nodes = bus_nodes_id + extra_nodes_id
+        edges = branch_edges + extra_edges_1 + extra_edges_2
+        graph = nx.Graph()
+        graph.add_nodes_from(nodes)
+        graph.add_edges_from(edges)
+        connected_components = list(nx.connected_components(graph))
+        #connected_components = [set(k) for k in connected_components] # todo get only the bus nodes and take only their id number
+        num_connected_components = len(connected_components)
+        if num_connected_components > 1:
+            alert(
+                {'data_type':
+                     'Data',
+                 'error_message':
+                     'more than one connected component in the base case unswitched system graph',
+                 'diagnostics': connected_components})
+        bridges = list(nx.bridges(graph))
+        num_bridges = len(bridges)
+        bridges = sorted(list(set(branch_edges).intersection(set(bridges))))
+        # assert len(bridges) == num_bridges i.e. all bridges are branch edges, i.e. not extra edges. extra edges should be elements of cycles
+        bridges = [branch_edge_branch_map[r] for r in bridges]
+        ctg_bridges = sorted(list(set(bridges).intersection(set(ctg_branches_id))))
+        num_ctg_bridges = len(ctg_bridges)
+        if num_ctg_bridges > 0:
+            alert(
+                {'data_type':
+                     'Data',
+                 'error_message':
+                     'at least one branch outage contingency causes multiple connected components in the post contingency unswitched system graph',
+                 'diagnostics': ctg_bridges})
 
     def check_gen_implies_cost_gen(self):   
 
