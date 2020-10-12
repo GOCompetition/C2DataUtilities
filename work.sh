@@ -19,9 +19,9 @@ scenario=01
 case_dir=${main_dir}${network_dir}scenario_${scenario}/
 
 # override data selection
-case_dir=./data/ieee14/scenario_1/
-#case_dir=./data/ieee14/scenario_2/
-#case_dir=./data/ieee14/scenario_3/
+case_dir=./test_data/ieee14/scenario_1/
+#case_dir=./test_data/ieee14/scenario_2/
+#case_dir=./test_data/ieee14/scenario_3/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo10K/tgo10K_0060_7178/
