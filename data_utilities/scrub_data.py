@@ -14,7 +14,10 @@ import argparse
 import time
 
 # gocomp imports
-import data_utilities.data as data
+try:
+    import data_utilities.data as data
+except:
+    import data
     
 def main():
 

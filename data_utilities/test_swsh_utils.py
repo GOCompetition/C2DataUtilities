@@ -4,14 +4,21 @@
 # date: 2020-09-06
 #
 
+import time
 import numpy as np
-from data_utilities.swsh_utils import solve_py
+
+try:
+    from data_utilities.swsh_utils import solve_py
+except:
+    from swsh_utils import solve_py
 try:
     from data_utilities.swsh_utils import solve_cy
 except:
-    print('cannot import solve_cy. using solve_py instead')
-    solve_cy = solve_py
-import time
+    try:
+        from swsh_utils import solve_cy
+    except:
+        print('cannot import solve_cy. using solve_py instead')
+        solve_cy = solve_py
 
 def timeit(function):
     def timed(*args, **kw):

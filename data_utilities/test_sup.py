@@ -1,11 +1,11 @@
-#from data_utilities.data_json import Sup
-#from data_utilities.data import Data
-
-from data_json import Sup
-from data import Data
-
-import evaluation
-
+try:
+    import data_utilities.evaluation as evaluation
+    from data_utilities.data_json import Sup
+    from data_utilities.data import Data
+except:
+    import evaluation
+    from data_json import Sup
+    from data import Data
 
 from pathlib import Path
 import os

@@ -1,9 +1,14 @@
-from data_utilities.data_json import Sup
-from data_utilities.data import Data
 from pathlib import Path
 import os
 import sys
 import numpy as np
+
+try:
+    from data_utilities.data_json import Sup
+    from data_utilities.data import Data
+except:
+    from data_json import Sup
+    from data import Data
 
 class Evaluation:
 

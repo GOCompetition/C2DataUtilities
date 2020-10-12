@@ -34,11 +34,16 @@ from itertools import islice
 from operator import itemgetter
 from pathlib import Path
 
-import data
 import numpy as np
 import pandas as pd
-from cost_utils import CostEvaluator
 from scipy import sparse as sp
+
+try:
+    import data_utilities.data as data
+    from data_utilities.cost_utils import CostEvaluator
+except:
+    import data
+    from cost_utils import CostEvaluator
 
 try:
     from cStringIO import StringIO
