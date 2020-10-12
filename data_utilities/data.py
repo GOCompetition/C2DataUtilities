@@ -1,7 +1,3 @@
-#new row length?
-
-
-
 """Data structures and read/write methods for input and output data file formats
 
 Author: Jesse Holzer, jesse.holzer@pnnl.gov
@@ -22,12 +18,16 @@ import sys
 import math
 import time
 import numpy as np
+import networkx as nx
 import traceback
 #from io import StringIO
 try:
     from cStringIO import StringIO
 except ImportError:
     from io import StringIO
+
+import inspect
+
 
 try:
     from data_utilities.data_json import Sup
@@ -37,8 +37,6 @@ except:
     from data_json import Sup
     from swsh_utils import solve_py as swsh_solve
     from xfmr_utils import compute_xfmr_position
-
-import inspect
 
 
 # init_defaults_in_unused_field = True # do this anyway - it is not too big
@@ -72,15 +70,17 @@ do_check_swrem_zero = False #True # fixed by scrubber
 do_check_binit_in_integer_set = False # this will be difficult and generally requires MIP
 do_check_bmin_le_binit_le_bmax = True # this is doable
 #do_combine_switched_shunt_blocks_steps = True # generally want this to be false
-do_fix_binit = True
+do_fix_swsh_binit = True # now this sets binit to the closest feasible value of binit
+do_fix_xfmr_tau_theta_init = True # sets windv1/windv2 or ang1 to closest feasible value if cod1 == 1 or == 3
 pg_qg_stat_mode = 1 # 0: do not scrub, 1: set pg=0 and qg=0, 2: set stat=1
 swsh_binit_feas_tol = 1e-4
+swsh_bmin_bmax_tol = 1e-8
 #num_swsh_to_test = 194 # 193 195 # problem with 11152/01
 max_swsh_n = 9 # maximum number of steps in each switched shunt block
 xfmr_tau_theta_init_tol = 1e-4
 EMERGENCY_CAPACITY_FACTOR = 0.1
 EMERGENCY_MARGINAL_COST_FACTOR = 5.0
-
+debug_check_tau_theta_init_feas = False
 ratec_ratea_2=False   #report error only once
 ratc1_rata1 = False
 
@@ -308,6 +308,7 @@ class Data:
         self.check_no_transformers_in_raw_not_in_sup()
         self.check_generator_base_case_ramp_constraints_feasible()
         self.check_load_base_case_ramp_constraints_feasible()
+        self.check_connectedness()
 
     def scrub(self):
         '''modifies certain data elements to meet Grid Optimization Competition assumptions'''
@@ -335,6 +336,89 @@ class Data:
 
         self.raw.set_operating_point_to_offline_solution()
 
+    def check_connectedness(self):
+
+        buses_id = [r.i for r in self.raw.get_buses()]
+        buses_id = sorted(buses_id)
+        num_buses = len(buses_id)
+        lines_id = [(r.i, r.j, r.ckt) for r in self.raw.get_nontransformer_branches() if r.st == 1] # todo check status
+        num_lines = len(lines_id)
+        xfmrs_id = [(r.i, r.j, r.ckt) for r in self.raw.get_transformers() if r.stat == 1] # todo check status
+        num_xfmrs = len(xfmrs_id)
+        branches_id = lines_id + xfmrs_id
+        num_branches = len(branches_id)
+        branches_id = [(r if r[0] < r[1] else (r[1], r[0], r[2])) for r in branches_id]
+        branches_id = sorted(list(set(branches_id)))
+        if len(branches_id) != num_branches:
+            alert(
+                {'data_type':
+                     'Data',
+                 'error_message':
+                     'Repeated branch id on a given pair of buses. this is duplicated by another check and should be caught and reported in more detail there',
+                 'diagnostics': None})
+        ctg_branches_id = [(e.i, e.j, e.ckt) for r in self.con.get_contingencies() for e in r.branch_out_events]
+        ctg_branches_id = [(r if r[0] < r[1] else (r[1], r[0], r[2])) for r in ctg_branches_id]
+        ctg_branches_id = sorted(list(set(ctg_branches_id)))
+        branch_bus_pairs = sorted(list(set([(r[0], r[1]) for r in branches_id])))
+        bus_pair_branches_map = {
+            r:[]
+            for r in branch_bus_pairs}
+        for r in branches_id:
+            bus_pair_branches_map[(r[0], r[1])].append(r)
+        bus_pair_num_branches_map = {
+            k:len(v)
+            for k, v in bus_pair_branches_map.items()}
+        bus_nodes_id = [
+            'node_bus_{}'.format(r) for r in buses_id]
+        extra_nodes_id = [
+            'node_extra_{}_{}_{}'.format(r[0], r[1], r[2])
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] > 1
+            for r in bus_pair_branches_map[k]]
+        branch_edges = [
+            ('node_bus_{}'.format(r[0]), 'node_bus_{}'.format(r[1]))
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] == 1
+            for r in bus_pair_branches_map[k]]
+        branch_edge_branch_map = {
+            ('node_bus_{}'.format(r[0]), 'node_bus_{}'.format(r[1])):r
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] == 1
+            for r in bus_pair_branches_map[k]}            
+        extra_edges_1 = [
+            ('node_bus_{}'.format(r[0]), 'node_extra_{}_{}_{}'.format(r[0], r[1], r[2]))
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] > 1
+            for r in bus_pair_branches_map[k]]
+        extra_edges_2 = [
+            ('node_bus_{}'.format(r[1]), 'node_extra_{}_{}_{}'.format(r[0], r[1], r[2]))
+            for k in branch_bus_pairs if bus_pair_num_branches_map[k] > 1
+            for r in bus_pair_branches_map[k]]
+        nodes = bus_nodes_id + extra_nodes_id
+        edges = branch_edges + extra_edges_1 + extra_edges_2
+        graph = nx.Graph()
+        graph.add_nodes_from(nodes)
+        graph.add_edges_from(edges)
+        connected_components = list(nx.connected_components(graph))
+        #connected_components = [set(k) for k in connected_components] # todo get only the bus nodes and take only their id number
+        num_connected_components = len(connected_components)
+        if num_connected_components > 1:
+            alert(
+                {'data_type':
+                     'Data',
+                 'error_message':
+                     'more than one connected component in the base case unswitched system graph',
+                 'diagnostics': connected_components})
+        bridges = list(nx.bridges(graph))
+        num_bridges = len(bridges)
+        bridges = sorted(list(set(branch_edges).intersection(set(bridges))))
+        # assert len(bridges) == num_bridges i.e. all bridges are branch edges, i.e. not extra edges. extra edges should be elements of cycles
+        bridges = [branch_edge_branch_map[r] for r in bridges]
+        ctg_bridges = sorted(list(set(bridges).intersection(set(ctg_branches_id))))
+        num_ctg_bridges = len(ctg_bridges)
+        if num_ctg_bridges > 0:
+            alert(
+                {'data_type':
+                     'Data',
+                 'error_message':
+                     'at least one branch outage contingency causes multiple connected components in the post contingency unswitched system graph',
+                 'diagnostics': ctg_bridges})
 
     def check_gen_implies_cost_gen(self):   
 
@@ -976,6 +1060,7 @@ class Raw:
     def scrub_switched_shunts(self):
 
         self.check_switched_shunts_bus_exists(scrub_mode=True)
+        self.check_switched_shunts_binit_feas(scrub_mode=True)
         for r in self.get_switched_shunts():
             r.scrub()
 
@@ -1027,6 +1112,8 @@ class Raw:
     def scrub_transformers(self):
 
         self.check_transformers_buses_exist(scrub_mode=True)
+        if do_fix_xfmr_tau_theta_init:
+            print('scrubbing all xfmr tau/theta init values')
         for r in self.get_transformers():
             r.scrub()
 
@@ -1221,7 +1308,7 @@ class Raw:
         self.check_switched_shunts_bus_exists(scrub_mode=False)
         for r in self.get_switched_shunts():
             r.check()
-        self.check_switched_shunts_binit_feas()
+        self.check_switched_shunts_binit_feas(scrub_mode=False)
 
     def check_switched_shunts_bus_exists(self, scrub_mode=False):
 
@@ -1251,7 +1338,7 @@ class Raw:
                 del self.switched_shunts[k]
 
     @timeit
-    def check_switched_shunts_binit_feas(self):
+    def check_switched_shunts_binit_feas(self, scrub_mode=False):
 
         swsh = [r for r in self.get_switched_shunts()]
         #swsh = swsh[:num_swsh_to_test] # todo remove this line
@@ -1281,23 +1368,33 @@ class Raw:
         swsh_nmax = np.amax(n, axis=1)
         swsh_nmax_index = np.argmax(swsh_nmax)
         nmax = np.amax(n)
+        swsh_solve_tol = 1e-6
         if nmax <= max_swsh_n:
-            swsh_solve(btar, n, b, x, br, br_abs, tol)
-            br_abs_argmax = np.argmax(br_abs)
-            br_abs_max = br_abs[br_abs_argmax]
-            if br_abs_max > tol * abs(btar[br_abs_argmax]):
-                alert(
-                    {'data_type': 'Raw',
-                     'error_message': 'swsh binit not feasible, up to tolerance',
-                     'diagnostics':
-                         {'i': i[br_abs_argmax],
-                          'binit': btar[br_abs_argmax],
-                          'ni': n[br_abs_argmax, :].flatten().tolist(),
-                          'bi': b[br_abs_argmax, :].flatten().tolist(),
-                          'tol': tol,
-                          'x': x[br_abs_argmax, :].flatten().tolist(),
-                          'resid': br[br_abs_argmax],
-                          'abs resid': br_abs[br_abs_argmax]}})
+            if scrub_mode:
+                if do_fix_swsh_binit:
+                    print('scrubbing all swsh binit values')
+                    swsh_solve(btar, n, b, x, br, br_abs, swsh_solve_tol)
+                    #br = btar - bnew
+                    bnew = btar - br
+                    for index in range(len(swsh)):
+                        swsh[index].binit = bnew[index]
+            else:
+                swsh_solve(btar, n, b, x, br, br_abs, swsh_solve_tol)
+                br_abs_argmax = np.argmax(br_abs)
+                br_abs_max = br_abs[br_abs_argmax]
+                if br_abs_max > tol * abs(btar[br_abs_argmax]):
+                    alert(
+                        {'data_type': 'Raw',
+                         'error_message': 'swsh binit not feasible, up to tolerance',
+                         'diagnostics':
+                             {'i': i[br_abs_argmax],
+                              'binit': btar[br_abs_argmax],
+                              'ni': n[br_abs_argmax, :].flatten().tolist(),
+                              'bi': b[br_abs_argmax, :].flatten().tolist(),
+                              'tol': tol,
+                              'x': x[br_abs_argmax, :].flatten().tolist(),
+                              'resid': br[br_abs_argmax],
+                              'abs resid': br_abs[br_abs_argmax]}})
         else:
             alert(
                 {'data_type': 'Raw',
@@ -3016,6 +3113,7 @@ class Transformer:
                      'ratc1': self.ratc1}})
             ''' 
             self.ratc1 = self.rata1
+        self.check_tau_theta_init_feas(scrub_mode=True)
 
     def check(self):
 
@@ -3035,7 +3133,7 @@ class Transformer:
             self.check_i_lt_j()
         self.check_i_ne_j()
         # need to check i, j in buses
-        self.check_tau_theta_init_feas()
+        self.check_tau_theta_init_feas(scrub_mode=False)
 
     def check_cod1_013(self):
 
@@ -3051,7 +3149,7 @@ class Transformer:
                      'cod1': self.cod1}})
 
 
-    def check_tau_theta_init_feas(self):
+    def check_tau_theta_init_feas(self, scrub_mode=False):
 
         x = compute_xfmr_position(self)
         position = x[0]
@@ -3061,7 +3159,36 @@ class Transformer:
         mid_val = x[4]
         step_size = x[5]
         max_position = x[6]
-        if abs(resid) > xfmr_tau_theta_init_tol * abs(oper_val):
+        if debug_check_tau_theta_init_feas:
+            alert(
+                {'data_type': 'Transformer',
+                 'error message': 'printing tau/theta init info for debugging.',
+                 'diagnostics': {
+                     'i': self.i,
+                     'j': self.j,
+                     'k': self.k,
+                     'ckt': self.ckt,
+                     'cod1': self.cod1,
+                     'stat': self.stat,
+                     'ntp1': self.ntp1,
+                     'rma1': self.rma1,
+                     'rmi1': self.rmi1,
+                     'max_position': max_position,
+                     'position': position,
+                     'oper_val': oper_val,
+                     'oper_val_resulting': oper_val_resulting,
+                     'resid': resid,
+                     'mid_val': mid_val,
+                     'step_size': step_size}})
+        if scrub_mode:
+            if do_fix_xfmr_tau_theta_init:
+                #print('scrubbing xfmr tau/theta init value')
+                if self.cod1 == 1:
+                    self.windv1 = oper_val_resulting
+                    self.windv2 = 1.0
+                elif self.cod1 == 3:
+                    self.ang1 = oper_val_resulting
+        elif abs(resid) > xfmr_tau_theta_init_tol * abs(oper_val):
             alert(
                 {'data_type': 'Transformer',
                  'error message': 'tau/theta init is infeasible.',
@@ -3617,7 +3744,7 @@ class SwitchedShunt:
     def scrub(self):
 
         self.scrub_swrem()
-        if do_fix_binit:
+        if do_fix_swsh_binit:
             self.scrub_binit()
 
     def scrub_binit(self):
@@ -3625,6 +3752,8 @@ class SwitchedShunt:
         b_min_max = self.compute_bmin_bmax()
         bmin = b_min_max[0]
         bmax = b_min_max[1]
+        #tolabs = 1e-8
+        #tol = max(abs(self.binit) * tolabs, tolabs)
         if self.binit < bmin:
             self.binit = bmin
         elif self.binit > bmax:
@@ -4067,7 +4196,8 @@ class SwitchedShunt:
         b_min_max = self.compute_bmin_bmax()
         bmin = b_min_max[0]
         bmax = b_min_max[1]
-        if bmin > self.binit:
+        tol = max(abs(self.binit) * swsh_bmin_bmax_tol, swsh_bmin_bmax_tol)
+        if bmin - tol > self.binit:
             alert(
                 {'data_type': 'SwitchedShunt',
                  'error_message': 'fails bmin <= binit. Please ensure that bmin <= binit, where bmin is derived from b1, n1, ..., b8, n8 as described in the formulation.',
@@ -4091,7 +4221,7 @@ class SwitchedShunt:
                      'n7': self.n7,
                      'b8': self.b8,
                      'n8': self.n8}})
-        if self.binit > bmax:
+        if self.binit > bmax + tol:
             alert(
                 {'data_type': 'SwitchedShunt',
                  'error_message': 'fails binit <= bmax. Please ensure that binit <= bmax, where bmin is derived from b1, n1, ..., b8, n8 as described in the formulation.',

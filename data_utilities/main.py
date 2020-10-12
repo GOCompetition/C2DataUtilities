@@ -135,7 +135,10 @@ def run():
             args_summary = "{}/GOCFeasibility_base.csv".format(output_path)
             args_detail = "{}/{}_DetailedSolution_base.csv".format(output_path, args.model_scenario_number)
             
-            evaluation.run(args_raw, args_con, args_sup,  args_sol1, None, args_summary, args_detail, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
+            (obj, infeas, solutions_exist) = evaluation.run_main(scenario_path,  args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
+            if solutions_exist == False or obj == None:
+                raise Exception ("Missing solution or onj is None")
+
         except:
             traceback.print_exc()
             errfile_path = output_path + '/solution_BASECASE.err'
@@ -173,7 +176,7 @@ def run():
     try:
 
         #if solutions_exist:
-        (obj, infeas, solutions_exist) = evaluation.run(args_raw, args_con, args_sup, args_sol1, args_sol2, args_summary, args_detail, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
+        (obj, infeas, solutions_exist) = evaluation.run_main(scenario_path, args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
 
 
         if process_rank == 0:
@@ -181,15 +184,24 @@ def run():
             if solutions_exist == False:
                 raise Exception( "All solutions do not exist")
 
-            if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
-                print("obj > slack_objective and infeas == 0")
+            # merging master into package JH
+            # accept master here
+            # <<<<<<< HEAD:data_utilities/main.py
+            #if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
+            #    print("obj > slack_objective and infeas == 0")
+            #    score = obj
+            #if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
+            #=======
+            if obj > slack_objective: #and infeas == 0:   #larger than slack and feasible
+                print("obj > infeasible_score and infeas == 0")
                 score = obj
-            if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
+            elif abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
+            # >>>>>>> master:py/main.py
                 print("infeasible score not available")
                 score = obj
-            if obj == float('nan'):
+            elif obj == float('nan'):
                 score = slack_objective
-            if infeas == 1:
+            elif infeas == 1:
                 score = slack_objective
 
             eval_runtime = time.time() - start_time
@@ -219,7 +231,7 @@ def run():
 
             if solutions_exist:
                 print("\tModel:{}".format(args.network_model))
-                print("\tSlack Objective:%f"%(slack_objective))
+                print("\tInfeasible Score:%f"%(slack_objective))
                 print("\tObjective:%f"%(obj))
                 print("\tInfeasibility:%d"%(infeas))
                 print("\tEval runtime:%f"%(eval_runtime))
@@ -234,11 +246,11 @@ def run():
     except Exception as e:
         traceback.print_exc()
         print(e)
-        missing_solution = 'TRUE' if solutions_exist else missing_solution
+        missing_solution = 'TRUE' if not solutions_exist else 'FALSE'
         with open(args_summary, 'w') as summaryfile:
             csvwriter = csv.writer(summaryfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
             csvwriter.writerow(['Scenario','Score', 'Objective',  'Infeasibility','Bad/Missing Solution','Slack Objective', 'Evaluation Duration (sec)', 'Code 1 Duration (sec)', 'Code 2 Duration (sec)','Contingency Count','Seconds per Contingency','Code 2 Runtime Goal (sec)'])
-            csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score,  'N/A', missing_solution, slack_objective,'', code1_runtime, code2_runtime, contingency_count, 'N/A', code2_runtime_goal_sec])
+            csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score, 'N/A',  'N/A', missing_solution, slack_objective,'', code1_runtime, code2_runtime, contingency_count, 'N/A', code2_runtime_goal_sec])
     
     
 if __name__ == '__main__':
