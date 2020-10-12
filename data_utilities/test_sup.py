@@ -1,9 +1,10 @@
 #from data_utilities.data_json import Sup
 #from data_utilities.data import Data
 
-from data_utilities.data_json import Sup
-from data_utilities.data import Data
-import data_utilities.evaluation as evaluation
+from data_json import Sup
+from data import Data
+
+import evaluation
 
 
 from pathlib import Path
@@ -22,11 +23,11 @@ basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_
 #basepath = "/pic/dtn/go/Terrence/sandbox"
 #basepath = "/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/C2Eval/data/ieee14/scenario_1"
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Globus"
-basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform"
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Terrence/sandbox/Sep6_01"
 basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/Sandbox072020_05'
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Jesse/14_bus_Sep7/"
 basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Sep9_01'
+basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Oct9_01/scrubbed"
 
 
 schema_path = Path( ".") / "sup_schema.json"
