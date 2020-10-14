@@ -308,7 +308,7 @@ class Data:
         self.check_no_transformers_in_raw_not_in_sup()
         self.check_generator_base_case_ramp_constraints_feasible()
         self.check_load_base_case_ramp_constraints_feasible()
-        self.check_connectedness()
+        self.check_connectedness(scrub_mode=False)
 
     def scrub(self):
         '''modifies certain data elements to meet Grid Optimization Competition assumptions'''
@@ -330,13 +330,14 @@ class Data:
         self.remove_transformers_in_sup_not_in_raw()
         self.remove_generators_in_sup_not_in_raw()
         self.sup.check(scrub_mode=True)
+        self.check_connectedness(scrub_mode=True)
 
     def convert_to_offline(self):
         '''converts the operating point to the offline starting point'''
 
         self.raw.set_operating_point_to_offline_solution()
 
-    def check_connectedness(self):
+    def check_connectedness(self, scrub_mode=False):
 
         buses_id = [r.i for r in self.raw.get_buses()]
         buses_id = sorted(buses_id)
@@ -359,6 +360,16 @@ class Data:
         ctg_branches_id = [(e.i, e.j, e.ckt) for r in self.con.get_contingencies() for e in r.branch_out_events]
         ctg_branches_id = [(r if r[0] < r[1] else (r[1], r[0], r[2])) for r in ctg_branches_id]
         ctg_branches_id = sorted(list(set(ctg_branches_id)))
+        ctg_branches_id_ctg_label_map = {
+            k:[]
+            for k in ctg_branches_id}
+        for r in self.con.get_contingencies():
+            for e in r.branch_out_events:
+                if e.i < e.j:
+                    k = (e.i, e.j, e.ckt)
+                else:
+                    k = (e.j, e.i, e.ckt)
+                ctg_branches_id_ctg_label_map[k].append(r.label)
         branch_bus_pairs = sorted(list(set([(r[0], r[1]) for r in branches_id])))
         bus_pair_branches_map = {
             r:[]
@@ -399,12 +410,20 @@ class Data:
         #connected_components = [set(k) for k in connected_components] # todo get only the bus nodes and take only their id number
         num_connected_components = len(connected_components)
         if num_connected_components > 1:
-            alert(
-                {'data_type':
-                     'Data',
-                 'error_message':
-                     'more than one connected component in the base case unswitched system graph',
-                 'diagnostics': connected_components})
+            if scrub_mode:
+                alert(
+                    {'data_type':
+                         'Data',
+                     'error_message':
+                         'more than one connected component in the base case unswitched system graph. This is diagnosed by the data checker but cannot be fixed by the scrubber. It must be fixed by the designer of the data set.',
+                     'diagnostics': connected_components})
+            else:
+                alert(
+                    {'data_type':
+                         'Data',
+                     'error_message':
+                         'more than one connected component in the base case unswitched system graph.',
+                     'diagnostics': connected_components})
         bridges = list(nx.bridges(graph))
         num_bridges = len(bridges)
         bridges = sorted(list(set(branch_edges).intersection(set(bridges))))
@@ -413,13 +432,35 @@ class Data:
         ctg_bridges = sorted(list(set(bridges).intersection(set(ctg_branches_id))))
         num_ctg_bridges = len(ctg_bridges)
         if num_ctg_bridges > 0:
-            alert(
-                {'data_type':
-                     'Data',
-                 'error_message':
-                     'at least one branch outage contingency causes multiple connected components in the post contingency unswitched system graph',
-                 'diagnostics': ctg_bridges})
-
+            if scrub_mode:
+                alert(
+                    {'data_type':
+                         'Data',
+                     'error_message':
+                         'at least one branch outage contingency causes multiple connected components in the post contingency unswitched system graph. Scrubbing by removing contingencies causing multiple connected components.',
+                     'diagnostics': ctg_bridges})
+                ctgs_label_to_remove = [
+                    k
+                    for r in ctg_bridges
+                    for k in ctg_branches_id_ctg_label_map[r]]
+                ctgs_label_to_remove = sorted(list(set(ctgs_label_to_remove)))
+                for k in ctgs_label_to_remove:
+                    alert(
+                        {'data_type':
+                             'Data',
+                         'error_message':
+                             'removing branch contingency where the loss of the branch causes islanding in the unswitched network',
+                         'diagnostics':
+                             {'ctg label': k}})
+                    del self.con.contingencies[k]
+            else:
+                alert(
+                    {'data_type':
+                         'Data',
+                     'error_message':
+                         'at least one branch outage contingency causes multiple connected components in the post contingency unswitched system graph',
+                     'diagnostics': ctg_bridges})
+                
     def check_gen_implies_cost_gen(self):   
 
         gen_set = set([(g.i, g.id) for g in self.raw.get_generators()])
