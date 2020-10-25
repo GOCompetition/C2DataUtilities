@@ -2,7 +2,7 @@
 
 # select data
 main_dir=/pic/dtn/go/Steve/C2/sandbox/
-#network_dir=C2S2N00014/
+network_dir=C2S4N00014/
 #network_dir=C2S1N00015/
 #network_dir=C2S1N00594/
 #network_dir=C2S1N02000/
@@ -13,20 +13,41 @@ main_dir=/pic/dtn/go/Steve/C2/sandbox/
 #network_dir=C2S1N04229/
 #network_dir=C2S1N09459/
 #network_dir=C2S1N09462/
-network_dir=C2S3N11152/
-scenario=01
+#network_dir=C2S3N11152/
+scenario=02
 #scenario=1
 case_dir=${main_dir}${network_dir}scenario_${scenario}/
 
 # override data selection
-#case_dir=./data/ieee14/scenario_1/
-#case_dir=./data/ieee14/scenario_2/
-#case_dir=./data/ieee14/scenario_3/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo10K/tgo10K_0060_7178/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/Sep30_TAMU01/tgo10K/tgo10K_0060_7178/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/Sep30_TAMU01/tgo2000/tgo2000_0100_0289/
+#/pic/projects/goc/submission-manager/submission-manager-tmp/arunveeramany/TESTSUB9_1_1/C2S3N00014_output1/
+
+# C2DataUtilities test data
+#case_dir=./data/ieee14/scenario_1/
+#case_dir=./data/ieee14/scenario_2/
+#case_dir=./data/ieee14/scenario_3/
+
+# Originals
+#case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
+
+# sandbox
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00014/scenario_01/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00014/scenario_02/
+
+# trial 1
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/France-EHV-Lyon_BB/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/France_NB/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/MSR_BB/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/MSR_NB/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_02R-173-tgo500_20190828/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_03R-200_S0700_20190923/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_25R-060_UW-LA2ND-24464_20191025/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_70R-422_S2000_20190625/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_70R-422_S2000_20190923/scenario_1/
 
 # set options
 strict_names=0
@@ -34,8 +55,8 @@ refresh_data=1
 check_data=1
 scrub_data=1
 check_scrubbed_data=1
-make_new_sol=0
-eval_sol=0
+make_new_sol=1
+eval_sol=1
 do_submission=0
 eval_submission=0
 division=1
@@ -49,6 +70,8 @@ sup1="${work_dir}/case.json"
 sup2="${work_dir}/case.scrubbed.json"
 con1="${work_dir}/case.con"
 con2="${work_dir}/case.scrubbed.con"
+
+echo "case: ${case_dir}"
 
 if [ ! -d "$work_dir" ] 
 then

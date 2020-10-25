@@ -554,13 +554,13 @@ class Evaluation:
         
         self.xfmr_xst_max = np.array([round(0.5 * (r.ntp1 - 1.0)) for r in xfmrs])
         self.xfmr_tap_mag_mid = np.array(
-            [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 == 1) else (r.windv1 / r.windv2) for r in xfmrs])
+            [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 in [-1, 1]) else (r.windv1 / r.windv2) for r in xfmrs])
         self.xfmr_tap_mag_step_size = np.array(
-            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 == 1) else 0.0 for r in xfmrs])
+            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 in [-1, 1]) else 0.0 for r in xfmrs])
         self.xfmr_tap_ang_mid = np.array(
-            [(0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 == 3) else (r.ang1 * math.pi / 180.0) for r in xfmrs])
+            [(0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 in [-3, 3]) else (r.ang1 * math.pi / 180.0) for r in xfmrs])
         self.xfmr_tap_ang_step_size = np.array(
-            [((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 == 3) else 0.0 for r in xfmrs])
+            [((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 in [-3, 3]) else 0.0 for r in xfmrs])
 
         self.bus_xfmr_orig_matrix = sp.csr_matrix(
             ([1.0 for i in range(self.num_xfmr)],
@@ -578,10 +578,10 @@ class Evaluation:
         self.xfmr_service_status = np.ones(shape=(self.num_xfmr,))
 
         # todo transformer impedance correction
-        self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if xfmrs[ind].tab1 > 0]
-        self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 not in [1,3]]
-        self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 1]
-        self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 3]
+        self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if (xfmrs[ind].tab1 > 0 and xfmrs[ind].cod1 in [-3, -1, 1, 3])]
+        self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 0]
+        self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-1, 1]]
+        self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-3, 3]]
         self.xfmr_index_imp_corr_var_tap_ratio = sorted(
             list(set(self.xfmr_index_imp_corr).intersection(
                     set(self.xfmr_index_var_tap_ratio))))

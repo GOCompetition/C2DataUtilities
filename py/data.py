@@ -3160,7 +3160,7 @@ class Transformer:
 
         check_two_char_id_str(self.ckt)
         self.check_ckt_len_1_or_2()
-        #self.check_cod1_013() # COD1 can be any integer value now
+        self.check_cod1_013() # COD1 can be any integer value now - nope, not anymore
         self.check_r12_x12_nonzero()
         if do_check_rate_pos:
             self.check_rata1_pos()
@@ -3178,10 +3178,10 @@ class Transformer:
 
     def check_cod1_013(self):
 
-        if not self.cod1 in [0, 1, 3]:
+        if not self.cod1 in [-3, -1, 0, 1, 3]:
             alert(
                 {'data_type': 'Transformer',
-                 'error message': 'COD1 not in [0, 1, 3].',
+                 'error message': 'COD1 not in [-3, -1, 0, 1, 3].',
                  'diagnostics': {
                      'i': self.i,
                      'j': self.j,
