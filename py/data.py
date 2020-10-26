@@ -3161,6 +3161,7 @@ class Transformer:
         check_two_char_id_str(self.ckt)
         self.check_ckt_len_1_or_2()
         self.check_cod1_013() # COD1 can be any integer value now - nope, not anymore
+        self.check_ntp1_odd_ge_1()
         self.check_r12_x12_nonzero()
         if do_check_rate_pos:
             self.check_rata1_pos()
@@ -3178,7 +3179,7 @@ class Transformer:
 
     def check_cod1_013(self):
 
-        if not self.cod1 in [-3, -1, 0, 1, 3]:
+        if not (self.cod1 in [-3, -1, 0, 1, 3]):
             alert(
                 {'data_type': 'Transformer',
                  'error message': 'COD1 not in [-3, -1, 0, 1, 3].',
@@ -3189,6 +3190,18 @@ class Transformer:
                      'ckt': self.ckt,
                      'cod1': self.cod1}})
 
+    def check_ntp1_odd_ge_1(self):
+
+        if not ((self.ntp1 >= 1) and (self.ntp1 % 2 == 1)):
+            alert(
+                {'data_type': 'Transformer',
+                 'error message': 'NTP1 not in [1, 3, 5, ...].',
+                 'diagnostics': {
+                     'i': self.i,
+                     'j': self.j,
+                     'k': self.k,
+                     'ckt': self.ckt,
+                     'cod1': self.ntp1}})
 
     def check_tau_theta_init_feas(self, scrub_mode=False):
 

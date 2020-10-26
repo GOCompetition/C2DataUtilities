@@ -1,23 +1,5 @@
 #!/bin/sh
 
-# select data
-main_dir=/pic/dtn/go/Steve/C2/sandbox/
-network_dir=C2S4N00014/
-#network_dir=C2S1N00015/
-#network_dir=C2S1N00594/
-#network_dir=C2S1N02000/
-#network_dir=C2S1N02044/
-#network_dir=C2S1N02380/
-#network_dir=C2S1N02742/
-#network_dir=C2S1N04225/
-#network_dir=C2S1N04229/
-#network_dir=C2S1N09459/
-#network_dir=C2S1N09462/
-#network_dir=C2S3N11152/
-scenario=02
-#scenario=1
-case_dir=${main_dir}${network_dir}scenario_${scenario}/
-
 # override data selection
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
@@ -36,7 +18,43 @@ case_dir=${main_dir}${network_dir}scenario_${scenario}/
 
 # sandbox
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00014/scenario_01/
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00014/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00014/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00594/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00594/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00594/scenario_03/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00594/scenario_04/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00594/scenario_05/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02000/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02000/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02000/scenario_03/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02000/scenario_04/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02000/scenario_05/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_01/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_03/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_04/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02380/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02380/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02380/scenario_03/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02380/scenario_04/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02380/scenario_05/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02742/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02742/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02742/scenario_03/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02742/scenario_04/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02742/scenario_05/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N04225/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N04229/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N04229/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N04229/scenario_03/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09459/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09462/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09462/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_03/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_04/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_05/
 
 # trial 1
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/France-EHV-Lyon_BB/scenario_1/
@@ -53,10 +71,10 @@ case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N00014/scenario_02/
 strict_names=0
 refresh_data=1
 check_data=1
-scrub_data=1
-check_scrubbed_data=1
-make_new_sol=1
-eval_sol=1
+scrub_data=0
+check_scrubbed_data=0
+make_new_sol=0
+eval_sol=0
 do_submission=0
 eval_submission=0
 division=1
