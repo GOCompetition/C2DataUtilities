@@ -146,7 +146,11 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
 
 
     global log_fileobject
-    log_fileobject.write(formatted_message)
+
+    try:
+        log_fileobject.write(formatted_message)
+    except:
+        pass  
 
     if raise_exception and check_passed != True:
         if evaluation is not None:

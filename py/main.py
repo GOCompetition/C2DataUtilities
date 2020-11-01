@@ -137,7 +137,7 @@ def run():
             args_summary = "{}/GOCFeasibility_base.csv".format(output_path)
             args_detail = "{}/{}_DetailedSolution_base.csv".format(output_path, args.model_scenario_number)
             
-            (obj, infeas, solutions_exist) = evaluation.run_main(scenario_path,  args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
+            (obj, infeas, solutions_exist, summary_all_cases) = evaluation.run_main(scenario_path,  args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
             if solutions_exist == False or obj == None:
                 raise Exception ("Missing solution or onj is None")
 
@@ -178,7 +178,7 @@ def run():
     try:
 
         #if solutions_exist:
-        (obj, infeas, solutions_exist) = evaluation.run_main(scenario_path, args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
+        (obj, infeas, solutions_exist,summary_all_cases) = evaluation.run_main(scenario_path, args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
 
 
         if process_rank == 0:
