@@ -28,7 +28,9 @@ basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Jesse/14
 basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Sep17_01'
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/"
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Oct8_01/scrubbed"
-
+basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Terrence/sandbox/Oct8_01/scrubbed"
+basepath = sys.argv[-1]
+print(basepath)
 
 schema_path = Path( ".") / "sup_schema.json"
 
@@ -46,11 +48,11 @@ for dirname, subdirList, fileList in os.walk(basepath):
     con=''
     for fname in fileList:
         fn = f'{dirname}/case.scrubbed.raw'
-        os.remove(fn) if os.path.exists(fn) else None
+        #os.remove(fn) if os.path.exists(fn) else None
         fn = f'{dirname}/case.scrubbed.con'
-        os.remove(fn) if os.path.exists(fn) else None
+        #os.remove(fn) if os.path.exists(fn) else None
         fn = f'{dirname}/case.scrubbed.json'
-        os.remove(fn) if os.path.exists(fn) else None
+        #os.remove(fn) if os.path.exists(fn) else None
         if 'scrubbed' in fname:
             continue
         if fname.endswith(('.raw','.RAW','.con','.json')) :
