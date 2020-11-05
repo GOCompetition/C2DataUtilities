@@ -30,7 +30,7 @@
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02000/scenario_04/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02000/scenario_05/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_01/
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_02/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_02/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_03/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_04/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02380/scenario_01/
@@ -66,6 +66,9 @@ case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N02044/scenario_02/
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_25R-060_UW-LA2ND-24464_20191025/scenario_1/
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_70R-422_S2000_20190625/scenario_1/
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_70R-422_S2000_20190923/scenario_1/
+
+# ?
+case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2_AUS/
 
 # set options
 strict_names=0

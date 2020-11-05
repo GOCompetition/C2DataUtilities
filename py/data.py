@@ -4302,12 +4302,17 @@ class SwitchedShunt:
 
     def read_from_row(self, row):
 
+        #print(row)
+        #if int(row[0]) == 23393:
+        #    print(row)
         row = pad_row(row, 26)
         self.i = parse_token(row[0], int, default=None)
         self.stat = parse_token(row[3], int, default=None)
         self.binit = parse_token(row[9], float, default=None)
-        self.n1 = parse_token(row[10], int, default=None)
-        self.b1 = parse_token(row[11], float, default=None)
+        #self.n1 = parse_token(row[10], int, default=None) # allow 0 blocks
+        #self.b1 = parse_token(row[11], float, default=None)
+        self.n1 = parse_token(row[10] , int, default=0)     if 10 < len(row) else 0
+        self.b1 = parse_token(row[11] , float, default=0.0) if 11 < len(row) else 0.0
         self.n2 = parse_token(row[12] , int, default=0)     if 12 < len(row) else 0
         self.b2 = parse_token(row[13] , float, default=0.0) if 13 < len(row) else 0.0
         self.n3 = parse_token(row[14] , int, default=0)     if 14 < len(row) else 0
