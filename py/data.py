@@ -3201,7 +3201,7 @@ class Transformer:
                      'j': self.j,
                      'k': self.k,
                      'ckt': self.ckt,
-                     'cod1': self.ntp1}})
+                     'ntp1': self.ntp1}})
 
     def check_tau_theta_init_feas(self, scrub_mode=False):
 

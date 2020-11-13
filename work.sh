@@ -67,15 +67,16 @@
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_70R-422_S2000_20190625/scenario_1/
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_70R-422_S2000_20190923/scenario_1/
 
-# ?
-case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2_AUS/
+# ad hoc analysis
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2_AUS/
+case_dir=/people/holz501/gocomp/c2/data/TAMU_GOTx600_5002_0006/
 
 # set options
 strict_names=0
 refresh_data=1
 check_data=1
-scrub_data=0
-check_scrubbed_data=0
+scrub_data=1
+check_scrubbed_data=1
 make_new_sol=0
 eval_sol=0
 do_submission=0
