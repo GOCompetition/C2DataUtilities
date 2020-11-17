@@ -3236,11 +3236,11 @@ class Transformer:
                      'step_size': step_size}})
         if scrub_mode:
             if do_fix_xfmr_tau_theta_init:
-                #print('scrubbing xfmr tau/theta init value')
-                if self.cod1 == 1:
+                print('scrubbing xfmr tau/theta init value')
+                if self.cod1 in [-1,1]:
                     self.windv1 = oper_val_resulting
                     self.windv2 = 1.0
-                elif self.cod1 == 3:
+                elif self.cod1 in [-3,3]:
                     self.ang1 = oper_val_resulting
         elif abs(resid) > xfmr_tau_theta_init_tol * abs(oper_val):
             alert(
