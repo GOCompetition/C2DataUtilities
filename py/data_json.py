@@ -392,6 +392,7 @@ class Sup:
                 for b in load[key]:
                     #print(b)
                     self.check_cblock(b, max_prefix='p', cblock_prefix='')
+                #self.check_pqscblocks(load[key], 'p') # todo: need to do this in Data.check(), as we do not have pmin,pmax here
 
         # tmin && tmax
         if "tmin" in keys and "tmax" in keys:
@@ -455,6 +456,13 @@ class Sup:
                 condition = generator[key] == 0 or generator[key] == 1
                 message = context + "{key} must be either 0 or 1".format(key=key)
                 self.assert_continue(condition, message)
+
+            # cblocks
+            if key == "cblocks":
+                for b in generator[key]:
+                    #print(b)
+                    self.check_cblock(b, max_prefix='p', cblock_prefix='')
+                #self.check_pqscblocks(generator[key], 'p') # todo: need to do this in Data.check(), as we do not have pmin,pmax here
 
     def check_line(self, line):
         context = "{} [origbus {}, destbus {}]: ".format(inspect.stack()[0][3], line["origbus"], line["destbus"])
