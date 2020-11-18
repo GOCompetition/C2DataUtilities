@@ -2440,6 +2440,7 @@ class Bus:
 
         self.check_ide_ne_4()
         self.check_i_pos()
+        self.check_i_le_imax()
         self.check_area_pos()
         self.check_vm_pos()
         self.check_nvhi_pos()
@@ -2475,6 +2476,17 @@ class Bus:
                  'error_message': 'fails i positivity. Please ensure that the i field of every bus is a positive integer',
                  'diagnostics': {
                      'i': self.i}})
+
+    def check_i_le_imax(self):
+
+        imax = 999997 # from commercial power system software manual
+        if self.i > imax:
+            alert(
+                {'data_type': 'Bus',
+                 'error_message': 'fails i <= imax. Please ensure that the i field of every bus is <= %s' % imax,
+                 'diagnostics': {
+                     'i': self.i,
+                     'imax': imax}})
 
     def check_area_pos(self):
 
