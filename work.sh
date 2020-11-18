@@ -50,7 +50,7 @@
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09459/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09462/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09462/scenario_02/
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_01/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_02/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_03/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_04/
@@ -70,7 +70,7 @@
 # ad hoc analysis
 #case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2_AUS/
 #case_dir=/people/holz501/gocomp/c2/data/TAMU_GOTx600_5002_0006/
-case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial1/nov15_01/source/GOTx31K-0001/pop/GOTx31K_0001_9001/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial1/nov15_01/source/GOTx31K-0001/pop/GOTx31K_0001_9001/
 
 # set options
 strict_names=0

@@ -310,8 +310,8 @@ class Data:
         self.check_generator_base_case_ramp_constraints_feasible()
         self.check_load_base_case_ramp_constraints_feasible()
         self.check_connectedness(scrub_mode=False)
-        self.check_gen_cost_domain()
-        self.check_load_cost_domain()
+        self.check_gen_cost_domain(scrub_mode=False)
+        self.check_load_cost_domain(scrub_mode=False)
 
     def scrub(self):
         '''modifies certain data elements to meet Grid Optimization Competition assumptions'''
@@ -334,11 +334,14 @@ class Data:
         self.remove_generators_in_sup_not_in_raw()
         self.sup.check(scrub_mode=True)
         self.check_connectedness(scrub_mode=True)
+        self.check_gen_cost_domain(scrub_mode=True)
+        self.check_load_cost_domain(scrub_mode=True)
 
-    def check_gen_cost_domain(self):
+    def check_gen_cost_domain(self, scrub_mode=False):
         
         cost_domain_tol = self.raw.case_identification.sbase * hard_constr_tol
         for r in self.raw.get_generators():
+            key = (r.i, r.id)
             cblocks = self.sup.generators[r.i, r.id]['cblocks']
             cblocks_total_pmax = sum([0.0] + [b['pmax'] for b in cblocks])
             diagnostics = {
@@ -348,12 +351,14 @@ class Data:
                 'cost_pmax': cblocks_total_pmax,
                 'pmax_tol': cost_domain_tol,
                 'cblocks': cblocks}
-            self.check_cost_domain(cblocks_total_pmax, r.pt, cost_domain_tol, 'Generator', diagnostics)
+            self.check_cost_domain(cblocks, key, cblocks_total_pmax, r.pt, cost_domain_tol, 'Generator', diagnostics, scrub_mode=scrub_mode)
+            self.sup.generators[r.i, r.id]['cblocks'] = [{'pmax': (1.0e12 + 1.0), 'c': 0.0}]
 
-    def check_load_cost_domain(self):
+    def check_load_cost_domain(self, scrub_mode=False):
         
         for r in self.raw.get_loads():
             cost_domain_tol = r.pl * hard_constr_tol
+            key = (r.i, r.id)
             pmax = r.pl * self.sup.loads[r.i, r.id]['tmax']
             cblocks = self.sup.loads[r.i, r.id]['cblocks']
             cblocks_total_pmax = sum([0.0] + [b['pmax'] for b in cblocks])
@@ -367,18 +372,30 @@ class Data:
                 'tmax_tol': hard_constr_tol,
                 'pmax_tol': cost_domain_tol,
                 'cblocks': cblocks}
-            self.check_cost_domain(cblocks_total_pmax, pmax, cost_domain_tol, 'Load', diagnostics)
+            self.check_cost_domain(cblocks, key, cblocks_total_pmax, pmax, cost_domain_tol, 'Load', diagnostics, scrub_mode=scrub_mode)
 
-    def check_cost_domain(self, cblocks_total_pmax, pmax, tol, data_type, diagnostics):
+    def check_cost_domain(self, cblocks, key, cblocks_total_pmax, pmax, tol, data_type, diagnostics, scrub_mode=False):
 
-        if pmax + tol > cblocks_total_pmax:
+        shortfall = pmax + tol - cblocks_total_pmax
+        if shortfall > 0.0:
             alert(
                 {'data_type':
                      data_type,
-                 'error_message':
-                     'cost function domain does not cover operating range with sufficient tolerance. please ensure the upper bound of the cost function domain exceeds the device operating range by more than the required tolerance.'
-,
+                 'error_message': (
+                        'Cost function domain does not cover operating range with sufficient tolerance. please ensure the upper bound of the cost function domain exceeds the device operating range by more than the required tolerance.' + (
+                            ' Scrubbing by extending the most expensive cost block or setting a wide enough cost block with 0 cost if no cost blocks exist.' if scrub_mode else '')),
                  'diagnostics': diagnostics})
+            if scrub_mode:
+                num_cblocks = len(cblocks)
+                if num_cblocks == 0:
+                    new_cblocks = [{'pmax': (shortfall + 1.0), 'c': 0.0}]
+                else:
+                    new_cblocks = sorted(cblocks, key=(lambda x: x['c']))
+                    new_cblocks[num_cblocks - 1]['pmax'] += (shortfall + 1.0)
+                if data_type == 'Load':
+                    self.sup.loads[key]['cblocks'] = new_cblocks
+                elif data_type == 'Generator':
+                    self.sup.generators[key]['cblocks'] = new_cblocks
 
     def convert_to_offline(self):
         '''converts the operating point to the offline starting point'''
