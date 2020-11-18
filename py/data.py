@@ -2755,7 +2755,7 @@ class Generator:
 
         check_two_char_id_str(self.id)
         self.check_id_len_1_or_2()
-        self.check_pg_nonnegative()
+        self.check_pg_nonnegative(scrub_mode=False)
         if do_check_pb_nonnegative:
             self.check_pb_nonnegative()
         self.check_qt_qb_consistent()
@@ -2769,7 +2769,7 @@ class Generator:
 
         self.scrub_pg_stat_consistent()
         self.scrub_qg_stat_consistent()
-        self.scrub_pg_nonnegative()
+        self.check_pg_nonnegative(scrub_mode=True)
 
     def add_emergency_capacity(self):
         '''add emergency capacity
@@ -2778,28 +2778,18 @@ class Generator:
 
         self.pt += EMERGENCY_CAPACITY_FACTOR * abs(self.pt)
 
-    def check_pg_nonnegative(self):
+    def check_pg_nonnegative(self, scrub_mode=False):
 
         if self.pg < 0.0:
             alert(
                 {'data_type': 'Generator',
-                 'error_message': 'fails PG >= 0.0',
+                 'error_message': ('fails PG >= 0.0.' + (' Setting PG = 0.0.' if scrub_mode else '')),
                  'diagnostics': {
                      'i': self.i,
                      'id': self.id,
                      'pg': self.pg}})
-
-    def scrub_pg_nonnegative(self):
-
-        if self.pg < 0.0:
-            alert(
-                {'data_type': 'Generator',
-                 'error_message': 'fails PG >= 0.0. Setting PG = 0.0',
-                 'diagnostics': {
-                     'i': self.i,
-                     'id': self.id,
-                     'pg': self.pg}})
-            self.pg = 0.0
+            if scrub_mode:
+                self.pg = 0.0
 
     def check_id_len_1_or_2(self):
 
