@@ -2625,10 +2625,24 @@ class Load:
 
         self.check_id_len_1_or_2()
         # need to check i in buses
+        self.check_pl_nonnegative(scrub_mode=False)
 
     def scrub(self):
 
-        pass
+        self.check_pl_nonnegative(scrub_mode=True)
+
+    def check_pl_nonnegative(self, scrub_mode=False):
+
+        if self.pl < 0.0:
+            alert(
+                {'data_type': 'Load',
+                 'error_message': ('fails PL >= 0.0.' + (' Setting PL = 0.0.' if scrub_mode else '')),
+                 'diagnostics': {
+                     'i': self.i,
+                     'id': self.id,
+                     'pl': self.pl}})
+            if scrub_mode:
+                self.pl = 0.0
 
     def check_id_len_1_or_2(self):
 
@@ -3600,23 +3614,11 @@ class Transformer:
         self.cnxa3 = parse_token(row[82], float, 0.0)
         '''
         
-        # just 2-winding, 4-row
-        try:
-            if len(row) != 43:
-                if len(row) < 43:
-                    raise Exception('missing field not allowed')
-                elif len(row) > 43:
-                    row = remove_end_of_line_comment_from_row(row, '/')
-                    if len(row) > new_row_len:
-                        raise Exception('extra field not allowed')
-        except Exception as e:
-            traceback.print_exc()
-            raise e
+        # check no 3-winding
         self.i = parse_token(row[0], int, default=None)
         self.j = parse_token(row[1], int, default=None)
-        self.ckt = parse_token(row[3], str, default=None).strip()
-        # check no 3-winding
         k = parse_token(row[2], int, default=None)
+        self.ckt = parse_token(row[3], str, default=None).strip()
         if not (k == 0):
             try:
                 alert(
@@ -3631,6 +3633,18 @@ class Transformer:
             except Exception as e:
                 traceback.print_exc()
                 raise e
+        # just 2-winding, 4-row
+        try:
+            if len(row) != 43:
+                if len(row) < 43:
+                    raise Exception('missing field not allowed')
+                elif len(row) > 43:
+                    row = remove_end_of_line_comment_from_row(row, '/')
+                    if len(row) > new_row_len: # todo: what is new_row_len? need this to handle end of line comments?
+                        raise Exception('extra field not allowed')
+        except Exception as e:
+            traceback.print_exc()
+            raise e
         self.mag1 = parse_token(row[7], float, default=None)
         self.mag2 = parse_token(row[8], float, default=None)
         self.stat = parse_token(row[11], int, default=None)
