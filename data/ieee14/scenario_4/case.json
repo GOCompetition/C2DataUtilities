@@ -5,6 +5,12 @@
 	"deltar": 0.1666667,
 	"deltarctg": 0.16666667
     },
+    "systemparameters": {
+	"delta": 1.0,
+	"deltactg": 1.0,
+	"deltar": 0.1666667,
+	"deltarctg": 0.16666667
+    },
     "loads": [
 	{
 	    "bus": 2,
