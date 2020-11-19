@@ -2008,6 +2008,9 @@ class Raw:
         cid_rows = rows[row_num:(row_num + 3)]
         self.case_identification.read_from_rows(rows)
         row_num += 2
+
+        # bus section
+        section_num_records = 0
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2018,6 +2021,15 @@ class Raw:
             bus = Bus()
             bus.read_from_row(row)
             self.buses[bus.i] = bus
+            section_num_records += 1
+        if section_num_records > len(self.buses):
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'Bus',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.buses)}})
+
+        # load section
+        section_num_records = 0
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2028,6 +2040,15 @@ class Raw:
             load = Load()
             load.read_from_row(row)
             self.loads[(load.i, load.id)] = load
+            section_num_records += 1
+        if section_num_records > len(self.loads):
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'Load',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.loads)}})
+
+        # fixed shunt section
+        section_num_records = 0
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2038,6 +2059,15 @@ class Raw:
             fixed_shunt = FixedShunt()
             fixed_shunt.read_from_row(row)
             self.fixed_shunts[(fixed_shunt.i, fixed_shunt.id)] = fixed_shunt
+            section_num_records += 1
+        if section_num_records > len(self.fixed_shunts):
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'FixedShunt',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.fixed_shunts)}})
+
+        # generator section
+        section_num_records = 0
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2048,6 +2078,15 @@ class Raw:
             generator = Generator()
             generator.read_from_row(row)
             self.generators[(generator.i, generator.id)] = generator
+            section_num_records += 1
+        if section_num_records > len(self.generators):
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'Generator',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.generators)}})
+
+        # nontransformer branch section
+        section_num_records = 0
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2061,6 +2100,15 @@ class Raw:
                 nontransformer_branch.i,
                 nontransformer_branch.j,
                 nontransformer_branch.ckt)] = nontransformer_branch
+            section_num_records += 1
+        if section_num_records > len(self.nontransformer_branches):
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'NontransformerBranch',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.nontransformer_branches)}})
+
+        # transformer section
+        section_num_records = 0
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2080,16 +2128,33 @@ class Raw:
                 #0, # leave k out
                 transformer.ckt)] = transformer
             row_num += (num_rows - 1)
-        while True: # areas - for now just make a set of areas based on bus info
+            section_num_records += 1
+        if section_num_records > len(self.transformers):
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'Transformer',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.transformers)}})
+
+        # skip section
+        #section_num_records = 0
+        while True: # areas
             row_num += 1
             row = rows[row_num]
             if self.row_is_file_end(row):
                 return
             if self.row_is_section_end(row):
                 break
-            area = Area()
-            area.read_from_row(row)
-            self.areas[area.i] = area
+            #area = Area()
+            #area.read_from_row(row)
+            #self.areas[area.i] = area
+            #section_num_records += 1
+        # if section_num_records > len(self.loads):
+        #     alert(
+        #         {'data_type': 'Raw',
+        #          'error_message': 'repeated key in RAW file section: %s' % 'Load',
+        #          'diagnostics': {'records': section_num_records, 'distinct keys': len(self.loads)}})
+
+        # skip section
         while True: # two-terminal DC transmission line data
             row_num += 1
             row = rows[row_num]
@@ -2097,6 +2162,8 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
         while True: # voltage source converter (VSC) DC transmission line data
             row_num += 1
             row = rows[row_num]
@@ -2104,7 +2171,10 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
-        while True: # transformer impedance correction tables
+
+        # transformer impedance correction tables section
+        section_num_records = 0
+        while True:
             row_num += 1
             row = rows[row_num]
             if self.row_is_file_end(row):
@@ -2114,20 +2184,14 @@ class Raw:
             tict = TransformerImpedanceCorrectionTable()
             tict.read_from_row(row)
             self.transformer_impedance_correction_tables[tict.i] = tict
-        while True:
-            row_num += 1
-            row = rows[row_num]
-            if self.row_is_file_end(row):
-                return
-            if self.row_is_section_end(row):
-                break
-        while True:
-            row_num += 1
-            row = rows[row_num]
-            if self.row_is_file_end(row):
-                return
-            if self.row_is_section_end(row):
-                break
+            section_num_records += 1
+        if section_num_records > len(self.transformer_impedance_correction_tables):
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'TransformerImpedanceCorrectionTable',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.transformer_impedance_correction_tables)}})
+
+        # skip section
         while True: # zone
             row_num += 1
             row = rows[row_num]
@@ -2135,6 +2199,8 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2142,6 +2208,17 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
+        while True: # zone
+            row_num += 1
+            row = rows[row_num]
+            if self.row_is_file_end(row):
+                return
+            if self.row_is_section_end(row):
+                break
+
+        # skip section
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2149,6 +2226,8 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2156,6 +2235,18 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
+        while True:
+            row_num += 1
+            row = rows[row_num]
+            if self.row_is_file_end(row):
+                return
+            if self.row_is_section_end(row):
+                break
+
+        # switched shunt section
+        section_num_records = 0
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2166,12 +2257,23 @@ class Raw:
             switched_shunt = SwitchedShunt()
             switched_shunt.read_from_row(row)
             self.switched_shunts[(switched_shunt.i,)] = switched_shunt
+            section_num_records += 1
+        if section_num_records > len(self.switched_shunts):
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'SwitchedShunt',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.switched_shunts)}})
         
         self.active_loads = dict(filter(lambda load: load[1].status >0, self.loads.items()))
         self.num_loads_active =   len(self.active_loads)
                
         self.active_swsh = dict(filter(lambda swsh: swsh[1].stat >0, self.switched_shunts.items()))
         self.num_swsh_active =   len(self.active_swsh)
+
+    def skip_section(self):
+
+        # todo
+        pass
 
 class Con:
     '''In physical units, i.e. data convention, i.e. input and output data files'''

@@ -12,6 +12,7 @@
 #case_dir=./data/ieee14/scenario_1/
 #case_dir=./data/ieee14/scenario_2/
 #case_dir=./data/ieee14/scenario_3/
+case_dir=./data/ieee14/scenario_4/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
@@ -50,7 +51,7 @@
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09459/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09462/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09462/scenario_02/
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_02/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_03/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_04/
