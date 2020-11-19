@@ -2438,6 +2438,7 @@ class Con:
 
         row_num = -1
         in_contingency = False
+        num_records = 0
         while True:
             row_num += 1
             #if row_num >= len(rows): # in case the data provider failed to put an end file line
@@ -2460,7 +2461,7 @@ class Con:
                 if in_contingency:
                     if  target_contingency == None or ( target_contingency != None and contingency.label == target_contingency):
                         self.contingencies[contingency.label] = contingency
-
+                        num_records += 1
                     in_contingency = False
                 else:
                     break
@@ -2483,6 +2484,12 @@ class Con:
                 except Exception as e:
                     traceback.print_exc()
                     raise e
+        if num_records > len(self.contingencies):
+            alert(
+                {'data_type': 'Con',
+                 'error_message': 'repeated key in CON file',
+                 'diagnostics': {'records': num_records, 'distinct keys': len(self.contingencies)}})
+
 
 class CaseIdentification:
 
