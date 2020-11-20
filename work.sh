@@ -13,8 +13,8 @@
 #case_dir=./data/ieee14/scenario_2/
 #case_dir=./data/ieee14/scenario_3/
 #case_dir=./data/ieee14/scenario_4/
-#case_dir=./data/ieee14/scenario_5/
-case_dir=./data/ieee14/scenario_6/
+case_dir=./data/ieee14/scenario_5/
+#case_dir=./data/ieee14/scenario_6/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
@@ -77,12 +77,12 @@ case_dir=./data/ieee14/scenario_6/
 
 # set options
 strict_names=0
-refresh_data=1
-check_data=1
-scrub_data=1
-check_scrubbed_data=1
+refresh_data=0
+check_data=0
+scrub_data=0
+check_scrubbed_data=0
 make_new_sol=0
-eval_sol=0
+eval_sol=1
 do_submission=0
 eval_submission=0
 division=1

@@ -67,7 +67,7 @@ try:
     if process_count > 1:
         USE_MPI = True
 except:
-        USE_MPI = False  
+    USE_MPI = False  
 
 
 print( "Using MPI" if USE_MPI else "Not using MPI"  )
@@ -88,6 +88,65 @@ stop_on_errors = True
 active_case = "BASECASE"
 active_solution_path = '.'
 log_fileobject = None
+
+summary_keys = [
+    'obj',
+    'infeas',
+    'total_bus_cost',
+    'total_load_benefit',
+    'total_gen_cost',
+    'total_line_cost',
+    'total_xfmr_cost',
+    'bus_volt_mag_max_viol',
+    'bus_volt_mag_min_viol',
+    'bus_pow_real_imbalance',
+    'bus_pow_imag_imbalance',
+    'bus_cost',
+    'load_t_max_viol',
+    'load_t_min_viol',
+    'load_ramp_up_max_viol',
+    'load_ramp_down_max_viol',
+    'load_benefit',
+    'gen_xon_max',
+    'gen_xon_min',
+    'gen_su_qual',
+    'gen_sd_qual',
+    'gen_su_sd_not_both',
+    'gen_sd_su_not_both',
+    'gen_pow_real_max_viol',
+    'gen_pow_real_min_viol',
+    'gen_pow_imag_max_viol',
+    'gen_pow_imag_min_viol',
+    'gen_ramp_up_max_viol',
+    'gen_ramp_down_max_viol',
+    'gen_cost',
+    'line_xsw_max',
+    'line_xsw_min',
+    'line_sw_qual',
+    'line_cost',
+    'xfmr_xsw_max',
+    'xfmr_xsw_min',
+    'xfmr_sw_qual',
+    'xfmr_xst_bounds',
+    'xfmr_cost',
+    'swsh_xst_max',
+    'swsh_xst_min',
+]
+summary_out_keys = [
+    'infeas',
+    'key',
+    'val',
+]
+check_summary_keys = True
+
+def create_new_summary():
+    
+    summary = {
+        k: {
+            j: None
+            for j in summary_out_keys}
+        for k in summary_keys}
+    return summary
 
 def flatten_summary(summary):
 
@@ -247,7 +306,7 @@ class Evaluation:
         self.check_contingencies = True # set to false to check only the base case and then return
         self.line_switching_allowed = True
         self.xfmr_switching_allowed = True
-        self.summary = {}
+        self.summary = create_new_summary()
         self.summary_all_cases = {}
         self.infeas = True
         self.infeas_cumulative = False
@@ -293,7 +352,6 @@ class Evaluation:
         #    summary_csv_writer.writerow(flatten_summary(e.summary)['keys'])
         #    summary_csv_writer.writerow(flatten_summary(e.summary)['values'])
 
-
     def summarize(self, summary_key, values, keys=None, tol=None):
 
         '''adds to the evaluation single case summary
@@ -318,6 +376,9 @@ class Evaluation:
             'infeas': infeas,
             'key': key,
             'val': val}
+        if check_summary_keys:
+            assert summary_key in self.summary.keys(), 'unregistered summary key. new key: {}, existing keys: {}'.format(summary_key, list(self.summary.keys()))
+            assert len(set(out.keys()).difference(set(summary_out_keys))) == 0, 'unregisered summary out key. new keys: {}, existing keys: {}'.format(list(out.keys), summary_out_keys) 
         self.summary[summary_key] = out
         if infeas:
             curframe = inspect.currentframe()
@@ -3496,7 +3557,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     # base case solution evaluation
     case_start_time = time.time()
 
-    e.summary = {}
+    e.summary = create_new_summary()
 
     # read the base case solution
     sb.set_read_dims()
@@ -3614,7 +3675,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                 if ctgs_so_far > stop_after_ctgs:
                     break
 
-            e.summary = {}
+            e.summary = create_new_summary()
             print('processing contingency {}'.format(active_case))
             try:
                 
