@@ -352,7 +352,6 @@ class Data:
                 'pmax_tol': cost_domain_tol,
                 'cblocks': cblocks}
             self.check_cost_domain(cblocks, key, cblocks_total_pmax, r.pt, cost_domain_tol, 'Generator', diagnostics, scrub_mode=scrub_mode)
-            self.sup.generators[r.i, r.id]['cblocks'] = [{'pmax': (1.0e12 + 1.0), 'c': 0.0}]
 
     def check_load_cost_domain(self, scrub_mode=False):
         

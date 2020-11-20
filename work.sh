@@ -13,7 +13,8 @@
 #case_dir=./data/ieee14/scenario_2/
 #case_dir=./data/ieee14/scenario_3/
 #case_dir=./data/ieee14/scenario_4/
-case_dir=./data/ieee14/scenario_5/
+#case_dir=./data/ieee14/scenario_5/
+case_dir=./data/ieee14/scenario_6/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
@@ -52,7 +53,7 @@ case_dir=./data/ieee14/scenario_5/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09459/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09462/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N09462/scenario_02/
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_01/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S5N11152/scenario_01/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_02/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_03/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S4N11152/scenario_04/
@@ -80,8 +81,8 @@ refresh_data=1
 check_data=1
 scrub_data=1
 check_scrubbed_data=1
-make_new_sol=1
-eval_sol=1
+make_new_sol=0
+eval_sol=0
 do_submission=0
 eval_submission=0
 division=1
