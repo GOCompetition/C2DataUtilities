@@ -12,8 +12,14 @@ import sys, os
 
 # modules for this code
 # better way to make this visible?
-sys.path.append(os.path.normpath('.'))
-sys.path.append(os.path.normpath('./py'))
+
+
+#sys.path.append(os.path.normpath('.'))
+#sys.path.append(os.path.normpath('./py'))
+
+script_path=os.path.dirname(os.path.realpath(__file__)) + '/py'
+
+sys.path.append(script_path)
 from infeasibility_solution import Solver
 
 args = sys.argv
