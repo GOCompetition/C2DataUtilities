@@ -82,6 +82,7 @@ check_data=0
 scrub_data=0
 check_scrubbed_data=0
 make_new_sol=0
+copy_sol=1 # copy from tmpsol/solXXX
 eval_sol=1
 do_submission=0
 eval_submission=0
@@ -90,6 +91,7 @@ num_proc=1
 
 py_dir=./py/
 work_dir=./tmp/
+stored_sol_dir=./tmpsol/sol
 raw1="${work_dir}/case.raw"
 raw2="${work_dir}/case.scrubbed.raw"
 sup1="${work_dir}/case.json"
@@ -188,6 +190,17 @@ then
     python ${py_dir}construct_infeasibility_solution.py "$raw2" "$sup2" "$con2" "$work_dir"
 else
     echo "skip construct new infeasibility solution"
+fi
+
+# copy stored solution
+if [ $copy_sol -gt 0 ]
+then
+    echo "copy stored solution"
+    stored_sol_dir_to_use="${stored_sol_dir}${copy_sol}/"
+    echo "stored solution directory: ${stored_sol_dir_to_use}"
+    cp ${stored_sol_dir_to_use}solution*.txt $work_dir
+else
+    echo "skip copy stored solution"
 fi
 
 # evaluate infeasibility solution
