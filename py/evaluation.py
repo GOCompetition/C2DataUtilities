@@ -85,6 +85,7 @@ pandas_float_precision=None
 #pandas_float_precision='round_trip'
 
 stop_on_errors = True
+#stop_on_errors = False
 active_case = "BASECASE"
 active_solution_path = '.'
 log_fileobject = None
