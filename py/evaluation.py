@@ -214,9 +214,11 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
 
     if raise_exception and check_passed != True:
         if evaluation is not None:
-            evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
-            evaluation.write_summary(eval_out_path, active_case, detail_json=True)
-            evaluation.write_summary(eval_out_path, '', summary_json=True)
+            if not evaluation.summary_written:
+                evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
+                evaluation.write_summary(eval_out_path, active_case, detail_json=True)
+                evaluation.write_summary(eval_out_path, '', summary_json=True)
+                evaluation.summary_written = True
         raise Exception(formatted_message)
 
 def print_info(message):
@@ -3444,9 +3446,13 @@ class CaseSolution:
 @timeit
 def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary_name=None, detail_name=None, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
 
-    print('check_contingencies: ', check_contingencies)
-    print('line_switching_allowed: ', line_switching_allowed)
-    print('xfmr_switching_allowed: ', xfmr_switching_allowed)
+    print('USE_MPI: {}'.format(USE_MPI))
+    print('check_contingencies: {}'.format(check_contingencies))
+    print('line_switching_allowed: {}'.format(line_switching_allowed))
+    print('xfmr_switching_allowed: {}'.format(xfmr_switching_allowed))
+    print('hard_constr_tol: {}'.format(hard_constr_tol))
+    print('pandas_float_precision: {}'.format(pandas_float_precision))
+    print('stop_on_errors: {}'.format(stop_on_errors))
 
     # todo - remove
     if debug:
@@ -3558,6 +3564,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     # base case solution evaluation
     case_start_time = time.time()
 
+    e.summary_written = False
     e.summary = create_new_summary()
 
     # read the base case solution
@@ -3578,21 +3585,24 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     e.infeas_all_cases['BASECASE'] = e.infeas
     e.summary_all_cases['BASECASE'] = copy.deepcopy(e.summary)
 
-    e.write_summary(eval_out_path, active_case, detail_json=True)
-    if USE_MPI:
-        # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
-        # with header row in eval_detail.csv
-        # then add the case rows to eval_detail.csv after evaluation is complete
-        # with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
-        #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        #     detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
-        # with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file: # write
-        #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        #     detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
-        # todo fix this
-        pass
-    else:
-        e.write_summary(eval_out_path, active_case, detail_csv=True)
+    # write summary
+    if not e.summary_written:
+        e.write_summary(eval_out_path, active_case, detail_json=True)
+        if USE_MPI:
+            # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
+            # with header row in eval_detail.csv
+            # then add the case rows to eval_detail.csv after evaluation is complete
+            # with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
+            #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            #     detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
+            # with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file: # write
+            #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            #     detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
+            # todo fix this
+            pass
+        else:
+            e.write_summary(eval_out_path, active_case, detail_csv=True)
+        e.summary_written = True
 
     case_end_time = time.time()
     print_info(
@@ -3676,6 +3686,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                 if ctgs_so_far > stop_after_ctgs:
                     break
 
+            e.summary_written = False
             e.summary = create_new_summary()
             print('processing contingency {}'.format(active_case))
             try:
@@ -3728,8 +3739,12 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                 e.infeas_all_cases[clean_string(active_case)] = e.infeas
                 traceback.print_exc()
 
-            e.write_summary(eval_out_path, active_case, detail_json=True)
-            e.write_summary(eval_out_path, active_case, detail_csv=True)
+            # write summary
+            if not e.summary_written:
+                e.write_summary(eval_out_path, active_case, detail_json=True)
+                e.write_summary(eval_out_path, active_case, detail_csv=True)
+                e.summary_written = True
+
             case_end_time = time.time()
             print_info(
                 "done evaluating case. label: {}, time: {}".format(
