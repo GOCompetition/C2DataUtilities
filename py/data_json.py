@@ -821,6 +821,7 @@ class Sup:
         with open(file_name, "r") as case_json_file:
             #self.sup_jsonobj = json.load(case_json_file)
             self.sup_jsonobj = json.load(case_json_file, object_pairs_hook=dict_alert_on_duplicates)
+            #print('json file: {}, size: {}'.format(case_json_file, len(self.sup_jsonobj) if self.sup_jsonobj is not None else 0))
             if self.do_force_defaults:
                 self.force_defaults()
             self.init()
