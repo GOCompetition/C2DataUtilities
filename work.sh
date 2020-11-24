@@ -9,11 +9,11 @@
 #/pic/projects/goc/submission-manager/submission-manager-tmp/arunveeramany/TESTSUB9_1_1/C2S3N00014_output1/
 
 # C2DataUtilities test data
-#case_dir=./data/ieee14/scenario_1/
+case_dir=./data/ieee14/scenario_1/
 #case_dir=./data/ieee14/scenario_2/
 #case_dir=./data/ieee14/scenario_3/
 #case_dir=./data/ieee14/scenario_4/
-case_dir=./data/ieee14/scenario_5/
+#case_dir=./data/ieee14/scenario_5/
 #case_dir=./data/ieee14/scenario_6/
 
 # Originals
@@ -82,7 +82,7 @@ check_data=0
 scrub_data=0
 check_scrubbed_data=0
 make_new_sol=0
-copy_sol=3 # copy from tmpsol/solXXX
+copy_sol=0 # copy from tmpsol/solXXX
 eval_sol=1
 do_submission=0
 eval_submission=0

@@ -222,7 +222,7 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
         raise Exception(formatted_message)
 
 def print_info(message):
-    #print(message)
+    print(message)
     print_alert(message, raise_exception=False)
     #pass
 
@@ -3446,14 +3446,6 @@ class CaseSolution:
 @timeit
 def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary_name=None, detail_name=None, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
 
-    print('USE_MPI: {}'.format(USE_MPI))
-    print('check_contingencies: {}'.format(check_contingencies))
-    print('line_switching_allowed: {}'.format(line_switching_allowed))
-    print('xfmr_switching_allowed: {}'.format(xfmr_switching_allowed))
-    print('hard_constr_tol: {}'.format(hard_constr_tol))
-    print('pandas_float_precision: {}'.format(pandas_float_precision))
-    print('stop_on_errors: {}'.format(stop_on_errors))
-
     # todo - remove
     if debug:
         ctgs_so_far = 0
@@ -3466,6 +3458,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     global eval_out_path
     global log_fileobject
 
+    active_case = 'BASECASE'
     active_solution_path = solution_path
     eval_out_path = solution_path
 
@@ -3473,9 +3466,17 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         log_fileobject = open(f'{active_solution_path}/{active_case}.eval.log', "w")
         log_fileobject.write(f"Initiating Evaluation for {active_solution_path}...\n")
 
+    print_info('USE_MPI: {}'.format(USE_MPI))
+    print_info('check_contingencies: {}'.format(check_contingencies))
+    print_info('line_switching_allowed: {}'.format(line_switching_allowed))
+    print_info('xfmr_switching_allowed: {}'.format(xfmr_switching_allowed))
+    print_info('hard_constr_tol: {}'.format(hard_constr_tol))
+    print_info('pandas_float_precision: {}'.format(pandas_float_precision))
+    print_info('stop_on_errors: {}'.format(stop_on_errors))
+
     if not ( os.path.exists(raw_name) and os.path.exists(con_name) and os.path.exists(sup_name)):
-        print('Could not find input data files')
-        print(raw_name, con_name, sup_name)
+        print_info('Could not find input data files')
+        print_info((raw_name, con_name, sup_name))
         return (None, 1, False, {})
         #sys.exit()
 
@@ -3625,11 +3626,33 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     # TODO - extract this to a function and add a verification that we have not just the right number of contingencies but also the right contingency label values
     #CHALLENGE2 - validate solution2 file count
-    print('solutions path', solution_path)
+    print_info('solutions path: {}'.format(solution_path))
     sol_ctg_path = f"{solution_path}/solution_*.txt"
     solution_files = glob.glob( str( sol_ctg_path)  )
     solution2_files = [ solution_file for solution_file in solution_files if "BASECASE" not in solution_file]
+    base_case_solution_files = [solution_file for solution_file in solution_files if "BASECASE" in solution_file]
+    print_alert(
+        'Expected 1 BASECASE solution file, Encountered {} BASECASE solution files, files found: {}'.format(
+            len(base_case_solution_files), base_case_solution_files),
+        check_passed=(len(base_case_solution_files) == 1))
     
+    #self.ctg_label#?????
+    #print(solution2_files)
+    ctg_labels_in_sol = [
+        Path(solution_file).resolve().stem.replace("solution_","")
+        for solution_file in solution2_files]
+    ctg_labels_in_con = e.ctg_label
+    ctg_labels_in_con_not_in_sol = sorted(list(set(ctg_labels_in_con).difference(set(ctg_labels_in_sol))))
+    print_alert(
+        'Expected 0 contingencies in CON not in solution_*.txt, found {}: {}'.format(
+            len(ctg_labels_in_con_not_in_sol), ctg_labels_in_con_not_in_sol),
+        check_passed=(len(ctg_labels_in_con_not_in_sol) == 0))
+    ctg_labels_in_sol_not_in_con = sorted(list(set(ctg_labels_in_sol).difference(set(ctg_labels_in_con))))
+    print_alert(
+        'Expected 0 contingencies in solution_*.txt not in CON, found {}: {}'.format(
+            len(ctg_labels_in_sol_not_in_con), ctg_labels_in_sol_not_in_con),
+        check_passed=(len(ctg_labels_in_sol_not_in_con) == 0))
+
     #with open(str(con_name)) as f:
     #   expected = sum('CONTINGENCY' in line for line in f)
 
@@ -3688,10 +3711,10 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
             e.summary_written = False
             e.summary = create_new_summary()
-            print('processing contingency {}'.format(active_case))
+            print_info('processing contingency {}'.format(active_case))
             try:
                 
-                print(f'writing {active_case} log to {active_solution_path}')
+                print_info(f'writing {active_case} log to {active_solution_path}')
                 log_fileobject = open( f'{active_solution_path}/{active_case}.eval.log', "w")
                 log_fileobject.write(f"Initiating Evaluation for {active_solution_path}...")
 
@@ -3861,34 +3884,37 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     if process_rank == 0:
         end_time_all = time.time()
-        print('obj all cases:')
-        print(e.obj_all_cases)
-        print('infeas all cases:')
-        print(e.infeas_all_cases)
-        print('obj cumulative: {}'.format(e.obj_cumulative))
-        print('infeas cumulative: {}'.format(e.infeas_cumulative))
-        print('eval time: {}'.format(end_time_all - start_time_all))
+        print_info('obj all cases:')
+        print_info(e.obj_all_cases)
+        print_info('infeas all cases:')
+        print_info(e.infeas_all_cases)
+        print_info('obj cumulative: {}'.format(e.obj_cumulative))
+        print_info('infeas cumulative: {}'.format(e.infeas_cumulative))
+        print_info('eval time: {}'.format(end_time_all - start_time_all))
     
         # todo : short circuit if infeas
 
         e.write_summary(eval_out_path, '', summary_json=True)
 
-        print("obj: {}".format(e.obj_cumulative))
-        print("infeas: {}".format(e.infeas_cumulative))    
+        print_info("obj: {}".format(e.obj_cumulative))
+        print_info("infeas: {}".format(e.infeas_cumulative))    
 
 
     return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist, e.summary_all_cases)
 
 
 def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
+
+    global active_case
     global active_solution_path
     global eval_out_path
     global USE_MPI
 
+    active_case = 'BASECASE'
     active_solution_path = solution_basepath
     eval_out_path = solution_basepath
-    print('writing logs to {}' .format(active_solution_path))
-    print('writing detailed and summary evaluation output to {}' .format(eval_out_path))
+    print_info('writing logs to {}' .format(active_solution_path))
+    print_info('writing detailed and summary evaluation output to {}' .format(eval_out_path))
 
     raw_name = f'{data_basepath}/case.scrubbed.raw' 
 
@@ -3906,9 +3932,9 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
         sup_name = f'{data_basepath}/case.json' 
 
 
-    print(f'raw: {raw_name}')
-    print(f'con: {con_name}')
-    print(f'sup: {sup_name}')
+    print_info(f'raw: {raw_name}')
+    print_info(f'con: {con_name}')
+    print_info(f'sup: {sup_name}')
     
 
     base_name = f"{solution_basepath}/solution_BASECASE.txt"
@@ -3916,8 +3942,8 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
     summary_name = f"{solution_basepath}/summary.csv"
     detail_name = f"{solution_basepath}/detail.csv"
 
-    print(f'Setting data path to {data_basepath}')
-    print(f'Setting solution path to {solution_basepath}')
+    print_info(f'Setting data path to {data_basepath}')
+    print_info(f'Setting solution path to {solution_basepath}')
 
     try:
         return run(raw_name, con_name, sup_name,solution_basepath, ctg_name, summary_name, detail_name, line_switching_allowed, xfmr_switching_allowed, check_contingencies)
