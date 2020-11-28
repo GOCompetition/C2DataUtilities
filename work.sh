@@ -60,7 +60,7 @@
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N11152/scenario_005/
 
 # trial 1
-case_dir=/pic/dtn/go/Steve/C2/T1/GT/industry/nonbase/MSR_BB/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GT/industry/nonbase/MSR_BB/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/France-EHV-Lyon_BB/scenario_1/
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/France_NB/scenario_1/
 #case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/MSR_BB/scenario_1/
@@ -77,11 +77,12 @@ case_dir=/pic/dtn/go/Steve/C2/T1/GT/industry/nonbase/MSR_BB/scenario_001/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial1/nov15_01/source/GOTx31K-0001/pop/GOTx31K_0001_9001/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov22_01/scrubbed/HVFLA/scenario_028/
 #case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/nov22_01/fix/HVFLA/scenario_029/
+case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov22_01/scrubbed/GOTx2000_2001/scenario_049/
 
 # set options
 strict_names=0
 refresh_data=1
-check_data=0
+check_data=1
 scrub_data=0
 check_scrubbed_data=0
 make_new_sol=1

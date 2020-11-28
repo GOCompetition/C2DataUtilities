@@ -339,7 +339,7 @@ class Data:
 
     def check_gen_cost_domain(self, scrub_mode=False):
         
-        cost_domain_tol = self.raw.case_identification.sbase * hard_constr_tol
+        cost_domain_tol = self.raw.case_identification.sbase * hard_constr_tol # + hard_constr_tol # todo: put in this extra?
         for r in self.raw.get_generators():
             key = (r.i, r.id)
             cblocks = self.sup.generators[r.i, r.id]['cblocks']
@@ -356,7 +356,7 @@ class Data:
     def check_load_cost_domain(self, scrub_mode=False):
         
         for r in self.raw.get_loads():
-            cost_domain_tol = r.pl * hard_constr_tol
+            cost_domain_tol = r.pl * hard_constr_tol # + hard_constr_tol # todo: put in this extra?
             key = (r.i, r.id)
             pmax = r.pl * self.sup.loads[r.i, r.id]['tmax']
             cblocks = self.sup.loads[r.i, r.id]['cblocks']
