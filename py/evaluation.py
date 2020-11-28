@@ -672,6 +672,9 @@ class Evaluation:
         self.swsh_block_num_steps = np.array(
             [[r.n1, r.n2, r.n3, r.n4, r.n5, r.n6, r.n7, r.n8]
              for r in swshs])
+        if self.num_swsh == 0:
+            self.swsh_block_adm_imag = np.zeros(shape=(0, 8))
+            self.swsh_block_num_steps = np.zeros(shape=(0, 8))
         self.swsh_num_blocks = np.array(
             [r.swsh_susc_count for r in swshs])
         self.bus_swsh_matrix = sp.csr_matrix(
