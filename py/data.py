@@ -62,6 +62,8 @@ id_str_ok_chars = [
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 default_branch_limit = 9999.0
+remove_loads_with_pq_eq_0 = True
+remove_switched_shunts_with_no_nonzero_blocks = True
 do_check_line_i_lt_j = False
 do_check_xfmr_i_lt_j = False
 do_check_pb_nonnegative = True # cannot fix this - need to check it though
@@ -1166,6 +1168,11 @@ class Raw:
 
         self.check_switched_shunts_bus_exists(scrub_mode=True)
         self.check_switched_shunts_binit_feas(scrub_mode=True)
+        if remove_switched_shunts_with_no_nonzero_blocks:
+            switched_shunts = self.get_switched_shunts()
+            for r in switched_shunts:
+                if r.swsh_susc_count == 0:
+                    del self.switched_shunts[r.i]
         for r in self.get_switched_shunts():
             r.scrub()
 
@@ -1287,6 +1294,11 @@ class Raw:
     def scrub_loads(self):
 
         self.check_loads_bus_exists(scrub_mode=True)
+        if remove_loads_with_pq_eq_0:
+            loads = self.get_loads()
+            for r in loads:
+                if (r.pl == 0.0) and (r.ql == 0.0):
+                    del self.loads[r.i, r.id]
         for r in self.get_loads():
             r.scrub()
 
