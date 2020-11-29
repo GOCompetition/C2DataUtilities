@@ -215,7 +215,7 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
     if raise_exception and check_passed != True:
         if evaluation is not None:
             if not evaluation.summary_written:
-                evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
+                #evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
                 evaluation.write_summary(eval_out_path, active_case, detail_json=True)
                 evaluation.write_summary(eval_out_path, '', summary_json=True)
                 evaluation.summary_written = True
@@ -3444,6 +3444,39 @@ class CaseSolution:
 
         #CHALLENGE2 - ENSURE XSTi ARE INTS
 
+@timeit
+def json_to_csv(path):
+
+    #print(path)
+    #print(str(path))
+    #print(glob.glob(str(path)))
+    json_files = [f for f in glob.glob(str('{}/eval_detail_*.json'.format(path))) if ('eval_detail_' in f) and ('json' in f)]
+    json_contingency_files = [f for f in json_files if 'BASECASE' not in f]
+    json_base_case_files = [f for f in json_files if 'BASECASE' in f]
+    #print(json_contingency_files)
+    #print(json_base_case_files)
+    print_alert(
+        'Expected 1 BASECASE json eval output file, Encountered {} BASECASE json eval output files, files found: {}'.format(
+            len(json_base_case_files), json_base_case_files),
+        check_passed=(len(json_base_case_files) == 1))
+
+    json_base_case_file = json_base_case_files[0]
+    contingency_labels = [Path(f).resolve().stem.replace("eval_detail_","") for f in json_contingency_files]
+    num_contingencies = len(contingency_labels)
+
+    with open('{}/eval_detail.csv'.format(eval_out_path), mode='w') as detail_csv_file:
+        detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        with open(json_base_case_file, 'r') as f:
+            s = json.load(f)
+        detail_csv_writer.writerow(['case_label'] + flatten_summary(s)['keys']) # field names come from keys of base case summary
+        detail_csv_writer.writerow(['BASECASE'] + flatten_summary(s)['values']) # values of base case summary
+        for i in range(num_contingencies):
+            json_contingency_file = json_contingency_files[i]
+            contingency_label = contingency_labels[i]
+            with open(json_contingency_file, 'r') as f:
+                s = json.load(f)
+            detail_csv_writer.writerow([contingency_label] + flatten_summary(s)['values']) # values of contingency summary
+
 # todo extract this to another module
 # e.g. evaluate_solution.py, evaluate_solution_serial.py, evaluate_solution_mpi.py, etc.
 @timeit
@@ -3593,6 +3626,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if not e.summary_written:
         e.write_summary(eval_out_path, active_case, detail_json=True)
         if USE_MPI:
+            #e.write_summary(eval_out_path,
             # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
             # with header row in eval_detail.csv
             # then add the case rows to eval_detail.csv after evaluation is complete
@@ -3605,7 +3639,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
             # todo fix this
             pass
         else:
-            e.write_summary(eval_out_path, active_case, detail_csv=True)
+            #e.write_summary(eval_out_path, active_case, detail_csv=True)
+            pass
         e.summary_written = True
 
     case_end_time = time.time()
@@ -3768,7 +3803,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
             # write summary
             if not e.summary_written:
                 e.write_summary(eval_out_path, active_case, detail_json=True)
-                e.write_summary(eval_out_path, active_case, detail_csv=True)
+                #e.write_summary(eval_out_path, active_case, detail_csv=True)
                 e.summary_written = True
 
             case_end_time = time.time()
@@ -3870,7 +3905,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                     #print('trying to write summary files eval_out_path: {}, active_case: {}'.format(eval_out_path, active_case))
                     #with open(eval_out_path + '/' + active_case + '.tmp', mode='w') as tmp_out_file:
                     #    tmp_out_file.write('test')
-                    #self.write_summary(eval_out_path, active_case, detail_json=True)
+                    e.write_summary(eval_out_path, active_case, detail_json=True)
                     #self.write_summary(eval_out_path, active_case, detail_csv=True)
 
                 except:
@@ -3898,6 +3933,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         # todo : short circuit if infeas
 
         e.write_summary(eval_out_path, '', summary_json=True)
+        json_to_csv(eval_out_path)
 
         print_info("obj: {}".format(e.obj_cumulative))
         print_info("infeas: {}".format(e.infeas_cumulative))    
