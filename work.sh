@@ -15,12 +15,13 @@
 #case_dir=./data/ieee14/scenario_4/
 #case_dir=./data/ieee14/scenario_5/
 #case_dir=./data/ieee14/scenario_6/
+case_dir=./data/ieee14/scenario_7/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
@@ -85,9 +86,9 @@ refresh_data=1
 check_data=1
 scrub_data=1
 check_scrubbed_data=1
-make_new_sol=1
+make_new_sol=0
 copy_sol=0 # copy from tmpsol/solXXX
-eval_sol=1
+eval_sol=0
 do_submission=0
 eval_submission=0
 division=1

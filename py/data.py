@@ -86,6 +86,8 @@ EMERGENCY_MARGINAL_COST_FACTOR = 5.0
 debug_check_tau_theta_init_feas = False
 ratec_ratea_2=False   #report error only once
 ratc1_rata1 = False
+default_load_marginal_cost = 8000.0
+default_generator_marginal_cost = 1000.0
 
 def timeit(function):
     def timed(*args, **kw):
@@ -377,26 +379,48 @@ class Data:
 
     def check_cost_domain(self, cblocks, key, cblocks_total_pmax, pmax, tol, data_type, diagnostics, scrub_mode=False):
 
+        default_marginal_cost = 0.0
+        if data_type == 'Load':
+            default_marginal_cost = default_load_marginal_cost
+        elif data_type == 'Generator':
+            default_marginal_cost = default_generator_marginal_cost
+
         shortfall = pmax + tol - cblocks_total_pmax
-        if shortfall > 0.0:
+        num_cblocks = len(cblocks)
+        if (shortfall <= 0.0) and (num_cblocks > 0):
+            return # no further check/scrub needed
+
+        # check/scrub messages
+        if len(cblocks) == 0:
+            alert(
+                {'data_type':
+                     data_type,
+                 'error_message': (
+                        'Cost function has 0 blocks. We prefer to have at least 1 block.' + (
+                            ' Scrubbing by setting a wide enough cost block with default marginal cost {}.'.format(default_marginal_cost)
+                            if scrub_mode else '')),
+                 'diagnostics': diagnostics})
+        elif shortfall > 0.0:
             alert(
                 {'data_type':
                      data_type,
                  'error_message': (
                         'Cost function domain does not cover operating range with sufficient tolerance. please ensure the upper bound of the cost function domain exceeds the device operating range by more than the required tolerance.' + (
-                            ' Scrubbing by extending the most expensive cost block or setting a wide enough cost block with 0 cost if no cost blocks exist.' if scrub_mode else '')),
+                            ' Scrubbing by extending the most expensive cost block.' if scrub_mode else '')),
                  'diagnostics': diagnostics})
-            if scrub_mode:
-                num_cblocks = len(cblocks)
-                if num_cblocks == 0:
-                    new_cblocks = [{'pmax': (shortfall + 1.0), 'c': 0.0}]
-                else:
-                    new_cblocks = sorted(cblocks, key=(lambda x: x['c']))
-                    new_cblocks[num_cblocks - 1]['pmax'] += (shortfall + 1.0)
-                if data_type == 'Load':
-                    self.sup.loads[key]['cblocks'] = new_cblocks
-                elif data_type == 'Generator':
-                    self.sup.generators[key]['cblocks'] = new_cblocks
+        if not scrub_mode:
+            return
+
+        # scrubbing needed
+        if num_cblocks == 0:
+            new_cblocks = [{'pmax': (shortfall + 1.0), 'c': default_marginal_cost}]
+        elif shortfall > 0.0:
+            new_cblocks = sorted(cblocks, key=(lambda x: x['c']))
+            new_cblocks[num_cblocks - 1]['pmax'] += (shortfall + 1.0)
+        if data_type == 'Load':
+            self.sup.loads[key]['cblocks'] = new_cblocks
+        elif data_type == 'Generator':
+            self.sup.generators[key]['cblocks'] = new_cblocks
 
     def convert_to_offline(self):
         '''converts the operating point to the offline starting point'''
