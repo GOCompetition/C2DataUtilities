@@ -1196,7 +1196,7 @@ class Raw:
             switched_shunts = self.get_switched_shunts()
             for r in switched_shunts:
                 if r.swsh_susc_count == 0:
-                    del self.switched_shunts[r.i]
+                    del self.switched_shunts[(r.i,)]
         for r in self.get_switched_shunts():
             r.scrub()
 

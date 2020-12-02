@@ -22,7 +22,7 @@
 
 # sandbox
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
@@ -79,13 +79,16 @@ case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov22_01/scrubbed/HVFLA/scenario_028/
 #case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/nov22_01/fix/HVFLA/scenario_029/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov22_01/scrubbed/GOTx2000_2001/scenario_049/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/LTU44/scenario_001/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/STV1/scenario_001/
+case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/AUS/scenario_007/
 
 # set options
 strict_names=0
-refresh_data=0
-check_data=0
-scrub_data=0
-check_scrubbed_data=0
+refresh_data=1
+check_data=1
+scrub_data=1
+check_scrubbed_data=1
 make_new_sol=0
 copy_sol=0 # copy from tmpsol/solXXX
 eval_sol=0
