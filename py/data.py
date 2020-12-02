@@ -2046,6 +2046,7 @@ class Raw:
 
         # bus section
         section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2057,14 +2058,17 @@ class Raw:
             bus.read_from_row(row)
             self.buses[bus.i] = bus
             section_num_records += 1
+            keys_with_repeats.append(bus.i)
         if section_num_records > len(self.buses):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Raw',
                  'error_message': 'repeated key in RAW file section: %s' % 'Bus',
-                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.buses)}})
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.buses), 'repeated keys': repeated_keys}})
 
         # load section
         section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2076,14 +2080,17 @@ class Raw:
             load.read_from_row(row)
             self.loads[(load.i, load.id)] = load
             section_num_records += 1
+            keys_with_repeats.append((load.i, load.id))
         if section_num_records > len(self.loads):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Raw',
                  'error_message': 'repeated key in RAW file section: %s' % 'Load',
-                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.loads)}})
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.loads), 'repeated keys': repeated_keys}})
 
         # fixed shunt section
         section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2095,14 +2102,17 @@ class Raw:
             fixed_shunt.read_from_row(row)
             self.fixed_shunts[(fixed_shunt.i, fixed_shunt.id)] = fixed_shunt
             section_num_records += 1
+            keys_with_repeats.append((fixed_shunt.i, fixed_shunt.id))
         if section_num_records > len(self.fixed_shunts):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Raw',
                  'error_message': 'repeated key in RAW file section: %s' % 'FixedShunt',
-                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.fixed_shunts)}})
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.fixed_shunts), 'repeated keys': repeated_keys}})
 
         # generator section
         section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2114,14 +2124,17 @@ class Raw:
             generator.read_from_row(row)
             self.generators[(generator.i, generator.id)] = generator
             section_num_records += 1
+            keys_with_repeats.append((generator.i, generator.id))
         if section_num_records > len(self.generators):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Raw',
                  'error_message': 'repeated key in RAW file section: %s' % 'Generator',
-                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.generators)}})
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.generators), 'repeated keys': repeated_keys}})
 
         # nontransformer branch section
         section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2136,14 +2149,20 @@ class Raw:
                 nontransformer_branch.j,
                 nontransformer_branch.ckt)] = nontransformer_branch
             section_num_records += 1
+            keys_with_repeats.append((
+                nontransformer_branch.i,
+                nontransformer_branch.j,
+                nontransformer_branch.ckt))
         if section_num_records > len(self.nontransformer_branches):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Raw',
                  'error_message': 'repeated key in RAW file section: %s' % 'NontransformerBranch',
-                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.nontransformer_branches)}})
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.nontransformer_branches), 'repeated keys': repeated_keys}})
 
         # transformer section
         section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2164,11 +2183,13 @@ class Raw:
                 transformer.ckt)] = transformer
             row_num += (num_rows - 1)
             section_num_records += 1
+            keys_with_repeats.append((transformer.i, transformer.j, transformer.ckt))
         if section_num_records > len(self.transformers):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Raw',
                  'error_message': 'repeated key in RAW file section: %s' % 'Transformer',
-                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.transformers)}})
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.transformers), 'repeated keys': repeated_keys}})
 
         # skip section
         #section_num_records = 0
@@ -2209,6 +2230,7 @@ class Raw:
 
         # transformer impedance correction tables section
         section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2220,11 +2242,13 @@ class Raw:
             tict.read_from_row(row)
             self.transformer_impedance_correction_tables[tict.i] = tict
             section_num_records += 1
+            keys_with_repeats.append(tict.i)
         if section_num_records > len(self.transformer_impedance_correction_tables):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Raw',
                  'error_message': 'repeated key in RAW file section: %s' % 'TransformerImpedanceCorrectionTable',
-                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.transformer_impedance_correction_tables)}})
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.transformer_impedance_correction_tables), 'repeated keys': repeated_keys}})
 
         # skip section
         while True: # zone
@@ -2282,6 +2306,7 @@ class Raw:
 
         # switched shunt section
         section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2293,11 +2318,13 @@ class Raw:
             switched_shunt.read_from_row(row)
             self.switched_shunts[(switched_shunt.i,)] = switched_shunt
             section_num_records += 1
+            keys_with_repeats.append((switched_shunt.i,))
         if section_num_records > len(self.switched_shunts):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Raw',
                  'error_message': 'repeated key in RAW file section: %s' % 'SwitchedShunt',
-                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.switched_shunts)}})
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.switched_shunts), 'repeated keys': repeated_keys}})
         
         self.active_loads = dict(filter(lambda load: load[1].status >0, self.loads.items()))
         self.num_loads_active =   len(self.active_loads)
@@ -2474,6 +2501,7 @@ class Con:
         row_num = -1
         in_contingency = False
         num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             #if row_num >= len(rows): # in case the data provider failed to put an end file line
@@ -2497,6 +2525,7 @@ class Con:
                     if  target_contingency == None or ( target_contingency != None and contingency.label == target_contingency):
                         self.contingencies[contingency.label] = contingency
                         num_records += 1
+                        keys_with_repeats.append(contingency.label)
                     in_contingency = False
                 else:
                     break
@@ -2520,11 +2549,20 @@ class Con:
                     traceback.print_exc()
                     raise e
         if num_records > len(self.contingencies):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
             alert(
                 {'data_type': 'Con',
                  'error_message': 'repeated key in CON file',
-                 'diagnostics': {'records': num_records, 'distinct keys': len(self.contingencies)}})
+                 'diagnostics': {'records': num_records, 'distinct keys': len(self.contingencies), 'repeated keys': repeated_keys}})
 
+def get_repeated_keys(keys):
+
+    keys_with_repeats = sorted(keys)
+    repeated_keys = []
+    for i in range(len(keys_with_repeats) - 1):
+        if keys_with_repeats[i] == keys_with_repeats[i + 1]:
+            repeated_keys.append(keys_with_repeats[i])
+    return sorted(list(set(repeated_keys)))
 
 class CaseIdentification:
 
