@@ -657,20 +657,20 @@ class Sup:
     def init_generators(self):
         self.generators = { (g['bus'], g['id']): g  for g in self.sup_jsonobj["generators"] }
         self.generator_count = len(self.generators)
-        self.check_repeated_keys_in_sup_jsonobj_section("generators", self.generator_count)
+        self.check_repeated_keys_in_sup_jsonobj_section("generators", ['bus', 'id'])
         self.gen_cblock_count = { (g['bus'], g['id']): len(g["cblocks"]) for g in self.generators.values()  }
 
     def init_lines(self):
         #CHALLENGE2 REVIEW: id == ckt ?
         self.lines = { (g['origbus'], g['destbus'], g['id']): g  for g in self.sup_jsonobj["lines"] }
         self.line_count = len(self.lines)
-        self.check_repeated_keys_in_sup_jsonobj_section("lines", self.line_count)
+        self.check_repeated_keys_in_sup_jsonobj_section("lines", ['origbus', 'destbus', 'id'])
 
     def init_transformers(self):
             #CHALLENGE2 REVIEW: id == ckt ?
         self.transformers = { (g['origbus'], g['destbus'], g['id']): g  for g in self.sup_jsonobj["transformers"] }
         self.xfmr_count = len(self.transformers)
-        self.check_repeated_keys_in_sup_jsonobj_section("transformers", self.xfmr_count)
+        self.check_repeated_keys_in_sup_jsonobj_section("transformers", ['origbus', 'destbus', 'id'])
 
     def  convert_generator_cblock_units(self,base_mva):
         if self.scrub_mode == True:
@@ -714,17 +714,26 @@ class Sup:
             #scblock['tmax'] /= base_mva # no normalization needed
             scblock['c'] *= base_mva
 
-    def check_repeated_keys_in_sup_jsonobj_section(self, section, num_unique_keys):
-        num_entries = len(self.sup_jsonobj[section])
+    def check_repeated_keys_in_sup_jsonobj_section(self, section, key_fields):
+        #num_entries = len(self.sup_jsonobj[section])
+        keys_with_repeats = sorted([tuple([r[kf] for kf in key_fields]) for r in self.sup_jsonobj[section]])
+        unique_keys = sorted(list(set(keys_with_repeats)))
+        num_entries = len(keys_with_repeats)
+        num_unique_keys = len(unique_keys)
         if num_unique_keys < num_entries:
+            repeated_keys = []
+            for i in range(len(keys_with_repeats) - 1):
+                if keys_with_repeats[i] == keys_with_repeats[i + 1]:
+                    repeated_keys.append(keys_with_repeats[i])
+            repeated_keys = sorted(list(set(repeated_keys)))
             print(
                 {'data_type': 'Sup', 'error_message': 'repeated key',
-                 'diagnostics': {'section': section, 'entries': num_entries, 'unique keys': num_unique_keys}})
+                 'diagnostics': {'section': section, 'entries': num_entries, 'unique keys': num_unique_keys, 'repeated keys': repeated_keys}})
 
     def init_loads(self):
         self.loads = { (v['bus'], v['id']): v  for v in self.sup_jsonobj["loads"] }
         self.load_count = len(self.loads)
-        self.check_repeated_keys_in_sup_jsonobj_section("loads", self.load_count)
+        self.check_repeated_keys_in_sup_jsonobj_section("loads", ['bus', 'id'])
         self.load_cblock_count = { load['bus']: len(load["cblocks"]) for load in self.loads.values()  }
   
     def get_lines(self):

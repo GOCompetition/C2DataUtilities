@@ -16,6 +16,7 @@
 #case_dir=./data/ieee14/scenario_5/
 #case_dir=./data/ieee14/scenario_6/
 #case_dir=./data/ieee14/scenario_7/
+case_dir=./data/ieee14/scenario_8/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
@@ -81,7 +82,7 @@
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov22_01/scrubbed/GOTx2000_2001/scenario_049/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/LTU44/scenario_001/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/STV1/scenario_001/
-case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/AUS/scenario_007/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/AUS/scenario_007/
 
 # set options
 strict_names=0
