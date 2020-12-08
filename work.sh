@@ -16,7 +16,7 @@
 #case_dir=./data/ieee14/scenario_5/
 #case_dir=./data/ieee14/scenario_6/
 #case_dir=./data/ieee14/scenario_7/
-case_dir=./data/ieee14/scenario_8/
+#case_dir=./data/ieee14/scenario_8/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
@@ -83,6 +83,10 @@ case_dir=./data/ieee14/scenario_8/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/LTU44/scenario_001/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/STV1/scenario_001/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/AUS/scenario_007/
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/AUSset1/AUSV1case01A
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial1/dec3_01/scrubbed/GOTx31K-0001/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/T1/Source/TAMU/GOTx31K-0001/scenario_003/
+case_dir=/pic/dtn/go/Steve/C2/T1/Source/GT/MSR_BB/scenario_244/
 
 # set options
 strict_names=0
@@ -90,9 +94,9 @@ refresh_data=1
 check_data=1
 scrub_data=1
 check_scrubbed_data=1
-make_new_sol=0
+make_new_sol=1
 copy_sol=0 # copy from tmpsol/solXXX
-eval_sol=0
+eval_sol=1
 do_submission=0
 eval_submission=0
 division=1
