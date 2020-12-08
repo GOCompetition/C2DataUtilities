@@ -1,54 +1,118 @@
 #!/bin/sh
 
-# select data
-main_dir=/pic/dtn/go/Steve/C2/sandbox/
-#network_dir=C2S2N00014/
-#network_dir=C2S1N00015/
-#network_dir=C2S1N00594/
-#network_dir=C2S1N02000/
-#network_dir=C2S1N02044/
-#network_dir=C2S1N02380/
-#network_dir=C2S1N02742/
-#network_dir=C2S1N04225/
-#network_dir=C2S1N04229/
-#network_dir=C2S1N09459/
-#network_dir=C2S1N09462/
-#network_dir=C2S3N11152/
-scenario=01
-#scenario=1
-case_dir=${main_dir}${network_dir}scenario_${scenario}/
-
 # override data selection
-case_dir=./test_data/ieee14/scenario_1/
-#case_dir=./test_data/ieee14/scenario_2/
-#case_dir=./test_data/ieee14/scenario_3/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo500/tgo500_0010_5857/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/TAMU/Sep16/tgo10K/tgo10K_0060_7178/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/Sep30_TAMU01/tgo10K/tgo10K_0060_7178/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/Sep30_TAMU01/tgo2000/tgo2000_0100_0289/
+#/pic/projects/goc/submission-manager/submission-manager-tmp/arunveeramany/TESTSUB9_1_1/C2S3N00014_output1/
+
+# C2DataUtilities test data
+#case_dir=./data/ieee14/scenario_1/
+#case_dir=./data/ieee14/scenario_2/
+#case_dir=./data/ieee14/scenario_3/
+#case_dir=./data/ieee14/scenario_4/
+#case_dir=./data/ieee14/scenario_5/
+#case_dir=./data/ieee14/scenario_6/
+#case_dir=./data/ieee14/scenario_7/
+#case_dir=./data/ieee14/scenario_8/
+
+# Originals
+#case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
+
+# sandbox
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_004/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_005/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_004/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_005/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02044/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02044/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02044/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02044/scenario_004/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02380/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02380/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02380/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02380/scenario_004/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02380/scenario_005/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02742/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02742/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02742/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02742/scenario_004/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02742/scenario_005/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N04225/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N04229/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N04229/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N04229/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N09459/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N09462/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N09462/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N11152/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N11152/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N11152/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N11152/scenario_004/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N11152/scenario_005/
+
+# trial 1
+#case_dir=/pic/dtn/go/Steve/C2/T1/GT/industry/nonbase/MSR_BB/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/France-EHV-Lyon_BB/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/France_NB/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/MSR_BB/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/MSR_NB/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_02R-173-tgo500_20190828/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_03R-200_S0700_20190923/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_25R-060_UW-LA2ND-24464_20191025/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_70R-422_S2000_20190625/scenario_1/
+#case_dir=/pic/dtn/go/Steve/C2/T1/GaTech/Trial_1_Oct8/Network_70R-422_S2000_20190923/scenario_1/
+
+# ad hoc analysis
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2_AUS/
+#case_dir=/people/holz501/gocomp/c2/data/TAMU_GOTx600_5002_0006/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial1/nov15_01/source/GOTx31K-0001/pop/GOTx31K_0001_9001/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov22_01/scrubbed/HVFLA/scenario_028/
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/nov22_01/fix/HVFLA/scenario_029/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov22_01/scrubbed/GOTx2000_2001/scenario_049/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/LTU44/scenario_001/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/STV1/scenario_001/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/AUS/scenario_007/
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/AUSset1/AUSV1case01A
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial1/dec3_01/scrubbed/GOTx31K-0001/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/T1/Source/TAMU/GOTx31K-0001/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/T1/Source/GT/MSR_BB/scenario_244/
 
 # set options
 strict_names=0
 refresh_data=1
-check_data=1
-scrub_data=1
-check_scrubbed_data=1
-make_new_sol=0
-eval_sol=0
-do_submission=1
-eval_submission=1
+check_data=0
+scrub_data=0
+check_scrubbed_data=0
+make_new_sol=1
+copy_sol=0 # copy from tmpsol/solXXX
+eval_sol=1
+do_submission=0
+eval_submission=0
 division=1
 num_proc=1
 
 py_dir=./data_utilities/
 work_dir=./tmp/
+stored_sol_dir=./tmpsol/sol
 raw1="${work_dir}/case.raw"
 raw2="${work_dir}/case.scrubbed.raw"
 sup1="${work_dir}/case.json"
 sup2="${work_dir}/case.scrubbed.json"
 con1="${work_dir}/case.con"
 con2="${work_dir}/case.scrubbed.con"
+
+echo "case: ${case_dir}"
 
 if [ ! -d "$work_dir" ] 
 then
@@ -139,6 +203,17 @@ then
     python ${py_dir}construct_infeasibility_solution.py "$raw2" "$sup2" "$con2" "$work_dir"
 else
     echo "skip construct new infeasibility solution"
+fi
+
+# copy stored solution
+if [ $copy_sol -gt 0 ]
+then
+    echo "copy stored solution"
+    stored_sol_dir_to_use="${stored_sol_dir}${copy_sol}/"
+    echo "stored solution directory: ${stored_sol_dir_to_use}"
+    cp ${stored_sol_dir_to_use}solution*.txt $work_dir
+else
+    echo "skip copy stored solution"
 fi
 
 # evaluate infeasibility solution

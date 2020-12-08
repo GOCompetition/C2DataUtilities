@@ -43,6 +43,7 @@ except:
 read_unused_fields = True
 write_defaults_in_unused_fields = False
 write_values_in_unused_fields = True
+hard_constr_tol = 1e-4 # tolerance on hard constraints, in the units of the model convention, i.e. mostly pu
 gen_cost_dx_margin = 1.0e-6 # ensure that consecutive x points differ by at least this amount
 gen_cost_dydx_min = 1.0e-6 # ensure that the marginal cost (i.e. cost function slope) never goes below this value ???
 gen_cost_y_min = 1.0e-6 # ensure that the cost never goes below this value ???
@@ -61,6 +62,8 @@ id_str_ok_chars = [
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 default_branch_limit = 9999.0
+remove_loads_with_pq_eq_0 = True
+remove_switched_shunts_with_no_nonzero_blocks = True
 do_check_line_i_lt_j = False
 do_check_xfmr_i_lt_j = False
 do_check_pb_nonnegative = True # cannot fix this - need to check it though
@@ -83,6 +86,8 @@ EMERGENCY_MARGINAL_COST_FACTOR = 5.0
 debug_check_tau_theta_init_feas = False
 ratec_ratea_2=False   #report error only once
 ratc1_rata1 = False
+default_load_marginal_cost = 8000.0
+default_generator_marginal_cost = 1000.0
 
 def timeit(function):
     def timed(*args, **kw):
@@ -308,7 +313,9 @@ class Data:
         self.check_no_transformers_in_raw_not_in_sup()
         self.check_generator_base_case_ramp_constraints_feasible()
         self.check_load_base_case_ramp_constraints_feasible()
-        self.check_connectedness()
+        self.check_connectedness(scrub_mode=False)
+        self.check_gen_cost_domain(scrub_mode=False)
+        self.check_load_cost_domain(scrub_mode=False)
 
     def scrub(self):
         '''modifies certain data elements to meet Grid Optimization Competition assumptions'''
@@ -330,13 +337,97 @@ class Data:
         self.remove_transformers_in_sup_not_in_raw()
         self.remove_generators_in_sup_not_in_raw()
         self.sup.check(scrub_mode=True)
+        self.check_connectedness(scrub_mode=True)
+        self.check_gen_cost_domain(scrub_mode=True)
+        self.check_load_cost_domain(scrub_mode=True)
+
+    def check_gen_cost_domain(self, scrub_mode=False):
+        
+        cost_domain_tol = self.raw.case_identification.sbase * hard_constr_tol # + hard_constr_tol # todo: put in this extra?
+        for r in self.raw.get_generators():
+            key = (r.i, r.id)
+            cblocks = self.sup.generators[r.i, r.id]['cblocks']
+            cblocks_total_pmax = sum([0.0] + [b['pmax'] for b in cblocks])
+            diagnostics = {
+                'I': r.i,
+                'ID': r.id,
+                'PT': r.pt,
+                'cost_pmax': cblocks_total_pmax,
+                'pmax_tol': cost_domain_tol,
+                'cblocks': cblocks}
+            self.check_cost_domain(cblocks, key, cblocks_total_pmax, r.pt, cost_domain_tol, 'Generator', diagnostics, scrub_mode=scrub_mode)
+
+    def check_load_cost_domain(self, scrub_mode=False):
+        
+        for r in self.raw.get_loads():
+            cost_domain_tol = r.pl * hard_constr_tol # + hard_constr_tol # todo: put in this extra?
+            key = (r.i, r.id)
+            pmax = r.pl * self.sup.loads[r.i, r.id]['tmax']
+            cblocks = self.sup.loads[r.i, r.id]['cblocks']
+            cblocks_total_pmax = sum([0.0] + [b['pmax'] for b in cblocks])
+            diagnostics = {
+                'I': r.i,
+                'ID': r.id,
+                'PL': r.pl,
+                'tmax': self.sup.loads[r.i, r.id]['tmax'],
+                'pmax': pmax,
+                'cost_pmax': cblocks_total_pmax,
+                'tmax_tol': hard_constr_tol,
+                'pmax_tol': cost_domain_tol,
+                'cblocks': cblocks}
+            self.check_cost_domain(cblocks, key, cblocks_total_pmax, pmax, cost_domain_tol, 'Load', diagnostics, scrub_mode=scrub_mode)
+
+    def check_cost_domain(self, cblocks, key, cblocks_total_pmax, pmax, tol, data_type, diagnostics, scrub_mode=False):
+
+        default_marginal_cost = 0.0
+        if data_type == 'Load':
+            default_marginal_cost = default_load_marginal_cost
+        elif data_type == 'Generator':
+            default_marginal_cost = default_generator_marginal_cost
+
+        shortfall = pmax + tol - cblocks_total_pmax
+        num_cblocks = len(cblocks)
+        if (shortfall <= 0.0) and (num_cblocks > 0):
+            return # no further check/scrub needed
+
+        # check/scrub messages
+        if len(cblocks) == 0:
+            alert(
+                {'data_type':
+                     data_type,
+                 'error_message': (
+                        'Cost function has 0 blocks. We prefer to have at least 1 block.' + (
+                            ' Scrubbing by setting a wide enough cost block with default marginal cost {}.'.format(default_marginal_cost)
+                            if scrub_mode else '')),
+                 'diagnostics': diagnostics})
+        elif shortfall > 0.0:
+            alert(
+                {'data_type':
+                     data_type,
+                 'error_message': (
+                        'Cost function domain does not cover operating range with sufficient tolerance. please ensure the upper bound of the cost function domain exceeds the device operating range by more than the required tolerance.' + (
+                            ' Scrubbing by extending the most expensive cost block.' if scrub_mode else '')),
+                 'diagnostics': diagnostics})
+        if not scrub_mode:
+            return
+
+        # scrubbing needed
+        if num_cblocks == 0:
+            new_cblocks = [{'pmax': (shortfall + 1.0), 'c': default_marginal_cost}]
+        elif shortfall > 0.0:
+            new_cblocks = sorted(cblocks, key=(lambda x: x['c']))
+            new_cblocks[num_cblocks - 1]['pmax'] += (shortfall + 1.0)
+        if data_type == 'Load':
+            self.sup.loads[key]['cblocks'] = new_cblocks
+        elif data_type == 'Generator':
+            self.sup.generators[key]['cblocks'] = new_cblocks
 
     def convert_to_offline(self):
         '''converts the operating point to the offline starting point'''
 
         self.raw.set_operating_point_to_offline_solution()
 
-    def check_connectedness(self):
+    def check_connectedness(self, scrub_mode=False):
 
         buses_id = [r.i for r in self.raw.get_buses()]
         buses_id = sorted(buses_id)
@@ -359,6 +450,16 @@ class Data:
         ctg_branches_id = [(e.i, e.j, e.ckt) for r in self.con.get_contingencies() for e in r.branch_out_events]
         ctg_branches_id = [(r if r[0] < r[1] else (r[1], r[0], r[2])) for r in ctg_branches_id]
         ctg_branches_id = sorted(list(set(ctg_branches_id)))
+        ctg_branches_id_ctg_label_map = {
+            k:[]
+            for k in ctg_branches_id}
+        for r in self.con.get_contingencies():
+            for e in r.branch_out_events:
+                if e.i < e.j:
+                    k = (e.i, e.j, e.ckt)
+                else:
+                    k = (e.j, e.i, e.ckt)
+                ctg_branches_id_ctg_label_map[k].append(r.label)
         branch_bus_pairs = sorted(list(set([(r[0], r[1]) for r in branches_id])))
         bus_pair_branches_map = {
             r:[]
@@ -399,12 +500,20 @@ class Data:
         #connected_components = [set(k) for k in connected_components] # todo get only the bus nodes and take only their id number
         num_connected_components = len(connected_components)
         if num_connected_components > 1:
-            alert(
-                {'data_type':
-                     'Data',
-                 'error_message':
-                     'more than one connected component in the base case unswitched system graph',
-                 'diagnostics': connected_components})
+            if scrub_mode:
+                alert(
+                    {'data_type':
+                         'Data',
+                     'error_message':
+                         'more than one connected component in the base case unswitched system graph. This is diagnosed by the data checker but cannot be fixed by the scrubber. It must be fixed by the designer of the data set.',
+                     'diagnostics': connected_components})
+            else:
+                alert(
+                    {'data_type':
+                         'Data',
+                     'error_message':
+                         'more than one connected component in the base case unswitched system graph.',
+                     'diagnostics': connected_components})
         bridges = list(nx.bridges(graph))
         num_bridges = len(bridges)
         bridges = sorted(list(set(branch_edges).intersection(set(bridges))))
@@ -413,13 +522,35 @@ class Data:
         ctg_bridges = sorted(list(set(bridges).intersection(set(ctg_branches_id))))
         num_ctg_bridges = len(ctg_bridges)
         if num_ctg_bridges > 0:
-            alert(
-                {'data_type':
-                     'Data',
-                 'error_message':
-                     'at least one branch outage contingency causes multiple connected components in the post contingency unswitched system graph',
-                 'diagnostics': ctg_bridges})
-
+            if scrub_mode:
+                alert(
+                    {'data_type':
+                         'Data',
+                     'error_message':
+                         'at least one branch outage contingency causes multiple connected components in the post contingency unswitched system graph. Scrubbing by removing contingencies causing multiple connected components.',
+                     'diagnostics': ctg_bridges})
+                ctgs_label_to_remove = [
+                    k
+                    for r in ctg_bridges
+                    for k in ctg_branches_id_ctg_label_map[r]]
+                ctgs_label_to_remove = sorted(list(set(ctgs_label_to_remove)))
+                for k in ctgs_label_to_remove:
+                    alert(
+                        {'data_type':
+                             'Data',
+                         'error_message':
+                             'removing branch contingency where the loss of the branch causes islanding in the unswitched network',
+                         'diagnostics':
+                             {'ctg label': k}})
+                    del self.con.contingencies[k]
+            else:
+                alert(
+                    {'data_type':
+                         'Data',
+                     'error_message':
+                         'at least one branch outage contingency causes multiple connected components in the post contingency unswitched system graph',
+                     'diagnostics': ctg_bridges})
+                
     def check_gen_implies_cost_gen(self):   
 
         gen_set = set([(g.i, g.id) for g in self.raw.get_generators()])
@@ -1061,6 +1192,11 @@ class Raw:
 
         self.check_switched_shunts_bus_exists(scrub_mode=True)
         self.check_switched_shunts_binit_feas(scrub_mode=True)
+        if remove_switched_shunts_with_no_nonzero_blocks:
+            switched_shunts = self.get_switched_shunts()
+            for r in switched_shunts:
+                if r.swsh_susc_count == 0:
+                    del self.switched_shunts[(r.i,)]
         for r in self.get_switched_shunts():
             r.scrub()
 
@@ -1182,6 +1318,11 @@ class Raw:
     def scrub_loads(self):
 
         self.check_loads_bus_exists(scrub_mode=True)
+        if remove_loads_with_pq_eq_0:
+            loads = self.get_loads()
+            for r in loads:
+                if (r.pl == 0.0) and (r.ql == 0.0):
+                    del self.loads[r.i, r.id]
         for r in self.get_loads():
             r.scrub()
 
@@ -1902,6 +2043,10 @@ class Raw:
         cid_rows = rows[row_num:(row_num + 3)]
         self.case_identification.read_from_rows(rows)
         row_num += 2
+
+        # bus section
+        section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -1912,6 +2057,18 @@ class Raw:
             bus = Bus()
             bus.read_from_row(row)
             self.buses[bus.i] = bus
+            section_num_records += 1
+            keys_with_repeats.append(bus.i)
+        if section_num_records > len(self.buses):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'Bus',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.buses), 'repeated keys': repeated_keys}})
+
+        # load section
+        section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -1922,6 +2079,18 @@ class Raw:
             load = Load()
             load.read_from_row(row)
             self.loads[(load.i, load.id)] = load
+            section_num_records += 1
+            keys_with_repeats.append((load.i, load.id))
+        if section_num_records > len(self.loads):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'Load',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.loads), 'repeated keys': repeated_keys}})
+
+        # fixed shunt section
+        section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -1932,6 +2101,18 @@ class Raw:
             fixed_shunt = FixedShunt()
             fixed_shunt.read_from_row(row)
             self.fixed_shunts[(fixed_shunt.i, fixed_shunt.id)] = fixed_shunt
+            section_num_records += 1
+            keys_with_repeats.append((fixed_shunt.i, fixed_shunt.id))
+        if section_num_records > len(self.fixed_shunts):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'FixedShunt',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.fixed_shunts), 'repeated keys': repeated_keys}})
+
+        # generator section
+        section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -1942,6 +2123,18 @@ class Raw:
             generator = Generator()
             generator.read_from_row(row)
             self.generators[(generator.i, generator.id)] = generator
+            section_num_records += 1
+            keys_with_repeats.append((generator.i, generator.id))
+        if section_num_records > len(self.generators):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'Generator',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.generators), 'repeated keys': repeated_keys}})
+
+        # nontransformer branch section
+        section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -1955,6 +2148,21 @@ class Raw:
                 nontransformer_branch.i,
                 nontransformer_branch.j,
                 nontransformer_branch.ckt)] = nontransformer_branch
+            section_num_records += 1
+            keys_with_repeats.append((
+                nontransformer_branch.i,
+                nontransformer_branch.j,
+                nontransformer_branch.ckt))
+        if section_num_records > len(self.nontransformer_branches):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'NontransformerBranch',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.nontransformer_branches), 'repeated keys': repeated_keys}})
+
+        # transformer section
+        section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -1974,16 +2182,35 @@ class Raw:
                 #0, # leave k out
                 transformer.ckt)] = transformer
             row_num += (num_rows - 1)
-        while True: # areas - for now just make a set of areas based on bus info
+            section_num_records += 1
+            keys_with_repeats.append((transformer.i, transformer.j, transformer.ckt))
+        if section_num_records > len(self.transformers):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'Transformer',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.transformers), 'repeated keys': repeated_keys}})
+
+        # skip section
+        #section_num_records = 0
+        while True: # areas
             row_num += 1
             row = rows[row_num]
             if self.row_is_file_end(row):
                 return
             if self.row_is_section_end(row):
                 break
-            area = Area()
-            area.read_from_row(row)
-            self.areas[area.i] = area
+            #area = Area()
+            #area.read_from_row(row)
+            #self.areas[area.i] = area
+            #section_num_records += 1
+        # if section_num_records > len(self.loads):
+        #     alert(
+        #         {'data_type': 'Raw',
+        #          'error_message': 'repeated key in RAW file section: %s' % 'Load',
+        #          'diagnostics': {'records': section_num_records, 'distinct keys': len(self.loads)}})
+
+        # skip section
         while True: # two-terminal DC transmission line data
             row_num += 1
             row = rows[row_num]
@@ -1991,6 +2218,8 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
         while True: # voltage source converter (VSC) DC transmission line data
             row_num += 1
             row = rows[row_num]
@@ -1998,7 +2227,11 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
-        while True: # transformer impedance correction tables
+
+        # transformer impedance correction tables section
+        section_num_records = 0
+        keys_with_repeats = []
+        while True:
             row_num += 1
             row = rows[row_num]
             if self.row_is_file_end(row):
@@ -2008,20 +2241,16 @@ class Raw:
             tict = TransformerImpedanceCorrectionTable()
             tict.read_from_row(row)
             self.transformer_impedance_correction_tables[tict.i] = tict
-        while True:
-            row_num += 1
-            row = rows[row_num]
-            if self.row_is_file_end(row):
-                return
-            if self.row_is_section_end(row):
-                break
-        while True:
-            row_num += 1
-            row = rows[row_num]
-            if self.row_is_file_end(row):
-                return
-            if self.row_is_section_end(row):
-                break
+            section_num_records += 1
+            keys_with_repeats.append(tict.i)
+        if section_num_records > len(self.transformer_impedance_correction_tables):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'TransformerImpedanceCorrectionTable',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.transformer_impedance_correction_tables), 'repeated keys': repeated_keys}})
+
+        # skip section
         while True: # zone
             row_num += 1
             row = rows[row_num]
@@ -2029,6 +2258,8 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2036,6 +2267,17 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
+        while True: # zone
+            row_num += 1
+            row = rows[row_num]
+            if self.row_is_file_end(row):
+                return
+            if self.row_is_section_end(row):
+                break
+
+        # skip section
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2043,6 +2285,8 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2050,6 +2294,19 @@ class Raw:
                 return
             if self.row_is_section_end(row):
                 break
+
+        # skip section
+        while True:
+            row_num += 1
+            row = rows[row_num]
+            if self.row_is_file_end(row):
+                return
+            if self.row_is_section_end(row):
+                break
+
+        # switched shunt section
+        section_num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             row = rows[row_num]
@@ -2060,12 +2317,25 @@ class Raw:
             switched_shunt = SwitchedShunt()
             switched_shunt.read_from_row(row)
             self.switched_shunts[(switched_shunt.i,)] = switched_shunt
+            section_num_records += 1
+            keys_with_repeats.append((switched_shunt.i,))
+        if section_num_records > len(self.switched_shunts):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Raw',
+                 'error_message': 'repeated key in RAW file section: %s' % 'SwitchedShunt',
+                 'diagnostics': {'records': section_num_records, 'distinct keys': len(self.switched_shunts), 'repeated keys': repeated_keys}})
         
         self.active_loads = dict(filter(lambda load: load[1].status >0, self.loads.items()))
         self.num_loads_active =   len(self.active_loads)
                
         self.active_swsh = dict(filter(lambda swsh: swsh[1].stat >0, self.switched_shunts.items()))
         self.num_swsh_active =   len(self.active_swsh)
+
+    def skip_section(self):
+
+        # todo
+        pass
 
 class Con:
     '''In physical units, i.e. data convention, i.e. input and output data files'''
@@ -2230,6 +2500,8 @@ class Con:
 
         row_num = -1
         in_contingency = False
+        num_records = 0
+        keys_with_repeats = []
         while True:
             row_num += 1
             #if row_num >= len(rows): # in case the data provider failed to put an end file line
@@ -2252,7 +2524,8 @@ class Con:
                 if in_contingency:
                     if  target_contingency == None or ( target_contingency != None and contingency.label == target_contingency):
                         self.contingencies[contingency.label] = contingency
-
+                        num_records += 1
+                        keys_with_repeats.append(contingency.label)
                     in_contingency = False
                 else:
                     break
@@ -2275,6 +2548,21 @@ class Con:
                 except Exception as e:
                     traceback.print_exc()
                     raise e
+        if num_records > len(self.contingencies):
+            repeated_keys = get_repeated_keys(keys_with_repeats)
+            alert(
+                {'data_type': 'Con',
+                 'error_message': 'repeated key in CON file',
+                 'diagnostics': {'records': num_records, 'distinct keys': len(self.contingencies), 'repeated keys': repeated_keys}})
+
+def get_repeated_keys(keys):
+
+    keys_with_repeats = sorted(keys)
+    repeated_keys = []
+    for i in range(len(keys_with_repeats) - 1):
+        if keys_with_repeats[i] == keys_with_repeats[i + 1]:
+            repeated_keys.append(keys_with_repeats[i])
+    return sorted(list(set(repeated_keys)))
 
 class CaseIdentification:
 
@@ -2351,6 +2639,7 @@ class Bus:
 
         self.check_ide_ne_4()
         self.check_i_pos()
+        self.check_i_le_imax()
         self.check_area_pos()
         self.check_vm_pos()
         self.check_nvhi_pos()
@@ -2386,6 +2675,17 @@ class Bus:
                  'error_message': 'fails i positivity. Please ensure that the i field of every bus is a positive integer',
                  'diagnostics': {
                      'i': self.i}})
+
+    def check_i_le_imax(self):
+
+        imax = 999997 # from commercial power system software manual
+        if self.i > imax:
+            alert(
+                {'data_type': 'Bus',
+                 'error_message': 'fails i <= imax. Please ensure that the i field of every bus is <= %s' % imax,
+                 'diagnostics': {
+                     'i': self.i,
+                     'imax': imax}})
 
     def check_area_pos(self):
 
@@ -2536,10 +2836,24 @@ class Load:
 
         self.check_id_len_1_or_2()
         # need to check i in buses
+        self.check_pl_nonnegative(scrub_mode=False)
 
     def scrub(self):
 
-        pass
+        self.check_pl_nonnegative(scrub_mode=True)
+
+    def check_pl_nonnegative(self, scrub_mode=False):
+
+        if self.pl < 0.0:
+            alert(
+                {'data_type': 'Load',
+                 'error_message': ('fails PL >= 0.0.' + (' Setting PL = 0.0.' if scrub_mode else '')),
+                 'diagnostics': {
+                     'i': self.i,
+                     'id': self.id,
+                     'pl': self.pl}})
+            if scrub_mode:
+                self.pl = 0.0
 
     def check_id_len_1_or_2(self):
 
@@ -2652,7 +2966,7 @@ class Generator:
 
         check_two_char_id_str(self.id)
         self.check_id_len_1_or_2()
-        self.check_pg_nonnegative()
+        self.check_pg_nonnegative(scrub_mode=False)
         if do_check_pb_nonnegative:
             self.check_pb_nonnegative()
         self.check_qt_qb_consistent()
@@ -2666,7 +2980,7 @@ class Generator:
 
         self.scrub_pg_stat_consistent()
         self.scrub_qg_stat_consistent()
-        self.scrub_pg_nonnegative()
+        self.check_pg_nonnegative(scrub_mode=True)
 
     def add_emergency_capacity(self):
         '''add emergency capacity
@@ -2675,28 +2989,18 @@ class Generator:
 
         self.pt += EMERGENCY_CAPACITY_FACTOR * abs(self.pt)
 
-    def check_pg_nonnegative(self):
+    def check_pg_nonnegative(self, scrub_mode=False):
 
         if self.pg < 0.0:
             alert(
                 {'data_type': 'Generator',
-                 'error_message': 'fails PG >= 0.0',
+                 'error_message': ('fails PG >= 0.0.' + (' Setting PG = 0.0.' if scrub_mode else '')),
                  'diagnostics': {
                      'i': self.i,
                      'id': self.id,
                      'pg': self.pg}})
-
-    def scrub_pg_nonnegative(self):
-
-        if self.pg < 0.0:
-            alert(
-                {'data_type': 'Generator',
-                 'error_message': 'fails PG >= 0.0. Setting PG = 0.0',
-                 'diagnostics': {
-                     'i': self.i,
-                     'id': self.id,
-                     'pg': self.pg}})
-            self.pg = 0.0
+            if scrub_mode:
+                self.pg = 0.0
 
     def check_id_len_1_or_2(self):
 
@@ -3119,7 +3423,8 @@ class Transformer:
 
         check_two_char_id_str(self.ckt)
         self.check_ckt_len_1_or_2()
-        #self.check_cod1_013() # COD1 can be any integer value now
+        self.check_cod1_013() # COD1 can be any integer value now - nope, not anymore
+        self.check_ntp1_odd_ge_1()
         self.check_r12_x12_nonzero()
         if do_check_rate_pos:
             self.check_rata1_pos()
@@ -3137,10 +3442,10 @@ class Transformer:
 
     def check_cod1_013(self):
 
-        if not self.cod1 in [0, 1, 3]:
+        if not (self.cod1 in [-3, -1, 0, 1, 3]):
             alert(
                 {'data_type': 'Transformer',
-                 'error message': 'COD1 not in [0, 1, 3].',
+                 'error message': 'COD1 not in [-3, -1, 0, 1, 3].',
                  'diagnostics': {
                      'i': self.i,
                      'j': self.j,
@@ -3148,6 +3453,18 @@ class Transformer:
                      'ckt': self.ckt,
                      'cod1': self.cod1}})
 
+    def check_ntp1_odd_ge_1(self):
+
+        if not ((self.ntp1 >= 1) and (self.ntp1 % 2 == 1)):
+            alert(
+                {'data_type': 'Transformer',
+                 'error message': 'NTP1 not in [1, 3, 5, ...].',
+                 'diagnostics': {
+                     'i': self.i,
+                     'j': self.j,
+                     'k': self.k,
+                     'ckt': self.ckt,
+                     'ntp1': self.ntp1}})
 
     def check_tau_theta_init_feas(self, scrub_mode=False):
 
@@ -3183,10 +3500,10 @@ class Transformer:
         if scrub_mode:
             if do_fix_xfmr_tau_theta_init:
                 #print('scrubbing xfmr tau/theta init value')
-                if self.cod1 == 1:
+                if self.cod1 in [-1,1]:
                     self.windv1 = oper_val_resulting
                     self.windv2 = 1.0
-                elif self.cod1 == 3:
+                elif self.cod1 in [-3,3]:
                     self.ang1 = oper_val_resulting
         elif abs(resid) > xfmr_tau_theta_init_tol * abs(oper_val):
             alert(
@@ -3498,23 +3815,11 @@ class Transformer:
         self.cnxa3 = parse_token(row[82], float, 0.0)
         '''
         
-        # just 2-winding, 4-row
-        try:
-            if len(row) != 43:
-                if len(row) < 43:
-                    raise Exception('missing field not allowed')
-                elif len(row) > 43:
-                    row = remove_end_of_line_comment_from_row(row, '/')
-                    if len(row) > new_row_len:
-                        raise Exception('extra field not allowed')
-        except Exception as e:
-            traceback.print_exc()
-            raise e
+        # check no 3-winding
         self.i = parse_token(row[0], int, default=None)
         self.j = parse_token(row[1], int, default=None)
-        self.ckt = parse_token(row[3], str, default=None).strip()
-        # check no 3-winding
         k = parse_token(row[2], int, default=None)
+        self.ckt = parse_token(row[3], str, default=None).strip()
         if not (k == 0):
             try:
                 alert(
@@ -3529,6 +3834,18 @@ class Transformer:
             except Exception as e:
                 traceback.print_exc()
                 raise e
+        # just 2-winding, 4-row
+        try:
+            if len(row) != 43:
+                if len(row) < 43:
+                    raise Exception('missing field not allowed')
+                elif len(row) > 43:
+                    row = remove_end_of_line_comment_from_row(row, '/')
+                    if len(row) > new_row_len: # todo: what is new_row_len? need this to handle end of line comments?
+                        raise Exception('extra field not allowed')
+        except Exception as e:
+            traceback.print_exc()
+            raise e
         self.mag1 = parse_token(row[7], float, default=None)
         self.mag2 = parse_token(row[8], float, default=None)
         self.stat = parse_token(row[11], int, default=None)
@@ -4248,12 +4565,17 @@ class SwitchedShunt:
 
     def read_from_row(self, row):
 
+        #print(row)
+        #if int(row[0]) == 23393:
+        #    print(row)
         row = pad_row(row, 26)
         self.i = parse_token(row[0], int, default=None)
         self.stat = parse_token(row[3], int, default=None)
         self.binit = parse_token(row[9], float, default=None)
-        self.n1 = parse_token(row[10], int, default=None)
-        self.b1 = parse_token(row[11], float, default=None)
+        #self.n1 = parse_token(row[10], int, default=None) # allow 0 blocks
+        #self.b1 = parse_token(row[11], float, default=None)
+        self.n1 = parse_token(row[10] , int, default=0)     if 10 < len(row) else 0
+        self.b1 = parse_token(row[11] , float, default=0.0) if 11 < len(row) else 0.0
         self.n2 = parse_token(row[12] , int, default=0)     if 12 < len(row) else 0
         self.b2 = parse_token(row[13] , float, default=0.0) if 13 < len(row) else 0.0
         self.n3 = parse_token(row[14] , int, default=0)     if 14 < len(row) else 0

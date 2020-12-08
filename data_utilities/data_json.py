@@ -133,7 +133,8 @@ class Sup:
 
         with open(instance_path, 'r') as f:
             sup_data = f.read()
-            instance = json.loads(sup_data)
+            #instance = json.loads(sup_data)
+            instance = json.loads(sup_data, object_pairs_hook=dict_alert_on_duplicates)
             v = Draft7Validator(schema)
             errors = sorted(v.iter_errors(instance), key=lambda e: e.path)
             for error in errors:
@@ -392,6 +393,7 @@ class Sup:
                 for b in load[key]:
                     #print(b)
                     self.check_cblock(b, max_prefix='p', cblock_prefix='')
+                #self.check_pqscblocks(load[key], 'p') # todo: need to do this in Data.check(), as we do not have pmin,pmax here
 
         # tmin && tmax
         if "tmin" in keys and "tmax" in keys:
@@ -455,6 +457,13 @@ class Sup:
                 condition = generator[key] == 0 or generator[key] == 1
                 message = context + "{key} must be either 0 or 1".format(key=key)
                 self.assert_continue(condition, message)
+
+            # cblocks
+            if key == "cblocks":
+                for b in generator[key]:
+                    #print(b)
+                    self.check_cblock(b, max_prefix='p', cblock_prefix='')
+                #self.check_pqscblocks(generator[key], 'p') # todo: need to do this in Data.check(), as we do not have pmin,pmax here
 
     def check_line(self, line):
         context = "{} [origbus {}, destbus {}]: ".format(inspect.stack()[0][3], line["origbus"], line["destbus"])
@@ -648,17 +657,20 @@ class Sup:
     def init_generators(self):
         self.generators = { (g['bus'], g['id']): g  for g in self.sup_jsonobj["generators"] }
         self.generator_count = len(self.generators)
+        self.check_repeated_keys_in_sup_jsonobj_section("generators", ['bus', 'id'])
         self.gen_cblock_count = { (g['bus'], g['id']): len(g["cblocks"]) for g in self.generators.values()  }
 
     def init_lines(self):
         #CHALLENGE2 REVIEW: id == ckt ?
         self.lines = { (g['origbus'], g['destbus'], g['id']): g  for g in self.sup_jsonobj["lines"] }
         self.line_count = len(self.lines)
+        self.check_repeated_keys_in_sup_jsonobj_section("lines", ['origbus', 'destbus', 'id'])
 
     def init_transformers(self):
             #CHALLENGE2 REVIEW: id == ckt ?
         self.transformers = { (g['origbus'], g['destbus'], g['id']): g  for g in self.sup_jsonobj["transformers"] }
         self.xfmr_count = len(self.transformers)
+        self.check_repeated_keys_in_sup_jsonobj_section("transformers", ['origbus', 'destbus', 'id'])
 
     def  convert_generator_cblock_units(self,base_mva):
         if self.scrub_mode == True:
@@ -702,10 +714,26 @@ class Sup:
             #scblock['tmax'] /= base_mva # no normalization needed
             scblock['c'] *= base_mva
 
+    def check_repeated_keys_in_sup_jsonobj_section(self, section, key_fields):
+        #num_entries = len(self.sup_jsonobj[section])
+        keys_with_repeats = sorted([tuple([r[kf] for kf in key_fields]) for r in self.sup_jsonobj[section]])
+        unique_keys = sorted(list(set(keys_with_repeats)))
+        num_entries = len(keys_with_repeats)
+        num_unique_keys = len(unique_keys)
+        if num_unique_keys < num_entries:
+            repeated_keys = []
+            for i in range(len(keys_with_repeats) - 1):
+                if keys_with_repeats[i] == keys_with_repeats[i + 1]:
+                    repeated_keys.append(keys_with_repeats[i])
+            repeated_keys = sorted(list(set(repeated_keys)))
+            print(
+                {'data_type': 'Sup', 'error_message': 'repeated key',
+                 'diagnostics': {'section': section, 'entries': num_entries, 'unique keys': num_unique_keys, 'repeated keys': repeated_keys}})
 
     def init_loads(self):
         self.loads = { (v['bus'], v['id']): v  for v in self.sup_jsonobj["loads"] }
         self.load_count = len(self.loads)
+        self.check_repeated_keys_in_sup_jsonobj_section("loads", ['bus', 'id'])
         self.load_cblock_count = { load['bus']: len(load["cblocks"]) for load in self.loads.values()  }
   
     def get_lines(self):
@@ -800,7 +828,9 @@ class Sup:
 
     def read(self, file_name):
         with open(file_name, "r") as case_json_file:
-            self.sup_jsonobj = json.load(case_json_file)
+            #self.sup_jsonobj = json.load(case_json_file)
+            self.sup_jsonobj = json.load(case_json_file, object_pairs_hook=dict_alert_on_duplicates)
+            #print('json file: {}, size: {}'.format(case_json_file, len(self.sup_jsonobj) if self.sup_jsonobj is not None else 0))
             if self.do_force_defaults:
                 self.force_defaults()
             self.init()
@@ -815,3 +845,11 @@ class Sup:
 #THESE ARE TRANSLATED TO COST BY APPLYING COST FUNCTIONS
 #eval_piecewise_linear_penalty() FOR IMBALANCES AND GEN COST
 
+def dict_alert_on_duplicates(pairs):
+    """Alert on duplicate keys."""
+    d = {}
+    for k, v in pairs:
+        if k in d:
+            print({'data_type': 'Sup', 'error_message': 'repeated key', 'diagnostics': k})
+        d[k] = v
+    return d

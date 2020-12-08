@@ -72,7 +72,7 @@ try:
     if process_count > 1:
         USE_MPI = True
 except:
-        USE_MPI = False  
+    USE_MPI = False  
 
 
 print( "Using MPI" if USE_MPI else "Not using MPI"  )
@@ -90,9 +90,69 @@ pandas_float_precision=None
 #pandas_float_precision='round_trip'
 
 stop_on_errors = True
+#stop_on_errors = False
 active_case = "BASECASE"
 active_solution_path = '.'
 log_fileobject = None
+
+summary_keys = [
+    'obj',
+    'infeas',
+    'total_bus_cost',
+    'total_load_benefit',
+    'total_gen_cost',
+    'total_line_cost',
+    'total_xfmr_cost',
+    'bus_volt_mag_max_viol',
+    'bus_volt_mag_min_viol',
+    'bus_pow_real_imbalance',
+    'bus_pow_imag_imbalance',
+    'bus_cost',
+    'load_t_max_viol',
+    'load_t_min_viol',
+    'load_ramp_up_max_viol',
+    'load_ramp_down_max_viol',
+    'load_benefit',
+    'gen_xon_max',
+    'gen_xon_min',
+    'gen_su_qual',
+    'gen_sd_qual',
+    'gen_su_sd_not_both',
+    'gen_sd_su_not_both',
+    'gen_pow_real_max_viol',
+    'gen_pow_real_min_viol',
+    'gen_pow_imag_max_viol',
+    'gen_pow_imag_min_viol',
+    'gen_ramp_up_max_viol',
+    'gen_ramp_down_max_viol',
+    'gen_cost',
+    'line_xsw_max',
+    'line_xsw_min',
+    'line_sw_qual',
+    'line_cost',
+    'xfmr_xsw_max',
+    'xfmr_xsw_min',
+    'xfmr_sw_qual',
+    'xfmr_xst_bounds',
+    'xfmr_cost',
+    'swsh_xst_max',
+    'swsh_xst_min',
+]
+summary_out_keys = [
+    'infeas',
+    'key',
+    'val',
+]
+check_summary_keys = True
+
+def create_new_summary():
+    
+    summary = {
+        k: {
+            j: None
+            for j in summary_out_keys}
+        for k in summary_keys}
+    return summary
 
 def flatten_summary(summary):
 
@@ -152,20 +212,22 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
 
     global log_fileobject
 
-    if log_fileobject is None:
-        print(message)
-    else:
+    try:
         log_fileobject.write(formatted_message)
+    except:
+        pass  
 
     if raise_exception and check_passed != True:
         if evaluation is not None:
-            evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
-            evaluation.write_summary(eval_out_path, active_case, detail_json=True)
-            evaluation.write_summary(eval_out_path, '', summary_json=True)
+            if not evaluation.summary_written:
+                #evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
+                evaluation.write_summary(eval_out_path, active_case, detail_json=True)
+                evaluation.write_summary(eval_out_path, '', summary_json=True)
+                evaluation.summary_written = True
         raise Exception(formatted_message)
 
 def print_info(message):
-    #print(message)
+    print(message)
     print_alert(message, raise_exception=False)
     #pass
 
@@ -252,7 +314,7 @@ class Evaluation:
         self.check_contingencies = True # set to false to check only the base case and then return
         self.line_switching_allowed = True
         self.xfmr_switching_allowed = True
-        self.summary = {}
+        self.summary = create_new_summary()
         self.summary_all_cases = {}
         self.infeas = True
         self.infeas_cumulative = False
@@ -298,7 +360,6 @@ class Evaluation:
         #    summary_csv_writer.writerow(flatten_summary(e.summary)['keys'])
         #    summary_csv_writer.writerow(flatten_summary(e.summary)['values'])
 
-
     def summarize(self, summary_key, values, keys=None, tol=None):
 
         '''adds to the evaluation single case summary
@@ -323,6 +384,9 @@ class Evaluation:
             'infeas': infeas,
             'key': key,
             'val': val}
+        if check_summary_keys:
+            assert summary_key in self.summary.keys(), 'unregistered summary key. new key: {}, existing keys: {}'.format(summary_key, list(self.summary.keys()))
+            assert len(set(out.keys()).difference(set(summary_out_keys))) == 0, 'unregisered summary out key. new keys: {}, existing keys: {}'.format(list(out.keys), summary_out_keys) 
         self.summary[summary_key] = out
         if infeas:
             curframe = inspect.currentframe()
@@ -563,13 +627,13 @@ class Evaluation:
         
         self.xfmr_xst_max = np.array([round(0.5 * (r.ntp1 - 1.0)) for r in xfmrs])
         self.xfmr_tap_mag_mid = np.array(
-            [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 == 1) else (r.windv1 / r.windv2) for r in xfmrs])
+            [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 in [-1, 1]) else (r.windv1 / r.windv2) for r in xfmrs])
         self.xfmr_tap_mag_step_size = np.array(
-            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 == 1) else 0.0 for r in xfmrs])
+            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 in [-1, 1]) else 0.0 for r in xfmrs])
         self.xfmr_tap_ang_mid = np.array(
-            [(0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 == 3) else (r.ang1 * math.pi / 180.0) for r in xfmrs])
+            [(0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 in [-3, 3]) else (r.ang1 * math.pi / 180.0) for r in xfmrs])
         self.xfmr_tap_ang_step_size = np.array(
-            [((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 == 3) else 0.0 for r in xfmrs])
+            [((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 in [-3, 3]) else 0.0 for r in xfmrs])
 
         self.bus_xfmr_orig_matrix = sp.csr_matrix(
             ([1.0 for i in range(self.num_xfmr)],
@@ -587,10 +651,10 @@ class Evaluation:
         self.xfmr_service_status = np.ones(shape=(self.num_xfmr,))
 
         # todo transformer impedance correction
-        self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if xfmrs[ind].tab1 > 0]
-        self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 not in [1,3]]
-        self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 1]
-        self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 3]
+        self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if (xfmrs[ind].tab1 > 0 and xfmrs[ind].cod1 in [-3, -1, 1, 3])]
+        self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 0]
+        self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-1, 1]]
+        self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-3, 3]]
         self.xfmr_index_imp_corr_var_tap_ratio = sorted(
             list(set(self.xfmr_index_imp_corr).intersection(
                     set(self.xfmr_index_var_tap_ratio))))
@@ -613,6 +677,9 @@ class Evaluation:
         self.swsh_block_num_steps = np.array(
             [[r.n1, r.n2, r.n3, r.n4, r.n5, r.n6, r.n7, r.n8]
              for r in swshs])
+        if self.num_swsh == 0:
+            self.swsh_block_adm_imag = np.zeros(shape=(0, 8))
+            self.swsh_block_num_steps = np.zeros(shape=(0, 8))
         self.swsh_num_blocks = np.array(
             [r.swsh_susc_count for r in swshs])
         self.bus_swsh_matrix = sp.csr_matrix(
@@ -3382,14 +3449,43 @@ class CaseSolution:
 
         #CHALLENGE2 - ENSURE XSTi ARE INTS
 
+@timeit
+def json_to_csv(path):
+
+    #print(path)
+    #print(str(path))
+    #print(glob.glob(str(path)))
+    json_files = [f for f in glob.glob(str('{}/eval_detail_*.json'.format(path))) if ('eval_detail_' in f) and ('json' in f)]
+    json_contingency_files = [f for f in json_files if 'BASECASE' not in f]
+    json_base_case_files = [f for f in json_files if 'BASECASE' in f]
+    #print(json_contingency_files)
+    #print(json_base_case_files)
+    print_alert(
+        'Expected 1 BASECASE json eval output file, Encountered {} BASECASE json eval output files, files found: {}'.format(
+            len(json_base_case_files), json_base_case_files),
+        check_passed=(len(json_base_case_files) == 1))
+
+    json_base_case_file = json_base_case_files[0]
+    contingency_labels = [Path(f).resolve().stem.replace("eval_detail_","") for f in json_contingency_files]
+    num_contingencies = len(contingency_labels)
+
+    with open('{}/eval_detail.csv'.format(eval_out_path), mode='w') as detail_csv_file:
+        detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        with open(json_base_case_file, 'r') as f:
+            s = json.load(f)
+        detail_csv_writer.writerow(['case_label'] + flatten_summary(s)['keys']) # field names come from keys of base case summary
+        detail_csv_writer.writerow(['BASECASE'] + flatten_summary(s)['values']) # values of base case summary
+        for i in range(num_contingencies):
+            json_contingency_file = json_contingency_files[i]
+            contingency_label = contingency_labels[i]
+            with open(json_contingency_file, 'r') as f:
+                s = json.load(f)
+            detail_csv_writer.writerow([contingency_label] + flatten_summary(s)['values']) # values of contingency summary
+
 # todo extract this to another module
 # e.g. evaluate_solution.py, evaluate_solution_serial.py, evaluate_solution_mpi.py, etc.
 @timeit
 def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary_name=None, detail_name=None, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
-
-    print('check_contingencies: ', check_contingencies)
-    print('line_switching_allowed: ', line_switching_allowed)
-    print('xfmr_switching_allowed: ', xfmr_switching_allowed)
 
     # todo - remove
     if debug:
@@ -3403,6 +3499,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     global eval_out_path
     global log_fileobject
 
+    active_case = 'BASECASE'
     active_solution_path = solution_path
     eval_out_path = solution_path
 
@@ -3410,9 +3507,17 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         log_fileobject = open(f'{active_solution_path}/{active_case}.eval.log', "w")
         log_fileobject.write(f"Initiating Evaluation for {active_solution_path}...\n")
 
+    print_info('USE_MPI: {}'.format(USE_MPI))
+    print_info('check_contingencies: {}'.format(check_contingencies))
+    print_info('line_switching_allowed: {}'.format(line_switching_allowed))
+    print_info('xfmr_switching_allowed: {}'.format(xfmr_switching_allowed))
+    print_info('hard_constr_tol: {}'.format(hard_constr_tol))
+    print_info('pandas_float_precision: {}'.format(pandas_float_precision))
+    print_info('stop_on_errors: {}'.format(stop_on_errors))
+
     if not ( os.path.exists(raw_name) and os.path.exists(con_name) and os.path.exists(sup_name)):
-        print('Could not find input data files')
-        print(raw_name, con_name, sup_name)
+        print_info('Could not find input data files')
+        print_info((raw_name, con_name, sup_name))
         return (None, 1, False, {})
         #sys.exit()
 
@@ -3501,7 +3606,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     # base case solution evaluation
     case_start_time = time.time()
 
-    e.summary = {}
+    e.summary_written = False
+    e.summary = create_new_summary()
 
     # read the base case solution
     sb.set_read_dims()
@@ -3521,21 +3627,26 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     e.infeas_all_cases['BASECASE'] = e.infeas
     e.summary_all_cases['BASECASE'] = copy.deepcopy(e.summary)
 
-    e.write_summary(eval_out_path, active_case, detail_json=True)
-    if USE_MPI:
-        # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
-        # with header row in eval_detail.csv
-        # then add the case rows to eval_detail.csv after evaluation is complete
-        # with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
-        #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        #     detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
-        # with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file: # write
-        #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        #     detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
-        # todo fix this
-        pass
-    else:
-        e.write_summary(eval_out_path, active_case, detail_csv=True)
+    # write summary
+    if not e.summary_written:
+        e.write_summary(eval_out_path, active_case, detail_json=True)
+        if USE_MPI:
+            #e.write_summary(eval_out_path,
+            # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
+            # with header row in eval_detail.csv
+            # then add the case rows to eval_detail.csv after evaluation is complete
+            # with open(f'{eval_out_path}/eval_detail.csv', mode='w') as detail_csv_file:
+            #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            #     detail_csv_writer.writerow(['case_label'] + flatten_summary(e.summary)['keys'])
+            # with open(f'{eval_out_path}/eval_detail_{active_case}.csv', mode='w') as detail_csv_file: # write
+            #     detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            #     detail_csv_writer.writerow([active_case] + flatten_summary(e.summary)['values'])
+            # todo fix this
+            pass
+        else:
+            #e.write_summary(eval_out_path, active_case, detail_csv=True)
+            pass
+        e.summary_written = True
 
     case_end_time = time.time()
     print_info(
@@ -3558,11 +3669,33 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     # TODO - extract this to a function and add a verification that we have not just the right number of contingencies but also the right contingency label values
     #CHALLENGE2 - validate solution2 file count
-    print('solutions path', solution_path)
+    print_info('solutions path: {}'.format(solution_path))
     sol_ctg_path = f"{solution_path}/solution_*.txt"
     solution_files = glob.glob( str( sol_ctg_path)  )
     solution2_files = [ solution_file for solution_file in solution_files if "BASECASE" not in solution_file]
+    base_case_solution_files = [solution_file for solution_file in solution_files if "BASECASE" in solution_file]
+    print_alert(
+        'Expected 1 BASECASE solution file, Encountered {} BASECASE solution files, files found: {}'.format(
+            len(base_case_solution_files), base_case_solution_files),
+        check_passed=(len(base_case_solution_files) == 1))
     
+    #self.ctg_label#?????
+    #print(solution2_files)
+    ctg_labels_in_sol = [
+        Path(solution_file).resolve().stem.replace("solution_","")
+        for solution_file in solution2_files]
+    ctg_labels_in_con = e.ctg_label
+    ctg_labels_in_con_not_in_sol = sorted(list(set(ctg_labels_in_con).difference(set(ctg_labels_in_sol))))
+    print_alert(
+        'Expected 0 contingencies in CON not in solution_*.txt, found {}: {}'.format(
+            len(ctg_labels_in_con_not_in_sol), ctg_labels_in_con_not_in_sol),
+        check_passed=(len(ctg_labels_in_con_not_in_sol) == 0))
+    ctg_labels_in_sol_not_in_con = sorted(list(set(ctg_labels_in_sol).difference(set(ctg_labels_in_con))))
+    print_alert(
+        'Expected 0 contingencies in solution_*.txt not in CON, found {}: {}'.format(
+            len(ctg_labels_in_sol_not_in_con), ctg_labels_in_sol_not_in_con),
+        check_passed=(len(ctg_labels_in_sol_not_in_con) == 0))
+
     #with open(str(con_name)) as f:
     #   expected = sum('CONTINGENCY' in line for line in f)
 
@@ -3619,11 +3752,12 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                 if ctgs_so_far > stop_after_ctgs:
                     break
 
-            e.summary = {}
-            print('processing contingency {}'.format(active_case))
+            e.summary_written = False
+            e.summary = create_new_summary()
+            print_info('processing contingency {}'.format(active_case))
             try:
                 
-                print(f'writing {active_case} log to {active_solution_path}')
+                print_info(f'writing {active_case} log to {active_solution_path}')
                 log_fileobject = open( f'{active_solution_path}/{active_case}.eval.log', "w")
                 log_fileobject.write(f"Initiating Evaluation for {active_solution_path}...")
 
@@ -3671,8 +3805,12 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                 e.infeas_all_cases[clean_string(active_case)] = e.infeas
                 traceback.print_exc()
 
-            e.write_summary(eval_out_path, active_case, detail_json=True)
-            e.write_summary(eval_out_path, active_case, detail_csv=True)
+            # write summary
+            if not e.summary_written:
+                e.write_summary(eval_out_path, active_case, detail_json=True)
+                #e.write_summary(eval_out_path, active_case, detail_csv=True)
+                e.summary_written = True
+
             case_end_time = time.time()
             print_info(
                 "done evaluating case. label: {}, time: {}".format(
@@ -3772,7 +3910,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                     #print('trying to write summary files eval_out_path: {}, active_case: {}'.format(eval_out_path, active_case))
                     #with open(eval_out_path + '/' + active_case + '.tmp', mode='w') as tmp_out_file:
                     #    tmp_out_file.write('test')
-                    #self.write_summary(eval_out_path, active_case, detail_json=True)
+                    e.write_summary(eval_out_path, active_case, detail_json=True)
                     #self.write_summary(eval_out_path, active_case, detail_csv=True)
 
                 except:
@@ -3789,34 +3927,38 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     if process_rank == 0:
         end_time_all = time.time()
-        print('obj all cases:')
-        print(e.obj_all_cases)
-        print('infeas all cases:')
-        print(e.infeas_all_cases)
-        print('obj cumulative: {}'.format(e.obj_cumulative))
-        print('infeas cumulative: {}'.format(e.infeas_cumulative))
-        print('eval time: {}'.format(end_time_all - start_time_all))
+        print_info('obj all cases:')
+        print_info(e.obj_all_cases)
+        print_info('infeas all cases:')
+        print_info(e.infeas_all_cases)
+        print_info('obj cumulative: {}'.format(e.obj_cumulative))
+        print_info('infeas cumulative: {}'.format(e.infeas_cumulative))
+        print_info('eval time: {}'.format(end_time_all - start_time_all))
     
         # todo : short circuit if infeas
 
         e.write_summary(eval_out_path, '', summary_json=True)
+        json_to_csv(eval_out_path)
 
-        print("obj: {}".format(e.obj_cumulative))
-        print("infeas: {}".format(e.infeas_cumulative))    
+        print_info("obj: {}".format(e.obj_cumulative))
+        print_info("infeas: {}".format(e.infeas_cumulative))    
 
 
     return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist, e.summary_all_cases)
 
 
 def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
+
+    global active_case
     global active_solution_path
     global eval_out_path
     global USE_MPI
 
+    active_case = 'BASECASE'
     active_solution_path = solution_basepath
     eval_out_path = solution_basepath
-    print('writing logs to {}' .format(active_solution_path))
-    print('writing detailed and summary evaluation output to {}' .format(eval_out_path))
+    print_info('writing logs to {}' .format(active_solution_path))
+    print_info('writing detailed and summary evaluation output to {}' .format(eval_out_path))
 
     raw_name = f'{data_basepath}/case.scrubbed.raw' 
 
@@ -3834,9 +3976,9 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
         sup_name = f'{data_basepath}/case.json' 
 
 
-    print(f'raw: {raw_name}')
-    print(f'con: {con_name}')
-    print(f'sup: {sup_name}')
+    print_info(f'raw: {raw_name}')
+    print_info(f'con: {con_name}')
+    print_info(f'sup: {sup_name}')
     
 
     base_name = f"{solution_basepath}/solution_BASECASE.txt"
@@ -3844,8 +3986,8 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
     summary_name = f"{solution_basepath}/summary.csv"
     detail_name = f"{solution_basepath}/detail.csv"
 
-    print(f'Setting data path to {data_basepath}')
-    print(f'Setting solution path to {solution_basepath}')
+    print_info(f'Setting data path to {data_basepath}')
+    print_info(f'Setting solution path to {solution_basepath}')
 
     try:
         return run(raw_name, con_name, sup_name,solution_basepath, ctg_name, summary_name, detail_name, line_switching_allowed, xfmr_switching_allowed, check_contingencies)

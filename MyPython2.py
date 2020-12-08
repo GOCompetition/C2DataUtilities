@@ -11,14 +11,17 @@ $ python MyPython2.py CON SUP RAW RESERVED TIMELIMIT DIVISION NETWORK
 import sys, os
 
 # modules for this code
-# better way to make this visible?
-# use a startup script to run setup.py to make data_utilities available as a package
-sys.path.append(os.path.normpath('.'))
-sys.path.append(os.path.normpath('./data_utilities'))
-try:
-    from data_utilities.infeasibility_solution import Solver
-except:
-    from infeasibility_solution import Solver
+#sys.path.append(os.path.normpath('.'))
+#sys.path.append(os.path.normpath('./data_utilities'))
+#try:
+#    from data_utilities.infeasibility_solution import Solver
+#except:
+#    from infeasibility_solution import Solver
+#sys.path.append(os.path.normpath('.'))
+#sys.path.append(os.path.normpath('./py'))
+script_path=os.path.dirname(os.path.realpath(__file__)) + '/py'
+sys.path.append(script_path)
+from infeasibility_solution import Solver
 
 args = sys.argv
 

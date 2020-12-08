@@ -20,7 +20,7 @@ import time
 # gocomp imports
 try:
     from data_utilities.infeasibility_solution import Solver
-except
+except:
     from infeasibility_solution import Solver
 
 import sys,os
