@@ -455,6 +455,12 @@ class Data:
         self.ctg_num_lines_out = [len(self.ctg_lines_out[i]) for i in range(self.num_ctg)]
         self.ctg_num_xfmrs_out = [len(self.ctg_xfmrs_out[i]) for i in range(self.num_ctg)]
 
+    #@timeit
+    #def read(self, raw, sup, con):
+    #    p = data.Data()
+    #    p.read(raw, sup, con)
+    #    self.set_data(p)
+
     @timeit
     def set_data(self, data):
         ''' set values from the data object
