@@ -22,8 +22,8 @@
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
@@ -87,15 +87,19 @@ case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial1/dec3_01/scrubbed/GOTx31K-0001/scenario_003/
 #case_dir=/pic/dtn/go/Steve/C2/T1/Source/TAMU/GOTx31K-0001/scenario_003/
 #case_dir=/pic/dtn/go/Steve/C2/T1/Source/GT/MSR_BB/scenario_244/
+#case_dir=/pic/dtn/go/Steve/C2/T1/????
+
+sol_dir=./tmpsol/sol7/
+#sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
 
 # set options
 strict_names=0
-refresh_data=0
+refresh_data=1
 check_data=0
 scrub_data=0
 check_scrubbed_data=0
 make_new_sol=0
-copy_sol=0 # copy from tmpsol/solXXX
+copy_sol=0
 eval_sol=1
 do_submission=0
 eval_submission=0
@@ -209,9 +213,8 @@ fi
 if [ $copy_sol -gt 0 ]
 then
     echo "copy stored solution"
-    stored_sol_dir_to_use="${stored_sol_dir}${copy_sol}/"
-    echo "stored solution directory: ${stored_sol_dir_to_use}"
-    cp ${stored_sol_dir_to_use}solution*.txt $work_dir
+    echo "stored solution directory: ${sol_dir}"
+    cp ${sol_dir}/solution*.txt $work_dir
 else
     echo "skip copy stored solution"
 fi
