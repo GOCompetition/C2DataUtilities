@@ -274,6 +274,7 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
                 evaluation.json_to_summary_all_cases(eval_out_path)
                 evaluation.summary_all_cases_to_summary()
                 evaluation.write_summary_json(eval_out_path)
+                evaluation.write_summary_csv(eval_out_path)
                 evaluation.write_detail_all_cases_json(eval_out_path)
                 evaluation.write_detail_all_cases_csv(eval_out_path)
                 evaluation.summary_written = True
@@ -555,6 +556,13 @@ class Evaluation:
                 #  'ctg_xfmr_switch_down_max': self.ctg_xfmr_switch_down_max,
                 #  }, # todo a bunch of others here
                 outfile, indent=4, sort_keys=False)
+
+    def write_summary_csv(self, path):
+
+        with open('{}/eval_summary.csv'.format(path), 'w') as outfile:
+            writer = csv.writer(outfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            for k in summary2_keys:
+                writer.writerow([k, self.summary2[k]])
 
     def write_detail(self, path, case, detail_csv=False, detail_json=False):
 
@@ -4231,6 +4239,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         e.json_to_summary_all_cases(eval_out_path)
         e.summary_all_cases_to_summary()
         e.write_summary_json(eval_out_path)
+        e.write_summary_csv(eval_out_path)
         e.write_detail_all_cases_json(eval_out_path)
         e.write_detail_all_cases_csv(eval_out_path)
         #e.json_to_csv(eval_out_path)
