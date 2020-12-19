@@ -182,6 +182,15 @@ summary2_keys = [
     'ctg_xfmr_switch_up_max',
     'ctg_xfmr_switch_down_actual',
     'ctg_xfmr_switch_down_max',
+    'base_gen_switches',
+    'base_line_switches',
+    'base_xfmr_switches',
+    'ctg_gen_switches',
+    'ctg_line_switches',
+    'ctg_xfmr_switches',
+    'base_total_switches',
+    'ctg_total_switches',
+    'total_switches',
 ]
 check_summary_keys = True
 #<base/ctg>_<gen/line/xfmr>_switch_<up/down>_<actual/max>
@@ -437,6 +446,22 @@ class Evaluation:
         self.summary2['ctg_xfmr_switch_up_max'] = np.sum([self.summary_all_cases[k]['xfmr_switch_up_max']['val'] for k in ctg_labels])
         self.summary2['ctg_xfmr_switch_down_actual'] = np.sum([self.summary_all_cases[k]['xfmr_switch_down_actual']['val'] for k in ctg_labels])
         self.summary2['ctg_xfmr_switch_down_max'] = np.sum([self.summary_all_cases[k]['xfmr_switch_down_max']['val'] for k in ctg_labels])
+
+        self.summary2['base_gen_switches'] = self.summary2['base_gen_switch_up_actual'] + self.summary2['base_gen_switch_down_actual']
+        self.summary2['base_line_switches'] = self.summary2['base_line_switch_up_actual'] + self.summary2['base_line_switch_down_actual']
+        self.summary2['base_xfmr_switches'] = self.summary2['base_xfmr_switch_up_actual'] + self.summary2['base_xfmr_switch_down_actual']
+        self.summary2['ctg_gen_switches'] = self.summary2['ctg_gen_switch_up_actual'] + self.summary2['ctg_gen_switch_down_actual']
+        self.summary2['ctg_line_switches'] = self.summary2['ctg_line_switch_up_actual'] + self.summary2['ctg_line_switch_down_actual']
+        self.summary2['ctg_xfmr_switches'] = self.summary2['ctg_xfmr_switch_up_actual'] + self.summary2['ctg_xfmr_switch_down_actual']
+        self.summary2['base_total_switches'] = (
+            self.summary2['base_gen_switches'] +
+            self.summary2['base_line_switches'] +
+            self.summary2['base_xfmr_switches'])
+        self.summary2['ctg_total_switches'] = (
+            self.summary2['ctg_gen_switches'] +
+            self.summary2['ctg_line_switches'] +
+            self.summary2['ctg_xfmr_switches'])
+        self.summary2['total_switches'] = self.summary2['base_total_switches'] + self.summary2['ctg_total_switches']
 
     @timeit
     def json_to_summary_all_cases(self, path):
