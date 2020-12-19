@@ -3841,7 +3841,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if not ( os.path.exists(raw_name) and os.path.exists(con_name) and os.path.exists(sup_name)):
         print_info('Could not find input data files')
         print_info((raw_name, con_name, sup_name))
-        return (None, 1, False, {}, {})
+        #return (None, 1, False, {}, {})
+        return (None, 1, False, {})
         #sys.exit()
 
     # read the data files
@@ -3895,7 +3896,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if not os.path.exists(f'{solution_path}/solution_BASECASE.txt'):
         e.summary2['solutions_exist'] = False
         print_info(f'{solution_path}/solution_BASECASE.txt could not be found')
-        return (None,  1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+        #return (None,  1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+        return (None,  1, e.summary2['solutions_exist'], e.summary_all_cases)
 
     if check_contingencies is not None:
         e.check_contingencies = check_contingencies
@@ -3979,7 +3981,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     #CHALLENGE2 - return here if solution1 validation is requested
     if not e.check_contingencies:
-        return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+        #return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+        return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
 
     #if ctg_name is None:
     #    return True
@@ -4040,7 +4043,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         if process_rank == 0:
             print_info(f'Some solution files are missing. Exiting...')
         # todo - which ones? need to check that the solutions found are exactly the ones that are expected
-        return (None, 1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)   
+        #return (None, 1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)   
+        return (None, 1, e.summary2['solutions_exist'], e.summary_all_cases)   
 
     if log_fileobject is not None:
        log_fileobject.close()
@@ -4272,7 +4276,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         print_info("obj: {}".format(e.summary2['obj_cumulative']))
         print_info("infeas: {}".format(e.summary2['infeas_cumulative']))
 
-    return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+    #return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+    return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
 
 
 def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
