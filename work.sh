@@ -16,13 +16,13 @@
 #case_dir=./data/ieee14/scenario_5/
 #case_dir=./data/ieee14/scenario_6/
 #case_dir=./data/ieee14/scenario_7/
-case_dir=./data/ieee14/scenario_8/
+#case_dir=./data/ieee14/scenario_8/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
@@ -83,20 +83,35 @@ case_dir=./data/ieee14/scenario_8/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/LTU44/scenario_001/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/STV1/scenario_001/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/nov24_01/UW/AUS/scenario_007/
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/AUSset1/AUSV1case01A
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial1/dec3_01/scrubbed/GOTx31K-0001/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/T1/Source/TAMU/GOTx31K-0001/scenario_003/
+#case_dir=/pic/dtn/go/Steve/C2/T1/Source/GT/MSR_BB/scenario_244/
+#case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N02312//scenario_254
+#case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N00500//scenario_052
+#case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N00403//scenario_222
+
+#sol_dir=./tmpsol/sol7/
+#sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
+#sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_1/C2T1N02312_output254
+#sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52
+#sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00403_output222/
+#grep Scenario: feasibility.log 
+#       Scenario:/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N02312//scenario_254
 
 # set options
 strict_names=0
 refresh_data=1
-check_data=1
-scrub_data=1
-check_scrubbed_data=1
-make_new_sol=0
-copy_sol=0 # copy from tmpsol/solXXX
-eval_sol=0
+check_data=0
+scrub_data=0
+check_scrubbed_data=0
+make_new_sol=1
+copy_sol=0
+eval_sol=1
 do_submission=0
 eval_submission=0
 division=1
-num_proc=1
+num_proc=2
 
 py_dir=./py/
 work_dir=./tmp/
@@ -115,15 +130,16 @@ then
     mkdir "$work_dir"
 fi
 
-# clean up the directory
+# clean up the directory - todo just remove everything, right?
 rm $work_dir/*.eval.log
 
 # copy to here
 if [ $refresh_data -gt 0 ]
 then
-    rm $work_dir/*.raw
-    rm $work_dir/*.json
-    rm $work_dir/*.con
+    rm -rf $work_dir/*
+    #rm $work_dir/*.raw
+    #rm $work_dir/*.json
+    #rm $work_dir/*.con
     if [ $strict_names -gt 0 ]
     then
 	echo "find case: strict names"
@@ -205,9 +221,8 @@ fi
 if [ $copy_sol -gt 0 ]
 then
     echo "copy stored solution"
-    stored_sol_dir_to_use="${stored_sol_dir}${copy_sol}/"
-    echo "stored solution directory: ${stored_sol_dir_to_use}"
-    cp ${stored_sol_dir_to_use}solution*.txt $work_dir
+    echo "stored solution directory: ${sol_dir}"
+    cp ${sol_dir}/solution*.txt $work_dir
 else
     echo "skip copy stored solution"
 fi

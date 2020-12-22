@@ -90,6 +90,7 @@ active_case = "BASECASE"
 active_solution_path = '.'
 log_fileobject = None
 
+# todo just make some summary classes
 summary_keys = [
     'obj',
     'infeas',
@@ -121,33 +122,95 @@ summary_keys = [
     'gen_ramp_up_max_viol',
     'gen_ramp_down_max_viol',
     'gen_cost',
+    'gen_switch_up_max',
+    'gen_switch_up_actual',
+    'gen_switch_down_max',
+    'gen_switch_down_actual',
     'line_xsw_max',
     'line_xsw_min',
     'line_sw_qual',
     'line_cost',
+    'line_switch_up_max',
+    'line_switch_up_actual',
+    'line_switch_down_max',
+    'line_switch_down_actual',
     'xfmr_xsw_max',
     'xfmr_xsw_min',
     'xfmr_sw_qual',
     'xfmr_xst_bounds',
     'xfmr_cost',
+    'xfmr_switch_up_max',
+    'xfmr_switch_up_actual',
+    'xfmr_switch_down_max',
+    'xfmr_switch_down_actual',
     'swsh_xst_max',
     'swsh_xst_min',
 ]
-summary_out_keys = [
-    'infeas',
-    'key',
-    'val',
+summary_out = {
+    'infeas':False,
+    'key':None,
+    'val':0.0,
+}
+summary_out_keys = sorted(list(summary_out.keys()))
+summary2_keys = [
+    'solutions_exist',
+    'infeas_cumulative',
+    'infeas_all_cases',
+    'obj_cumulative',
+    'obj_all_cases',
+    'base_gen_switch_up_actual',
+    'base_gen_switch_up_max',
+    'base_gen_switch_down_actual',
+    'base_gen_switch_down_max',
+    'base_line_switch_up_actual',
+    'base_line_switch_up_max',
+    'base_line_switch_down_actual',
+    'base_line_switch_down_max',
+    'base_xfmr_switch_up_actual',
+    'base_xfmr_switch_up_max',
+    'base_xfmr_switch_down_actual',
+    'base_xfmr_switch_down_max',
+    'ctg_gen_switch_up_actual',
+    'ctg_gen_switch_up_max',
+    'ctg_gen_switch_down_actual',
+    'ctg_gen_switch_down_max',
+    'ctg_line_switch_up_actual',
+    'ctg_line_switch_up_max',
+    'ctg_line_switch_down_actual',
+    'ctg_line_switch_down_max',
+    'ctg_xfmr_switch_up_actual',
+    'ctg_xfmr_switch_up_max',
+    'ctg_xfmr_switch_down_actual',
+    'ctg_xfmr_switch_down_max',
+    'base_gen_switches',
+    'base_line_switches',
+    'base_xfmr_switches',
+    'ctg_gen_switches',
+    'ctg_line_switches',
+    'ctg_xfmr_switches',
+    'base_total_switches',
+    'ctg_total_switches',
+    'total_switches',
 ]
 check_summary_keys = True
+#<base/ctg>_<gen/line/xfmr>_switch_<up/down>_<actual/max>
 
 def create_new_summary():
     
-    summary = {
-        k: {
-            j: None
-            for j in summary_out_keys}
-        for k in summary_keys}
+    summary = {k: copy.deepcopy(summary_out) for k in summary_keys}
+        # k: {
+        #     j: None
+        #     for j in summary_out_keys}
+        # for k in summary_keys}
     return summary
+
+def create_new_summary2():
+
+    summary2 = {k: 0.0 for k in summary2_keys}
+    summary2['solutions_exist'] = True
+    summary2['obj_all_cases'] = {}
+    summary2['infeas_all_cases'] = {}
+    return summary2
 
 def flatten_summary(summary):
 
@@ -215,9 +278,14 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
     if raise_exception and check_passed != True:
         if evaluation is not None:
             if not evaluation.summary_written:
-                #evaluation.write_summary(eval_out_path, active_case, detail_csv=True)
-                evaluation.write_summary(eval_out_path, active_case, detail_json=True)
-                evaluation.write_summary(eval_out_path, '', summary_json=True)
+                #evaluation.write_detail(eval_out_path, active_case, detail_csv=True)
+                evaluation.write_detail(eval_out_path, active_case, detail_json=True)
+                evaluation.json_to_summary_all_cases(eval_out_path)
+                evaluation.summary_all_cases_to_summary()
+                evaluation.write_summary_json(eval_out_path)
+                evaluation.write_summary_csv(eval_out_path)
+                evaluation.write_detail_all_cases_json(eval_out_path)
+                evaluation.write_detail_all_cases_csv(eval_out_path)
                 evaluation.summary_written = True
         print(formatted_message)        
 
@@ -311,17 +379,219 @@ class Evaluation:
         self.check_contingencies = True # set to false to check only the base case and then return
         self.line_switching_allowed = True
         self.xfmr_switching_allowed = True
-        self.summary = create_new_summary()
-        self.summary_all_cases = {}
+        self.summary = create_new_summary() # todo refactor: call this detail
+        self.summary_all_cases = {} # todo refactor: call this detail_all_cases
+        self.summary2 = create_new_summary2() # todo refactor: call this summary
         self.infeas = True
-        self.infeas_cumulative = False
-        self.infeas_all_cases = {}
+        #self.infeas_cumulative = False
+        #self.infeas_all_cases = {}
         self.obj = -float('inf')
-        self.obj_cumulative = 0.0
-        self.obj_all_cases = {}
+        #self.obj_cumulative = 0.0
+        #self.obj_all_cases = {}
         self.detail_csv_header_done = False
 
-    def write_summary(self, path, case, detail_csv=False, detail_json=False, summary_json=False, summary_all_cases_json=False):
+        '''
+        self.base_gen_switch_up_actual = 0.0
+        self.base_gen_switch_up_max = 0.0
+        self.base_gen_switch_down_actual = 0.0
+        self.base_gen_switch_down_max = 0.0
+        self.base_line_switch_up_actual = 0.0
+        self.base_line_switch_up_max = 0.0
+        self.base_line_switch_down_actual = 0.0
+        self.base_line_switch_down_max = 0.0
+        self.base_xfmr_switch_up_actual = 0.0
+        self.base_xfmr_switch_up_max = 0.0
+        self.base_xfmr_switch_down_actual = 0.0
+        self.base_xfmr_switch_down_max = 0.0
+        self.ctg_gen_switch_up_actual = 0.0
+        self.ctg_gen_switch_up_max = 0.0
+        self.ctg_gen_switch_down_actual = 0.0
+        self.ctg_gen_switch_down_max = 0.0
+        self.ctg_line_switch_up_actual = 0.0
+        self.ctg_line_switch_up_max = 0.0
+        self.ctg_line_switch_down_actual = 0.0
+        self.ctg_line_switch_down_max = 0.0
+        self.ctg_xfmr_switch_up_actual = 0.0
+        self.ctg_xfmr_switch_up_max = 0.0
+        self.ctg_xfmr_switch_down_actual = 0.0
+        self.ctg_xfmr_switch_down_max = 0.0
+        '''
+
+    @timeit
+    def summary_all_cases_to_summary(self):
+        '''construct whole problem summary from summary_all_cases'''
+
+        self.summary2['base_gen_switch_up_actual'] = self.summary_all_cases['BASECASE']['gen_switch_up_actual']['val']
+        self.summary2['base_gen_switch_up_max'] = self.summary_all_cases['BASECASE']['gen_switch_up_max']['val']
+        self.summary2['base_gen_switch_down_actual'] = self.summary_all_cases['BASECASE']['gen_switch_down_actual']['val']
+        self.summary2['base_gen_switch_down_max'] = self.summary_all_cases['BASECASE']['gen_switch_down_max']['val']
+        self.summary2['base_line_switch_up_actual'] = self.summary_all_cases['BASECASE']['line_switch_up_actual']['val']
+        self.summary2['base_line_switch_up_max'] = self.summary_all_cases['BASECASE']['line_switch_up_max']['val']
+        self.summary2['base_line_switch_down_actual'] = self.summary_all_cases['BASECASE']['line_switch_down_actual']['val']
+        self.summary2['base_line_switch_down_max'] = self.summary_all_cases['BASECASE']['line_switch_down_max']['val']
+        self.summary2['base_xfmr_switch_up_actual'] = self.summary_all_cases['BASECASE']['xfmr_switch_up_actual']['val']
+        self.summary2['base_xfmr_switch_up_max'] = self.summary_all_cases['BASECASE']['xfmr_switch_up_max']['val']
+        self.summary2['base_xfmr_switch_down_actual'] = self.summary_all_cases['BASECASE']['xfmr_switch_down_actual']['val']
+        self.summary2['base_xfmr_switch_down_max'] = self.summary_all_cases['BASECASE']['xfmr_switch_down_max']['val']
+
+        ctg_labels = sorted(list(set(self.summary_all_cases.keys()).difference(['BASECASE'])))
+
+        self.summary2['ctg_gen_switch_up_actual'] = np.sum([self.summary_all_cases[k]['gen_switch_up_actual']['val'] for k in ctg_labels])
+        self.summary2['ctg_gen_switch_up_max'] = np.sum([self.summary_all_cases[k]['gen_switch_up_max']['val'] for k in ctg_labels])
+        self.summary2['ctg_gen_switch_down_actual'] = np.sum([self.summary_all_cases[k]['gen_switch_down_actual']['val'] for k in ctg_labels])
+        self.summary2['ctg_gen_switch_down_max'] = np.sum([self.summary_all_cases[k]['gen_switch_down_max']['val'] for k in ctg_labels])
+        self.summary2['ctg_line_switch_up_actual'] = np.sum([self.summary_all_cases[k]['line_switch_up_actual']['val'] for k in ctg_labels])
+        self.summary2['ctg_line_switch_up_max'] = np.sum([self.summary_all_cases[k]['line_switch_up_max']['val'] for k in ctg_labels])
+        self.summary2['ctg_line_switch_down_actual'] = np.sum([self.summary_all_cases[k]['line_switch_down_actual']['val'] for k in ctg_labels])
+        self.summary2['ctg_line_switch_down_max'] = np.sum([self.summary_all_cases[k]['line_switch_down_max']['val'] for k in ctg_labels])
+        self.summary2['ctg_xfmr_switch_up_actual'] = np.sum([self.summary_all_cases[k]['xfmr_switch_up_actual']['val'] for k in ctg_labels])
+        self.summary2['ctg_xfmr_switch_up_max'] = np.sum([self.summary_all_cases[k]['xfmr_switch_up_max']['val'] for k in ctg_labels])
+        self.summary2['ctg_xfmr_switch_down_actual'] = np.sum([self.summary_all_cases[k]['xfmr_switch_down_actual']['val'] for k in ctg_labels])
+        self.summary2['ctg_xfmr_switch_down_max'] = np.sum([self.summary_all_cases[k]['xfmr_switch_down_max']['val'] for k in ctg_labels])
+
+        self.summary2['base_gen_switches'] = self.summary2['base_gen_switch_up_actual'] + self.summary2['base_gen_switch_down_actual']
+        self.summary2['base_line_switches'] = self.summary2['base_line_switch_up_actual'] + self.summary2['base_line_switch_down_actual']
+        self.summary2['base_xfmr_switches'] = self.summary2['base_xfmr_switch_up_actual'] + self.summary2['base_xfmr_switch_down_actual']
+        self.summary2['ctg_gen_switches'] = self.summary2['ctg_gen_switch_up_actual'] + self.summary2['ctg_gen_switch_down_actual']
+        self.summary2['ctg_line_switches'] = self.summary2['ctg_line_switch_up_actual'] + self.summary2['ctg_line_switch_down_actual']
+        self.summary2['ctg_xfmr_switches'] = self.summary2['ctg_xfmr_switch_up_actual'] + self.summary2['ctg_xfmr_switch_down_actual']
+        self.summary2['base_total_switches'] = (
+            self.summary2['base_gen_switches'] +
+            self.summary2['base_line_switches'] +
+            self.summary2['base_xfmr_switches'])
+        self.summary2['ctg_total_switches'] = (
+            self.summary2['ctg_gen_switches'] +
+            self.summary2['ctg_line_switches'] +
+            self.summary2['ctg_xfmr_switches'])
+        self.summary2['total_switches'] = self.summary2['base_total_switches'] + self.summary2['ctg_total_switches']
+
+    @timeit
+    def json_to_summary_all_cases(self, path):
+        '''read the json case summary files and create summary_all_cases from them'''
+
+        json_files = [f for f in glob.glob(str('{}/eval_detail_*.json'.format(path))) if ('eval_detail_' in f) and ('json' in f)]
+        json_contingency_files = [f for f in json_files if 'BASECASE' not in f]
+        json_base_case_files = [f for f in json_files if 'BASECASE' in f]
+        print_alert(
+            'Expected 1 BASECASE json eval output file, Encountered {} BASECASE json eval output files, files found: {}'.format(
+                len(json_base_case_files), json_base_case_files),
+            check_passed=(len(json_base_case_files) == 1))
+
+        json_base_case_file = json_base_case_files[0]
+        contingency_labels = [Path(f).resolve().stem.replace("eval_detail_","") for f in json_contingency_files]
+        num_contingencies = len(contingency_labels)
+        
+        with open(json_base_case_file, 'r') as f:
+            s = json.load(f)
+        self.summary_all_cases['BASECASE'] = s
+        for i in range(num_contingencies):
+            json_contingency_file = json_contingency_files[i]
+            contingency_label = contingency_labels[i]
+            with open(json_contingency_file, 'r') as f:
+                s = json.load(f)
+            self.summary_all_cases[contingency_label] = s
+
+    @timeit
+    def write_detail_all_cases_csv(self, path):
+
+        contingency_labels = sorted(list(set(self.summary_all_cases.keys()).difference(set(['BASECASE']))))
+        num_contingencies = len(contingency_labels)
+
+        with open('{}/eval_detail.csv'.format(path), mode='w') as detail_csv_file:
+            detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            s = self.summary_all_cases['BASECASE']
+            detail_csv_writer.writerow(['case_label'] + flatten_summary(s)['keys']) # field names come from keys of base case summary
+            detail_csv_writer.writerow(['BASECASE'] + flatten_summary(s)['values']) # values of base case summary
+            for i in range(num_contingencies):
+                contingency_label = contingency_labels[i]
+                s = self.summary_all_cases[contingency_label]
+                detail_csv_writer.writerow([contingency_label] + flatten_summary(s)['values']) # values of contingency summary
+
+    @timeit
+    def write_detail_all_cases_json(self, path):
+
+        with open('{}/eval_detail.json'.format(path), mode='w') as outfile:
+        #with open(f'{eval_out_path}/eval_out.json', 'w') as outfile:
+            json.dump(self.summary_all_cases, outfile, indent=4, sort_keys=True)
+
+    @timeit
+    def json_to_csv(self, path):
+        ''''''
+        # todo split this up
+        # create_summary_all_cases(path)
+        #     read the case summary json files into a dict structure
+        # write_summary_all_cases(path)
+        #     write the csv file as below
+        #     write a json version of it
+    
+        json_files = [f for f in glob.glob(str('{}/eval_detail_*.json'.format(path))) if ('eval_detail_' in f) and ('json' in f)]
+        json_contingency_files = [f for f in json_files if 'BASECASE' not in f]
+        json_base_case_files = [f for f in json_files if 'BASECASE' in f]
+        print_alert(
+            'Expected 1 BASECASE json eval output file, Encountered {} BASECASE json eval output files, files found: {}'.format(
+                len(json_base_case_files), json_base_case_files),
+            check_passed=(len(json_base_case_files) == 1))
+
+        json_base_case_file = json_base_case_files[0]
+        contingency_labels = [Path(f).resolve().stem.replace("eval_detail_","") for f in json_contingency_files]
+        num_contingencies = len(contingency_labels)
+        
+        with open('{}/eval_detail.csv'.format(eval_out_path), mode='w') as detail_csv_file:
+            detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            with open(json_base_case_file, 'r') as f:
+                s = json.load(f)
+            detail_csv_writer.writerow(['case_label'] + flatten_summary(s)['keys']) # field names come from keys of base case summary
+            detail_csv_writer.writerow(['BASECASE'] + flatten_summary(s)['values']) # values of base case summary
+            for i in range(num_contingencies):
+                json_contingency_file = json_contingency_files[i]
+                contingency_label = contingency_labels[i]
+                with open(json_contingency_file, 'r') as f:
+                    s = json.load(f)
+                detail_csv_writer.writerow([contingency_label] + flatten_summary(s)['values']) # values of contingency summary
+
+    def write_summary_json(self, path):
+
+        with open('{}/eval_summary.json'.format(path), 'w') as outfile:
+            json.dump(self.summary2,
+                # {'infeas_cumulative': self.infeas_cumulative,
+                #  'obj_cumulative': self.obj_cumulative,
+                #  'infeas_all_cases': self.infeas_all_cases,
+                #  'obj_all_cases': self.obj_all_cases,
+                #  'base_gen_switch_up_actual': self.base_gen_switch_up_actual,
+                #  'base_gen_switch_up_max': self.base_gen_switch_up_max,
+                #  'base_gen_switch_down_actual': self.base_gen_switch_down_actual,
+                #  'base_gen_switch_down_max': self.base_gen_switch_down_max,
+                #  'base_line_switch_up_actual': self.base_line_switch_up_actual,
+                #  'base_line_switch_up_max': self.base_line_switch_up_max,
+                #  'base_line_switch_down_actual': self.base_line_switch_down_actual,
+                #  'base_line_switch_down_max': self.base_line_switch_down_max,
+                #  'base_xfmr_switch_up_actual': self.base_xfmr_switch_up_actual,
+                #  'base_xfmr_switch_up_max': self.base_xfmr_switch_up_max,
+                #  'base_xfmr_switch_down_actual': self.base_xfmr_switch_down_actual,
+                #  'base_xfmr_switch_down_max': self.base_xfmr_switch_down_max,
+                #  'ctg_gen_switch_up_actual': self.ctg_gen_switch_up_actual,
+                #  'ctg_gen_switch_up_max': self.ctg_gen_switch_up_max,
+                #  'ctg_gen_switch_down_actual': self.ctg_gen_switch_down_actual,
+                #  'ctg_gen_switch_down_max': self.ctg_gen_switch_down_max,
+                #  'ctg_line_switch_up_actual': self.ctg_line_switch_up_actual,
+                #  'ctg_line_switch_up_max': self.ctg_line_switch_up_max,
+                #  'ctg_line_switch_down_actual': self.ctg_line_switch_down_actual,
+                #  'ctg_line_switch_down_max': self.ctg_line_switch_down_max,
+                #  'ctg_xfmr_switch_up_actual': self.ctg_xfmr_switch_up_actual,
+                #  'ctg_xfmr_switch_up_max': self.ctg_xfmr_switch_up_max,
+                #  'ctg_xfmr_switch_down_actual': self.ctg_xfmr_switch_down_actual,
+                #  'ctg_xfmr_switch_down_max': self.ctg_xfmr_switch_down_max,
+                #  }, # todo a bunch of others here
+                outfile, indent=4, sort_keys=False)
+
+    def write_summary_csv(self, path):
+
+        with open('{}/eval_summary.csv'.format(path), 'w') as outfile:
+            writer = csv.writer(outfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            for k in summary2_keys:
+                writer.writerow([k, self.summary2[k]])
+
+    def write_detail(self, path, case, detail_csv=False, detail_json=False):
 
         if detail_csv:
             if self.detail_csv_header_done:
@@ -338,24 +608,6 @@ class Evaluation:
         if detail_json:
             with open('{}/eval_detail_{}.json'.format(path, case), 'w') as outfile:
                 json.dump(self.summary, outfile, indent=4, sort_keys=True)
-
-        if summary_json:
-            with open('{}/eval_summary.json'.format(path), 'w') as outfile:
-                json.dump(
-                    {'infeas_cumulative': self.infeas_cumulative,
-                     'obj_cumulative': self.obj_cumulative,
-                     'infeas_all_cases': self.infeas_all_cases,
-                     'obj_all_cases': self.obj_all_cases},
-                    outfile, indent=4, sort_keys=False)
-
-        # maybe we can do something better than this for an output file
-        #with open('eval_out.json', 'w') as outfile:
-        #with open(f'{eval_out_path}/eval_out.json', 'w') as outfile:
-        #    json.dump(e.summary_all_cases, outfile, indent=4, sort_keys=True)
-        #with open(f'{eval_out_path}/eval_summary.csv', mode='w') as summary_csv_file: # write
-        #    summary_csv_writer = csv.writer(summary_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        #    summary_csv_writer.writerow(flatten_summary(e.summary)['keys'])
-        #    summary_csv_writer.writerow(flatten_summary(e.summary)['values'])
 
     def summarize(self, summary_key, values, keys=None, tol=None):
 
@@ -842,6 +1094,8 @@ class Evaluation:
 
         # lines
         self.line_temp = np.zeros(shape=(self.num_line,))
+        self.line_xsu = np.zeros(shape=(self.num_line,))
+        self.line_xsd = np.zeros(shape=(self.num_line,))
         self.line_xsw_prior = np.zeros(shape=(self.num_line,))
         self.line_xsw = np.zeros(shape=(self.num_line,))
         self.line_orig_volt_mag = np.zeros(shape=(self.num_line,))
@@ -857,6 +1111,8 @@ class Evaluation:
 
         # transformers
         self.xfmr_temp = np.zeros(shape=(self.num_xfmr,))
+        self.xfmr_xsu = np.zeros(shape=(self.num_xfmr,))
+        self.xfmr_xsd = np.zeros(shape=(self.num_xfmr,))
         self.xfmr_xsw_prior = np.zeros(shape=(self.num_xfmr,))
         self.xfmr_xsw = np.zeros(shape=(self.num_xfmr,))
         self.xfmr_xst = np.zeros(shape=(self.num_xfmr,))
@@ -2001,6 +2257,20 @@ class Evaluation:
         np.negative(self.gen_temp, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_xsd) # negative part
 
+        self.summarize('gen_switch_up_actual', self.gen_xsu.sum())
+        self.summarize('gen_switch_down_actual', self.gen_xsd.sum())
+
+        #su_max = su_qual * (1 - x_prior) * stat
+        np.subtract(1, self.gen_xon_prior, out=self.gen_temp)
+        np.multiply(self.gen_temp, self.gen_su_qual, out=self.gen_temp)
+        np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
+        self.summarize('gen_switch_up_max', self.gen_temp.sum())
+
+        #sd_max = sd_qual * x_prior * stat
+        np.multiply(self.gen_xon_prior, self.gen_sd_qual, out=self.gen_temp)
+        np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
+        self.summarize('gen_switch_down_max', self.gen_temp.sum())
+
     @timeit
     def eval_gen_xsusd_qual(self):
         
@@ -2034,20 +2304,111 @@ class Evaluation:
         #print_info('debug: {}'.format(self.line_sw_qual))
 
         np.subtract(self.line_xsw, self.line_xsw_prior, out=self.line_temp)
-        np.absolute(self.line_temp, out=self.line_temp)
+        np.multiply(self.line_temp, self.line_service_status, out=self.line_temp) # 0 if out of service anyway
+        np.clip(self.line_temp, a_min=0.0, a_max=None, out=self.line_xsu) # positive part
+        np.negative(self.line_temp, out=self.line_temp)
+        np.clip(self.line_temp, a_min=0.0, a_max=None, out=self.line_xsd) # negative part
+        #print(self.line_xsu)
+        #print(self.line_xsd)
+
+        self.summarize('line_switch_up_actual', self.line_xsu.sum())
+        self.summarize('line_switch_down_actual', self.line_xsd.sum())
+
+        #su_max = sw_qual * (1 - x_prior) * stat
+        np.subtract(1, self.line_xsw_prior, out=self.line_temp)
+        np.multiply(self.line_temp, self.line_sw_qual, out=self.line_temp)
         np.multiply(self.line_temp, self.line_service_status, out=self.line_temp)
-        np.subtract(self.line_temp, self.line_sw_qual, out=self.line_temp)
+        self.summarize('line_switch_up_max', self.line_temp.sum())
+
+        #sd_max = sw_qual * x_prior * stat
+        np.multiply(self.line_xsw_prior, self.line_sw_qual, out=self.line_temp)
+        np.multiply(self.line_temp, self.line_service_status, out=self.line_temp)
+        self.summarize('line_switch_down_max', self.line_temp.sum())
+
+        # check sw qual
+        np.add(self.line_xsu, self.line_xsd, out=self.line_temp) # absolute value
+        np.subtract(self.line_temp, self.line_sw_qual, out=self.line_temp) # exceedance
         self.summarize('line_sw_qual', self.line_temp, self.line_key, self.epsilon)
-            
+
+
+
+
+
+
+        #orig
+        # np.subtract(self.line_xsw, self.line_xsw_prior, out=self.line_temp)
+        # np.absolute(self.line_temp, out=self.line_temp)
+        # np.multiply(self.line_temp, self.line_service_status, out=self.line_temp)
+        # np.subtract(self.line_temp, self.line_sw_qual, out=self.line_temp)
+        # self.summarize('line_sw_qual', self.line_temp, self.line_key, self.epsilon)
+
+        # # todo fix these
+        # self.summarize('line_switch_up_actual', 0.0)
+        # self.summarize('line_switch_down_actual', 0.0)
+        # self.summarize('line_switch_up_max', 0.0)
+        # self.summarize('line_switch_down_max', 0.0)
+
+
+        '''
+        self.summarize('gen_switch_up_actual', self.gen_xsu.sum())
+        self.summarize('gen_switch_down_actual', self.gen_xsd.sum())
+
+        #su_max = su_qual * (1 - x_prior) * stat
+        np.subtract(1, self.gen_xon_prior, out=self.gen_temp)
+        np.multiply(self.gen_temp, self.gen_su_qual, out=self.gen_temp)
+        np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
+        self.summarize('gen_switch_up_max', self.gen_temp.sum())
+
+        #sd_max = sd_qual * x_prior * stat
+        np.multiply(self.gen_xon_prior, self.gen_sd_qual, out=self.gen_temp)
+        np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
+        self.summarize('gen_switch_down_max', self.gen_temp.sum())
+        '''
+    
     @timeit
     def eval_xfmr_xsw_qual(self):
         # C2 A1 S6 #86
-        
+
         np.subtract(self.xfmr_xsw, self.xfmr_xsw_prior, out=self.xfmr_temp)
-        np.absolute(self.xfmr_temp, out=self.xfmr_temp)
+        np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp) # 0 if out of service anyway
+        np.clip(self.xfmr_temp, a_min=0.0, a_max=None, out=self.xfmr_xsu) # positive part
+        np.negative(self.xfmr_temp, out=self.xfmr_temp)
+        np.clip(self.xfmr_temp, a_min=0.0, a_max=None, out=self.xfmr_xsd) # negative part
+
+        self.summarize('xfmr_switch_up_actual', self.xfmr_xsu.sum())
+        self.summarize('xfmr_switch_down_actual', self.xfmr_xsd.sum())
+
+        #su_max = sw_qual * (1 - x_prior) * stat
+        np.subtract(1, self.xfmr_xsw_prior, out=self.xfmr_temp)
+        np.multiply(self.xfmr_temp, self.xfmr_sw_qual, out=self.xfmr_temp)
         np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
-        np.subtract(self.xfmr_temp, self.xfmr_sw_qual, out=self.xfmr_temp)
+        self.summarize('xfmr_switch_up_max', self.xfmr_temp.sum())
+
+        #sd_max = sw_qual * x_prior * stat
+        np.multiply(self.xfmr_xsw_prior, self.xfmr_sw_qual, out=self.xfmr_temp)
+        np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
+        self.summarize('xfmr_switch_down_max', self.xfmr_temp.sum())
+
+        # check sw qual
+        np.add(self.xfmr_xsu, self.xfmr_xsd, out=self.xfmr_temp) # absolute value
+        np.subtract(self.xfmr_temp, self.xfmr_sw_qual, out=self.xfmr_temp) # exceedance
         self.summarize('xfmr_sw_qual', self.xfmr_temp, self.xfmr_key, self.epsilon)
+
+
+
+
+
+        #orig
+        # np.subtract(self.xfmr_xsw, self.xfmr_xsw_prior, out=self.xfmr_temp)
+        # np.absolute(self.xfmr_temp, out=self.xfmr_temp)
+        # np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
+        # np.subtract(self.xfmr_temp, self.xfmr_sw_qual, out=self.xfmr_temp)
+        # self.summarize('xfmr_sw_qual', self.xfmr_temp, self.xfmr_key, self.epsilon)
+        # # todo fix these
+        # self.summarize('xfmr_switch_up_actual', 0.0)
+        # self.summarize('xfmr_switch_down_actual', 0.0)
+        # self.summarize('xfmr_switch_up_max', 0.0)
+        # self.summarize('xfmr_switch_down_max', 0.0)
 
     @timeit
     def eval_gen_xon_bounds(self):
@@ -3446,39 +3807,6 @@ class CaseSolution:
 
         #CHALLENGE2 - ENSURE XSTi ARE INTS
 
-@timeit
-def json_to_csv(path):
-
-    #print(path)
-    #print(str(path))
-    #print(glob.glob(str(path)))
-    json_files = [f for f in glob.glob(str('{}/eval_detail_*.json'.format(path))) if ('eval_detail_' in f) and ('json' in f)]
-    json_contingency_files = [f for f in json_files if 'BASECASE' not in f]
-    json_base_case_files = [f for f in json_files if 'BASECASE' in f]
-    #print(json_contingency_files)
-    #print(json_base_case_files)
-    print_alert(
-        'Expected 1 BASECASE json eval output file, Encountered {} BASECASE json eval output files, files found: {}'.format(
-            len(json_base_case_files), json_base_case_files),
-        check_passed=(len(json_base_case_files) == 1))
-
-    json_base_case_file = json_base_case_files[0]
-    contingency_labels = [Path(f).resolve().stem.replace("eval_detail_","") for f in json_contingency_files]
-    num_contingencies = len(contingency_labels)
-
-    with open('{}/eval_detail.csv'.format(eval_out_path), mode='w') as detail_csv_file:
-        detail_csv_writer = csv.writer(detail_csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        with open(json_base_case_file, 'r') as f:
-            s = json.load(f)
-        detail_csv_writer.writerow(['case_label'] + flatten_summary(s)['keys']) # field names come from keys of base case summary
-        detail_csv_writer.writerow(['BASECASE'] + flatten_summary(s)['values']) # values of base case summary
-        for i in range(num_contingencies):
-            json_contingency_file = json_contingency_files[i]
-            contingency_label = contingency_labels[i]
-            with open(json_contingency_file, 'r') as f:
-                s = json.load(f)
-            detail_csv_writer.writerow([contingency_label] + flatten_summary(s)['values']) # values of contingency summary
-
 # todo extract this to another module
 # e.g. evaluate_solution.py, evaluate_solution_serial.py, evaluate_solution_mpi.py, etc.
 @timeit
@@ -3515,6 +3843,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if not ( os.path.exists(raw_name) and os.path.exists(con_name) and os.path.exists(sup_name)):
         print_info('Could not find input data files')
         print_info((raw_name, con_name, sup_name))
+        #return (None, 1, False, {}, {})
         return (None, 1, False, {})
         #sys.exit()
 
@@ -3562,14 +3891,16 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         print_info('solution_path is invalid')
         return True
 
-    solutions_exist = True
-    if not os.path.exists(f'{solution_path}/solution_BASECASE.txt'):
-        solutions_exist = False
-        print_info(f'{solution_path}/solution_BASECASE.txt could not be found')
-        return (None,  1,solutions_exist, {})
-
     # set up evaluation
     e = Evaluation()
+
+    e.summary2['solutions_exist'] = True
+    if not os.path.exists(f'{solution_path}/solution_BASECASE.txt'):
+        e.summary2['solutions_exist'] = False
+        print_info(f'{solution_path}/solution_BASECASE.txt could not be found')
+        #return (None,  1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+        return (None,  1, e.summary2['solutions_exist'], e.summary_all_cases)
+
     if check_contingencies is not None:
         e.check_contingencies = check_contingencies
     if line_switching_allowed is not None:
@@ -3618,17 +3949,17 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     # and evaluate...
     e.eval_case()
 
-    e.obj_cumulative += e.obj
-    e.infeas_cumulative += e.infeas
-    e.obj_all_cases['BASECASE'] = e.obj
-    e.infeas_all_cases['BASECASE'] = e.infeas
-    e.summary_all_cases['BASECASE'] = copy.deepcopy(e.summary)
+    e.summary2['obj_cumulative'] += e.obj
+    e.summary2['infeas_cumulative'] += e.infeas
+    e.summary2['obj_all_cases']['BASECASE'] = e.obj
+    e.summary2['infeas_all_cases']['BASECASE'] = e.infeas
+    #e.summary_all_cases['BASECASE'] = copy.deepcopy(e.summary)
 
     # write summary
     if not e.summary_written:
-        e.write_summary(eval_out_path, active_case, detail_json=True)
+        e.write_detail(eval_out_path, active_case, detail_json=True)
         if USE_MPI:
-            #e.write_summary(eval_out_path,
+            #e.write_detail(eval_out_path,
             # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
             # with header row in eval_detail.csv
             # then add the case rows to eval_detail.csv after evaluation is complete
@@ -3641,7 +3972,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
             # todo fix this
             pass
         else:
-            #e.write_summary(eval_out_path, active_case, detail_csv=True)
+            #e.write_detail(eval_out_path, active_case, detail_csv=True)
             pass
         e.summary_written = True
 
@@ -3652,7 +3983,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     #CHALLENGE2 - return here if solution1 validation is requested
     if not e.check_contingencies:
-        return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist, e.summary_all_cases)
+        #return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+        return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
 
     #if ctg_name is None:
     #    return True
@@ -3707,13 +4039,14 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         pass
 
     #solutions_exist = (expected == found)
-    solutions_exist = (found == e.num_ctg)
+    e.summary2['solutions_exist'] = (found == e.num_ctg)
 
-    if solutions_exist == False:
+    if e.summary2['solutions_exist'] == False:
         if process_rank == 0:
             print_info(f'Some solution files are missing. Exiting...')
         # todo - which ones? need to check that the solutions found are exactly the ones that are expected
-        return (None,   1,solutions_exist, e.summary_all_cases)   
+        #return (None, 1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)   
+        return (None, 1, e.summary2['solutions_exist'], e.summary_all_cases)   
 
     if log_fileobject is not None:
        log_fileobject.close()
@@ -3791,21 +4124,21 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                 #if e.infeas == 1:
                 #    raise Exception(f'Infeasibility detected in {active_case}')
                 
-                e.obj_cumulative += (e.obj / e.num_ctg)
-                e.infeas_cumulative += e.infeas
-                e.obj_all_cases[clean_string(active_case)] = e.obj
-                e.infeas_all_cases[clean_string(active_case)] = e.infeas
-                e.summary_all_cases[clean_string(active_case)] = copy.deepcopy(e.summary)
+                e.summary2['obj_cumulative'] += (e.obj / e.num_ctg)
+                e.summary2['infeas_cumulative'] += e.infeas
+                e.summary2['obj_all_cases'][clean_string(active_case)] = e.obj
+                e.summary2['infeas_all_cases'][clean_string(active_case)] = e.infeas
+                #e.summary_all_cases[clean_string(active_case)] = copy.deepcopy(e.summary)
             except:
                 e.infeas = 1
-                e.infeas_cumulative += e.infeas
-                e.infeas_all_cases[clean_string(active_case)] = e.infeas
+                e.summary2['infeas_cumulative'] += e.infeas
+                e.summary2['infeas_all_cases'][clean_string(active_case)] = e.infeas
                 traceback.print_exc()
 
             # write summary
             if not e.summary_written:
-                e.write_summary(eval_out_path, active_case, detail_json=True)
-                #e.write_summary(eval_out_path, active_case, detail_csv=True)
+                e.write_detail(eval_out_path, active_case, detail_json=True)
+                #e.write_detail(eval_out_path, active_case, detail_csv=True)
                 e.summary_written = True
 
             case_end_time = time.time()
@@ -3847,9 +4180,9 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                     e_ctg_obj = contingency_result['e_ctg_obj']
 
                     if(e_ctg_obj != None):
-                        e.obj_cumulative += (e_ctg_obj / e.num_ctg )
-                        e.obj_all_cases[clean_string(active_case)] = e_ctg_obj
-                        e.infeas_all_cases[clean_string(active_case)] = 0
+                        e.summary2['obj_cumulative'] += (e_ctg_obj / e.num_ctg )
+                        e.summary2['obj_all_cases'][clean_string(active_case)] = e_ctg_obj
+                        e.summary2['infeas_all_cases'][clean_string(active_case)] = 0
                         #e.summary_all_cases[clean_string(active_case)] = e_ctg_summary
                     else:
                         e.infeas = 1
@@ -3907,8 +4240,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                     #print('trying to write summary files eval_out_path: {}, active_case: {}'.format(eval_out_path, active_case))
                     #with open(eval_out_path + '/' + active_case + '.tmp', mode='w') as tmp_out_file:
                     #    tmp_out_file.write('test')
-                    e.write_summary(eval_out_path, active_case, detail_json=True)
-                    #self.write_summary(eval_out_path, active_case, detail_csv=True)
+                    e.write_detail(eval_out_path, active_case, detail_json=True)
+                    #self.write_detail(eval_out_path, active_case, detail_csv=True)
 
                 except:
                     e.infeas = 1
@@ -3925,23 +4258,28 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if process_rank == 0:
         end_time_all = time.time()
         print_info('obj all cases:')
-        print_info(e.obj_all_cases)
+        print_info(e.summary2['obj_all_cases'])
         print_info('infeas all cases:')
-        print_info(e.infeas_all_cases)
-        print_info('obj cumulative: {}'.format(e.obj_cumulative))
-        print_info('infeas cumulative: {}'.format(e.infeas_cumulative))
+        print_info(e.summary2['infeas_all_cases'])
+        print_info('obj cumulative: {}'.format(e.summary2['obj_cumulative']))
+        print_info('infeas cumulative: {}'.format(e.summary2['infeas_cumulative']))
         print_info('eval time: {}'.format(end_time_all - start_time_all))
     
         # todo : short circuit if infeas
 
-        e.write_summary(eval_out_path, '', summary_json=True)
-        json_to_csv(eval_out_path)
+        e.json_to_summary_all_cases(eval_out_path)
+        e.summary_all_cases_to_summary()
+        e.write_summary_json(eval_out_path)
+        e.write_summary_csv(eval_out_path)
+        e.write_detail_all_cases_json(eval_out_path)
+        e.write_detail_all_cases_csv(eval_out_path)
+        #e.json_to_csv(eval_out_path)
 
-        print_info("obj: {}".format(e.obj_cumulative))
-        print_info("infeas: {}".format(e.infeas_cumulative))    
+        print_info("obj: {}".format(e.summary2['obj_cumulative']))
+        print_info("infeas: {}".format(e.summary2['infeas_cumulative']))
 
-
-    return (e.obj_cumulative,  1 if e.infeas_cumulative else 0, solutions_exist, e.summary_all_cases)
+    #return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
+    return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
 
 
 def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
