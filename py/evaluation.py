@@ -298,7 +298,9 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
                 evaluation.write_detail_all_cases_json(eval_out_path)
                 evaluation.write_detail_all_cases_csv(eval_out_path)
                 evaluation.summary_written = True
-        raise Exception(formatted_message)
+        print(formatted_message)        
+
+        #raise Exception(formatted_message)
 
 def print_info(message):
     print(message)
@@ -4166,8 +4168,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                 # and evaluate...
                 e.eval_case()
 
-                if e.infeas == 1:
-                    raise Exception(f'Infeasibility detected in {active_case}')
+                #if e.infeas == 1:
+                #    raise Exception(f'Infeasibility detected in {active_case}')
                 
                 e.summary2['obj_cumulative'] += (e.obj / e.num_ctg)
                 e.summary2['infeas_cumulative'] += e.infeas
@@ -4278,8 +4280,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
                     log_fileobject.close()
 
-                    if e.infeas == 1:
-                        raise Exception(f'Infeasibility dectected in {active_case}')
+                    #if e.infeas == 1:
+                    #    raise Exception(f'Infeasibility dectected in {active_case}')
 
                     # TODO this causes an error. not sure why
                     #print('trying to write summary files eval_out_path: {}, active_case: {}'.format(eval_out_path, active_case))
@@ -4375,7 +4377,7 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
         var = traceback.format_exc()
         traceback.print_exc()
         print_alert(var, raise_exception=False)
-
+        return (None, 1, False, {})
 
 def main():
     #arg_basepath = Path( '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Terrence/sandbox')

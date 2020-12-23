@@ -28,6 +28,8 @@ import sys
 import time
 import traceback
 
+import os.path
+from os import path
 
 try:
     import data_utilities.evaluation as evaluation
@@ -73,7 +75,7 @@ def run():
     parser.add_argument('network_model', help='name of the network model')
     parser.add_argument('model_scenario_number', help='scenario number being evaluated relative to single model')
     parser.add_argument('dataset_scenario_number', help='scenario number being evaluated relative to a multi-model dataset')
-    parser.add_argument('slack_objective', help='slack objective for empty/infeasible/bad solutions')
+    parser.add_argument('zinf_objective', help='zinf objective for empty/infeasible/bad solutions')
     parser.add_argument('code1_runtime', help='code1 runtime')
     parser.add_argument('code2_runtime', help='code2 runtime', action="store", nargs='?')
     parser.add_argument('contingency_count', help='contingency count', action="store", nargs='?')
@@ -86,7 +88,7 @@ def run():
     args = parser.parse_args()
 
     model_path = "{}/{}/".format(args.datapath, args.network_model)
-    scenario_path = "%s/scenario_%02d"%(model_path, int(args.model_scenario_number))
+    scenario_path = "%s/scenario_%03d"%(model_path, int(args.model_scenario_number))
 
     print('Model Path: ', model_path)
     print('Scenario Path: ', scenario_path)
@@ -94,6 +96,12 @@ def run():
     args_raw = getInputPath(model_path, "case.raw", scenario_path) + "/case.raw"    #"{}/case.raw".format(scenario_path, args.model_scenario_number) 
     args_sup = getInputPath(model_path, "case.json", scenario_path) + "/case.json"
     args_con = getInputPath(model_path, "case.con", scenario_path) + "/case.con"
+
+
+    #if path.exists(args_raw)==False or path.exists(args_sup)==False or path.exists(args_con)==False:
+    #    sys.exit(-1)
+    #fi
+
 
     #/${NETWORKMODEL}_output${SCENARIO_LOCAL}
     output_path = "{}/{}_output{}".format(args.solutionpath,args.network_model,args.model_scenario_number ) 
@@ -132,14 +140,14 @@ def run():
     print("\tCON:%s"%(args_con))
 
     #Check if solution1 is valid
-    if args.slack_objective == "0" and args.code1_runtime == "0" and args.code2_runtime == "0":
+    if args.zinf_objective == "0" and args.code1_runtime == "0" and args.code2_runtime == "0":
         try:
             args_summary = "{}/GOCFeasibility_base.csv".format(output_path)
             args_detail = "{}/{}_DetailedSolution_base.csv".format(output_path, args.model_scenario_number)
             
             (obj, infeas, solutions_exist, summary_all_cases) = evaluation.run_main(scenario_path,  args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
             if solutions_exist == False or obj == None:
-                raise Exception ("Missing solution or onj is None")
+                raise Exception ("Missing solution or obj is None")
 
         except:
             traceback.print_exc()
@@ -156,8 +164,8 @@ def run():
 
     start_time = time.time()
 
-    slack_objective = float(args.slack_objective)
-    score = slack_objective
+    zinf_objective = float(args.zinf_objective)
+    score = zinf_objective
 
     code1_runtime = ""
     code2_runtime = ""
@@ -181,21 +189,21 @@ def run():
         (obj, infeas, solutions_exist,summary_all_cases) = evaluation.run_main(scenario_path, args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
 
 
-        if process_rank == 0:
+        if process_rank == 0 and solutions_exist != False:
 
-            if solutions_exist == False:
-                raise Exception( "All solutions do not exist")
+            #if solutions_exist == False:
+            #    raise Exception( "All solutions do not exist")
 
-            if obj > slack_objective: #and infeas == 0:   #larger than slack and feasible
+            if obj > zinf_objective:   #larger than zinf and feasible
                 print("obj > infeasible_score and infeas == 0")
                 score = obj
-            elif abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
+            elif abs(abs(zinf_objective) - MAXOBJ) < 1:       #zinf objective is not available, capture worst case score
                 print("infeasible score not available")
                 score = obj
             elif obj == float('nan'):
-                score = slack_objective
+                score = zinf_objective
             elif infeas == 1:
-                score = slack_objective
+                score = zinf_objective
 
             eval_runtime = time.time() - start_time
 
@@ -204,27 +212,27 @@ def run():
 
             with open(args_summary, 'w') as summaryfile:
                 csvwriter = csv.writer(summaryfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
-                csvwriter.writerow(['Scenario','Score', 'Objective',  'Infeasibility','Bad/Missing Solution','Slack Objective', 'Evaluation Duration (sec)', 'Code 1 Duration (sec)', 'Code 2 Duration (sec)','Contingency Count', 'Seconds per Contingency','Code 2 Runtime Goal (sec)'])
-                csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score, obj,  infeasibility_text, missing_solution, slack_objective,eval_runtime, code1_runtime, code2_runtime, contingency_count,sec_per_contingency,code2_runtime_goal_sec ])
+                csvwriter.writerow(['Scenario','Score', 'Objective',  'Infeasibility','Bad/Missing Solution','Zinf Objective', 'Evaluation Duration (sec)', 'Code 1 Duration (sec)', 'Code 2 Duration (sec)','Contingency Count', 'Seconds per Contingency','Code 2 Runtime Goal (sec)'])
+                csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score, obj,  infeasibility_text, missing_solution, zinf_objective,eval_runtime, code1_runtime, code2_runtime, contingency_count,sec_per_contingency,code2_runtime_goal_sec ])
 
             print("\tSolutions generated:{}".format(solutions_exist))
 
             try:
                 if args.is_sensitive == "1":
-                    obj -= slack_objective
-                    score -= slack_objective
+                    obj -= zinf_objective
+                    score -= zinf_objective
             except:
                 pass
 
             if args.is_sensitive == "1":
                 contingency_count = 0
                 code2_runtime_goal_sec = 0
-                slack_objective = 0
+                zinf_objective = 0
 
 
             if solutions_exist:
                 print("\tModel:{}".format(args.network_model))
-                print("\tInfeasible Score:%f"%(slack_objective))
+                print("\tInfeasible Score:%f"%(zinf_objective))
                 print("\tObjective:%f"%(obj))
                 print("\tInfeasibility:%d"%(infeas))
                 print("\tEval runtime:%f"%(eval_runtime))
@@ -242,8 +250,8 @@ def run():
         missing_solution = 'TRUE' if not solutions_exist else 'FALSE'
         with open(args_summary, 'w') as summaryfile:
             csvwriter = csv.writer(summaryfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
-            csvwriter.writerow(['Scenario','Score', 'Objective',  'Infeasibility','Bad/Missing Solution','Slack Objective', 'Evaluation Duration (sec)', 'Code 1 Duration (sec)', 'Code 2 Duration (sec)','Contingency Count','Seconds per Contingency','Code 2 Runtime Goal (sec)'])
-            csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score, 'N/A',  'N/A', missing_solution, slack_objective,'', code1_runtime, code2_runtime, contingency_count, 'N/A', code2_runtime_goal_sec])
+            csvwriter.writerow(['Scenario','Score', 'Objective',  'Infeasibility','Bad/Missing Solution','Zinf Objective', 'Evaluation Duration (sec)', 'Code 1 Duration (sec)', 'Code 2 Duration (sec)','Contingency Count','Seconds per Contingency','Code 2 Runtime Goal (sec)'])
+            csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score, 'N/A',  'N/A', missing_solution, zinf_objective,'', code1_runtime, code2_runtime, contingency_count, 'N/A', code2_runtime_goal_sec])
     
     
 if __name__ == '__main__':
