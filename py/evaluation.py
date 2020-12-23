@@ -99,6 +99,7 @@ summary_keys = [
     'total_gen_cost',
     'total_line_cost',
     'total_xfmr_cost',
+    'min_total_load_benefit',
     'bus_volt_mag_max_viol',
     'bus_volt_mag_min_viol',
     'bus_pow_real_imbalance',
@@ -158,6 +159,16 @@ summary2_keys = [
     'infeas_all_cases',
     'obj_cumulative',
     'obj_all_cases',
+
+    'obj',
+    'infeas',
+    'total_bus_cost',
+    'total_load_benefit',
+    'total_gen_cost',
+    'total_line_cost',
+    'total_xfmr_cost',
+    'min_total_load_benefit',
+
     'base_gen_switch_up_actual',
     'base_gen_switch_up_max',
     'base_gen_switch_down_actual',
@@ -419,6 +430,35 @@ class Evaluation:
     def summary_all_cases_to_summary(self):
         '''construct whole problem summary from summary_all_cases'''
 
+        # can only use contingencies represented in the details
+        # this should be the same as the set of all contingencies
+        # unless terminating early due to infeasibility
+        ctg_labels = sorted(list(set(self.summary_all_cases.keys()).difference(['BASECASE'])))
+
+        #self.summary2['obj'] = 
+        self.summary2['obj'] = (
+            self.summary_all_cases['BASECASE']['obj']['val'] +
+            np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg)
+        self.summary2['infeas'] = np.sum([1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels])
+        self.summary2['total_bus_cost'] = (
+            self.summary_all_cases['BASECASE']['total_bus_cost']['val'] +
+            np.sum([self.summary_all_cases[k]['total_bus_cost']['val'] for k in ctg_labels]) / self.num_ctg)
+        self.summary2['total_load_benefit'] = (
+            self.summary_all_cases['BASECASE']['total_load_benefit']['val'] +
+            np.sum([self.summary_all_cases[k]['total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg)
+        self.summary2['total_gen_cost'] = (
+            self.summary_all_cases['BASECASE']['total_gen_cost']['val'] +
+            np.sum([self.summary_all_cases[k]['total_gen_cost']['val'] for k in ctg_labels]) / self.num_ctg)
+        self.summary2['total_line_cost'] = (
+            self.summary_all_cases['BASECASE']['total_line_cost']['val'] +
+            np.sum([self.summary_all_cases[k]['total_line_cost']['val'] for k in ctg_labels]) / self.num_ctg)
+        self.summary2['total_xfmr_cost'] = (
+            self.summary_all_cases['BASECASE']['total_xfmr_cost']['val'] +
+            np.sum([self.summary_all_cases[k]['total_xfmr_cost']['val'] for k in ctg_labels]) / self.num_ctg)
+        self.summary2['min_total_load_benefit'] = (
+            self.summary_all_cases['BASECASE']['min_total_load_benefit']['val'] +
+            np.sum([self.summary_all_cases[k]['min_total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg)
+
         self.summary2['base_gen_switch_up_actual'] = self.summary_all_cases['BASECASE']['gen_switch_up_actual']['val']
         self.summary2['base_gen_switch_up_max'] = self.summary_all_cases['BASECASE']['gen_switch_up_max']['val']
         self.summary2['base_gen_switch_down_actual'] = self.summary_all_cases['BASECASE']['gen_switch_down_actual']['val']
@@ -431,8 +471,6 @@ class Evaluation:
         self.summary2['base_xfmr_switch_up_max'] = self.summary_all_cases['BASECASE']['xfmr_switch_up_max']['val']
         self.summary2['base_xfmr_switch_down_actual'] = self.summary_all_cases['BASECASE']['xfmr_switch_down_actual']['val']
         self.summary2['base_xfmr_switch_down_max'] = self.summary_all_cases['BASECASE']['xfmr_switch_down_max']['val']
-
-        ctg_labels = sorted(list(set(self.summary_all_cases.keys()).difference(['BASECASE'])))
 
         self.summary2['ctg_gen_switch_up_actual'] = np.sum([self.summary_all_cases[k]['gen_switch_up_actual']['val'] for k in ctg_labels])
         self.summary2['ctg_gen_switch_up_max'] = np.sum([self.summary_all_cases[k]['gen_switch_up_max']['val'] for k in ctg_labels])
@@ -2560,6 +2598,14 @@ class Evaluation:
         np.multiply(self.load_benefit, self.delta, out=self.load_benefit)
 
         self.summarize('load_benefit', self.load_benefit, self.load_key)
+        self.summarize('min_total_load_benefit', self.min_total_load_benefit)
+
+    @timeit
+    def eval_min_total_load_benefit(self):
+
+        np.multiply(self.load_pow_real_0, self.load_t_min, out=self.load_temp)
+        self.load_cost_evaluator.eval_benefit(self.load_temp, self.load_benefit)
+        self.min_total_load_benefit = float(np.sum(self.load_benefit))
 
     @timeit
     def eval_gen_ramp_viol(self):
@@ -3907,6 +3953,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         e.xfmr_switching_allowed = xfmr_switching_allowed
     e.set_data(p)
     e.set_sol_initialize()
+    e.eval_min_total_load_benefit()
 
     #print_alert('done setting evaluation data',raise_exception=False)
     print_info('done setting evaluation data')

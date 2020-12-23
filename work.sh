@@ -22,7 +22,7 @@
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
@@ -90,6 +90,8 @@ case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N02312//scenario_254
 #case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N00500//scenario_052
 #case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N00403//scenario_222
+case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N00617/scenario_042/
+#case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N15810/scenario_059
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
@@ -111,7 +113,7 @@ eval_sol=1
 do_submission=0
 eval_submission=0
 division=1
-num_proc=2
+num_proc=1
 
 py_dir=./py/
 work_dir=./tmp/
