@@ -13,7 +13,7 @@ import math
 import time
 import traceback
 
-#import data
+import data_utilities.data as p_data
 import numpy as np
 #import pandas as pd
 #from cost_utils import CostEvaluator
@@ -77,6 +77,8 @@ class Data:
         self.bus_i = [r.i for r in buses]
         self.bus_key = self.bus_i
         self.bus_map = {self.bus_i[i]:i for i in range(len(self.bus_i))}
+        self.bus_volt_mag_0 = np.array([r.vm for r in buses])
+        self.bus_volt_ang_0 = np.array([r.va for r in buses]) * np.pi / 180.0
         self.bus_volt_mag_max_base = np.array([r.nvhi for r in buses])
         self.bus_volt_mag_min_base = np.array([r.nvlo for r in buses])
         self.bus_volt_mag_max_ctg = np.array([r.evhi for r in buses])
@@ -197,6 +199,7 @@ class Data:
 
         # real power output in given operating point prior to the base case
         self.gen_pow_real_0 = np.array([r.pg for r in gens]) / self.base_mva
+        self.gen_pow_imag_0 = np.array([r.qg for r in gens]) / self.base_mva
 
         self.gen_service_status = np.ones(shape=(self.num_gen,))
         self.bus_gen_matrix = sp.csr_matrix(
@@ -331,15 +334,28 @@ class Data:
         self.xfmr_pow_mag_max_base = np.array([r.rata1 for r in xfmrs]) / self.base_mva # todo check normalization
         self.xfmr_pow_mag_max_ctg = np.array([r.ratc1 for r in xfmrs]) / self.base_mva # todo check normalization
         
-        self.xfmr_xst_max = np.array([round(0.5 * (r.ntp1 - 1.0)) for r in xfmrs])
+        self.xfmr_xst_max = np.array([round(0.5 * (r.ntp1 - 1.0)) if (r.cod1 in [-3, -1, 1, 3]) else 0 for r in xfmrs], dtype=int)
         self.xfmr_tap_mag_mid = np.array(
-            [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 == 1) else (r.windv1 / r.windv2) for r in xfmrs])
-        self.xfmr_tap_mag_step_size = np.array(
-            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 == 1) else 0.0 for r in xfmrs])
+            [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 in [-1, 1]) else (r.windv1 / r.windv2) for r in xfmrs])
         self.xfmr_tap_ang_mid = np.array(
-            [(0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 == 3) else (r.ang1 * math.pi / 180.0) for r in xfmrs])
+            [(0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 in [-3, 3]) else (r.ang1 * math.pi / 180.0) for r in xfmrs])
+        self.xfmr_mid = np.array(
+            [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 in [-1, 1]) else
+             (0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 in [-3, 3]) else
+             0.0
+             for r in xfmrs])
+        self.xfmr_tap_mag_step_size = np.array(
+            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 in [-1, 1]) else 0.0 for r in xfmrs])
         self.xfmr_tap_ang_step_size = np.array(
-            [((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 == 3) else 0.0 for r in xfmrs])
+            [((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 in [-3, 3]) else 0.0 for r in xfmrs])
+        self.xfmr_step_size = np.array(
+            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 in [-1, 1]) else
+             ((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 in [-3, 3]) else
+             0.0
+             for r in xfmrs])
+        # to facilitate division by step size
+        self.xfmr_xst_max[self.xfmr_step_size == 0.0] = 0
+        self.xfmr_step_size[self.xfmr_step_size == 0.0] = 1.0
 
         self.bus_xfmr_orig_matrix = sp.csr_matrix(
             ([1.0 for i in range(self.num_xfmr)],
@@ -360,9 +376,9 @@ class Data:
 
         # todo transformer impedance correction
         self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if xfmrs[ind].tab1 > 0]
-        self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 not in [1,3]]
-        self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 1]
-        self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 3]
+        self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 not in [-3, -1, 1, 3]]
+        self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-1, 1]]
+        self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-3, 3]]
         self.xfmr_index_imp_corr_var_tap_ratio = sorted(
             list(set(self.xfmr_index_imp_corr).intersection(
                     set(self.xfmr_index_var_tap_ratio))))
@@ -386,12 +402,16 @@ class Data:
         self.swsh_key = self.swsh_i
         self.swsh_bus = [self.bus_map[self.swsh_i[i]] for i in range(self.num_swsh)]
         self.swsh_map = {self.swsh_i[i]:i for i in range(self.num_swsh)}
+        self.swsh_adm_imag_init = np.array([r.binit for r in swshs]) / self.base_mva
         self.swsh_block_adm_imag = np.array(
             [[r.b1, r.b2, r.b3, r.b4, r.b5, r.b6, r.b7, r.b8]
              for r in swshs]) / self.base_mva
         self.swsh_block_num_steps = np.array(
             [[r.n1, r.n2, r.n3, r.n4, r.n5, r.n6, r.n7, r.n8]
              for r in swshs])
+        if self.num_swsh == 0:
+            self.swsh_block_num_steps.shape = (0, 8)
+            self.swsh_block_adm_imag.shape = (0, 8)
         self.swsh_num_blocks = np.array(
             [r.swsh_susc_count for r in swshs])
         self.bus_swsh_matrix = sp.csr_matrix(
@@ -418,6 +438,7 @@ class Data:
 
     @timeit
     def set_data_ctg_params(self, data):
+        # TODO 1/2 this is incomplete ? maybe? need to check
         # contingency records
         # this section was pretty long (40 s) - much reduced now, < 1 s (see below)
         # todo what is needed? can it be more efficient?
@@ -455,11 +476,11 @@ class Data:
         self.ctg_num_lines_out = [len(self.ctg_lines_out[i]) for i in range(self.num_ctg)]
         self.ctg_num_xfmrs_out = [len(self.ctg_xfmrs_out[i]) for i in range(self.num_ctg)]
 
-    #@timeit
-    #def read(self, raw, sup, con):
-    #    p = data.Data()
-    #    p.read(raw, sup, con)
-    #    self.set_data(p)
+    @timeit
+    def read(self, raw, sup, con):
+        p = p_data.Data()
+        p.read(raw, sup, con)
+        self.set_data(p)
 
     @timeit
     def set_data(self, data):
@@ -479,7 +500,7 @@ class Data:
         self.set_data_system_cost_params(data)
         #self.set_data_line_cost_params(data)
         #self.set_data_xfmr_cost_params(data)
-        #self.set_data_ctg_params(data)
+        self.set_data_ctg_params(data)
 
     @timeit
     def set_data_system_cost_params(self, data):
