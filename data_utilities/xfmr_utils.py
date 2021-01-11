@@ -14,7 +14,7 @@ def compute_xfmr_position_single(cod1, rma1, rmi1, ntp1, tap_mag, tap_ang):
         max_position = int(round(0.5 * (ntp1 - 1.0)))
         if cod1 in [-1, 1]:
             oper_val = tap_mag # windv1 / windv2
-        elif r.cod1 in [-3, 3]:
+        elif cod1 in [-3, 3]:
             oper_val = tap_ang # r.ang1
         else:
             print('data error: transformer cod1 allowable values: [-3, -1, 0, 1, 3], actual value: {}'.format(cod1))
@@ -30,7 +30,7 @@ def compute_xfmr_position_single(cod1, rma1, rmi1, ntp1, tap_mag, tap_ang):
 
 def compute_xfmr_position(r):
 
-    return compute_xfmr_position_single(r.cod1, r.rma1, r.rmi1, r.ntp1, r.windv1 / r.windv2, r.ang)
+    return compute_xfmr_position_single(r.cod1, r.rma1, r.rmi1, r.ntp1, r.windv1 / r.windv2, r.ang1)
 
 # def compute_xfmr_position(r):
 

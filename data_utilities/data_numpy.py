@@ -379,6 +379,10 @@ class Data:
         self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 not in [-3, -1, 1, 3]]
         self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-1, 1]]
         self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-3, 3]]
+        #print('xfmr index')
+        #print([r.cod1 for r in xfmrs])
+        #print(self.xfmr_index_var_tap_ratio)
+        #print(self.xfmr_index_var_phase_shift)
         self.xfmr_index_imp_corr_var_tap_ratio = sorted(
             list(set(self.xfmr_index_imp_corr).intersection(
                     set(self.xfmr_index_var_tap_ratio))))
@@ -455,12 +459,9 @@ class Data:
         ctg_branch_keys_out = {
             r.label:set([(e.i, e.j, e.ckt) for e in r.branch_out_events])
             for r in ctgs}
-        ctg_branch_xfmr_keys_out = {
-            r.label:set([(e.i, e.j, 0, e.ckt) for e in r.branch_out_events])
-            for r in ctgs}
 
         ctg_line_keys_out = {k:(v & line_keys) for k,v in ctg_branch_keys_out.items()}
-        ctg_xfmr_keys_out = {k:(v & xfmr_keys) for k,v in ctg_branch_xfmr_keys_out.items()}
+        ctg_xfmr_keys_out = {k:(v & xfmr_keys) for k,v in ctg_branch_keys_out.items()}
 
         self.ctg_gens_out = [
             [self.gen_map[k] for k in ctg_gen_keys_out[self.ctg_label[i]]]
