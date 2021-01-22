@@ -24,9 +24,14 @@ except ImportError:
     from io import StringIO ## for Python 3
 
 # GOComp modules - this should be visible on the GOComp evaluation system
-import data
-from swsh_utils import solve_py as swsh_solve
-from xfmr_utils import compute_xfmr_position
+try:
+    import data_utilities.data as data
+    from data_utilities.swsh_utils import solve_py as swsh_solve
+    from data_utilities.xfmr_utils import compute_xfmr_position
+except:
+    import data
+    from swsh_utils import solve_py as swsh_solve
+    from xfmr_utils import compute_xfmr_position
 
 swsh_binit_tol = 1e-4
 

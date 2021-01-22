@@ -1,10 +1,11 @@
-#from py.data_json import Sup
-#from py.data import Data
-
-from data_json import Sup
-from data import Data
-import evaluation
-
+try:
+    import data_utilities.evaluation as evaluation
+    from data_utilities.data_json import Sup
+    from data_utilities.data import Data
+except:
+    import evaluation
+    from data_json import Sup
+    from data import Data
 
 from pathlib import Path
 import os
@@ -25,6 +26,7 @@ basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Globus"
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Terrence/sandbox/Sep6_01"
 basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/Sandbox072020_05'
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Jesse/14_bus_Sep7/"
+basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Sep9_01'
 basepath = '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/Sandbox/Sep17_01'
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Sep30_01/"
 basepath="/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Platform/Oct8_01/scrubbed"

@@ -11,14 +11,13 @@ $ python MyPython1.py CON SUP RAW RESERVED TIMELIMIT DIVISION NETWORK
 import sys, os
 
 # modules for this code
-# better way to make this visible?
-
-
+#try:
+#    from data_utilities.infeasibility_solution import Solver
+#except:
+#    from infeasibility_solution import Solver
 #sys.path.append(os.path.normpath('.'))
 #sys.path.append(os.path.normpath('./py'))
-
 script_path=os.path.dirname(os.path.realpath(__file__)) + '/py'
-
 sys.path.append(script_path)
 from infeasibility_solution import Solver
 

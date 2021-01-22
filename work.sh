@@ -119,7 +119,7 @@ eval_submission=0
 division=1
 num_proc=1
 
-py_dir=./py/
+py_dir=./data_utilities/
 work_dir=./tmp/
 stored_sol_dir=./tmpsol/sol
 raw1="${work_dir}/case.raw"

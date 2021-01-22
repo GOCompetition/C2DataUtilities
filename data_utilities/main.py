@@ -28,14 +28,16 @@ import sys
 import time
 import traceback
 
+#<<<<<<< HEAD:py/main.py
 import os.path
 from os import path
 
+#=======
+#>>>>>>> package:data_utilities/main.py
 try:
     import data_utilities.evaluation as evaluation
 except:
     import evaluation
-
 
 
 from mpi4py import MPI
@@ -194,10 +196,26 @@ def run():
             #if solutions_exist == False:
             #    raise Exception( "All solutions do not exist")
 
+            #<<<<<<< HEAD:py/main.py
             if obj > zinf_objective:   #larger than zinf and feasible
                 print("obj > infeasible_score and infeas == 0")
                 score = obj
             elif abs(abs(zinf_objective) - MAXOBJ) < 1:       #zinf objective is not available, capture worst case score
+            #=======
+            # merging master into package JH
+            # accept master here
+            # <<<<<<< HEAD:data_utilities/main.py
+            #if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
+            #    print("obj > slack_objective and infeas == 0")
+            #    score = obj
+            #if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
+            #=======
+            #if obj > slack_objective: #and infeas == 0:   #larger than slack and feasible
+            #    print("obj > infeasible_score and infeas == 0")
+            #    score = obj
+            #elif abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
+            # >>>>>>> master:py/main.py
+            #>>>>>>> package:data_utilities/main.py
                 print("infeasible score not available")
                 score = obj
             elif obj == float('nan'):

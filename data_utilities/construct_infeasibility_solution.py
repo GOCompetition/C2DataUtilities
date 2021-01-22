@@ -18,7 +18,10 @@ import argparse
 import time
 
 # gocomp imports
-from infeasibility_solution import Solver
+try:
+    from data_utilities.infeasibility_solution import Solver
+except:
+    from infeasibility_solution import Solver
 
 import sys,os
 

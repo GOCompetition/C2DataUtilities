@@ -3,19 +3,22 @@
 # author: Jesse Holzer
 # date: 2020-09-06
 #
-# to compile use
-#
-#   $ python setup.py build_ext --inplace
-#
 
-import numpy as np
-from swsh_utils import solve_py
-try:
-    from swsh_utils import solve_cy
-except:
-    print('cannot import solve_cy. using solve_py instead')
-    solve_cy = solve_py
 import time
+import numpy as np
+
+try:
+    from data_utilities.swsh_utils import solve_py
+except:
+    from swsh_utils import solve_py
+try:
+    from data_utilities.swsh_utils import solve_cy
+except:
+    try:
+        from swsh_utils import solve_cy
+    except:
+        print('cannot import solve_cy. using solve_py instead')
+        solve_cy = solve_py
 
 def timeit(function):
     def timed(*args, **kw):
