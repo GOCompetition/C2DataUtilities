@@ -17,9 +17,12 @@ import sys, os
 #    from infeasibility_solution import Solver
 #sys.path.append(os.path.normpath('.'))
 #sys.path.append(os.path.normpath('./py'))
-script_path=os.path.dirname(os.path.realpath(__file__)) + '/py'
-sys.path.append(script_path)
-from infeasibility_solution import Solver
+#script_path=os.path.dirname(os.path.realpath(__file__)) + '/py'
+#sys.path.append(script_path)
+try:
+    from data_utilities.infeasibility_solution import Solver
+except:
+    from infeasibility_solution import Solver
 
 args = sys.argv
 
