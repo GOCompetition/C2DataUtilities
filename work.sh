@@ -22,7 +22,7 @@
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
@@ -94,7 +94,7 @@
 #case_dir=/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N15810/scenario_059
 #case_dir=/pic/dtn/go/Adam/Challenge2/2021_01_08_GOScen12k/GOTx12k_a00001/
 #case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N00403/scenario_001/
-case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenario_002/
+#case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenario_002/
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
@@ -103,7 +103,7 @@ case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenari
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00403_output222/
 #grep Scenario: feasibility.log 
 #       Scenario:/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N02312//scenario_254
-sol_dir=/pic/dtn/go/Adam/Challenge2/2021_01_08_GOScen12k/GOTx12k_a00001/sol/
+#sol_dir=/pic/dtn/go/Adam/Challenge2/2021_01_08_GOScen12k/GOTx12k_a00001/sol/
 
 # set options
 strict_names=0
