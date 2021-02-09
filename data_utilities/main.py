@@ -193,31 +193,17 @@ def run():
 
         if process_rank == 0 and solutions_exist != False:
 
-            #if solutions_exist == False:
-            #    raise Exception( "All solutions do not exist")
-
-            #<<<<<<< HEAD:py/main.py
             if obj > zinf_objective:   #larger than zinf and feasible
                 print("obj > infeasible_score and infeas == 0")
                 score = obj
             elif abs(abs(zinf_objective) - MAXOBJ) < 1:       #zinf objective is not available, capture worst case score
-            #=======
-            # merging master into package JH
-            # accept master here
-            # <<<<<<< HEAD:data_utilities/main.py
-            #if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
-            #    print("obj > slack_objective and infeas == 0")
-            #    score = obj
-            #if abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
-            #=======
-            #if obj > slack_objective: #and infeas == 0:   #larger than slack and feasible
-            #    print("obj > infeasible_score and infeas == 0")
-            #    score = obj
-            #elif abs(abs(slack_objective) - MAXOBJ) < 1:       #slack objective is not available, capture worst case score
-            # >>>>>>> master:py/main.py
-            #>>>>>>> package:data_utilities/main.py
                 print("infeasible score not available")
                 score = obj
+                infeas = 1
+            if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
+                print("obj < slack_objective and infeas == 0")
+                score = obj
+                infeas = 1
             elif obj == float('nan'):
                 score = zinf_objective
             elif infeas == 1:
@@ -234,7 +220,8 @@ def run():
                 csvwriter.writerow(['{} Scenario {} (output{})'.format(args.network_model, args.model_scenario_number,args.model_scenario_number), score, obj,  infeasibility_text, missing_solution, zinf_objective,eval_runtime, code1_runtime, code2_runtime, contingency_count,sec_per_contingency,code2_runtime_goal_sec ])
 
             print("\tSolutions generated:{}".format(solutions_exist))
-
+             
+            '''
             try:
                 if args.is_sensitive == "1":
                     obj -= zinf_objective
@@ -246,6 +233,7 @@ def run():
                 contingency_count = 0
                 code2_runtime_goal_sec = 0
                 zinf_objective = 0
+            '''
 
 
             if solutions_exist:
