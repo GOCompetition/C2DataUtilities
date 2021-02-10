@@ -345,21 +345,6 @@ def eval_piecewise_linear_penalty(residual, penalty_block_max, penalty_block_coe
             penalty += max_block_cost * remaining_resid
     return penalty
 
-#gets the index where max is encountered
-def extra_max(keys, values):
-    '''values is a numpy array, keys is a list with len=values.size.
-    returns (k,v) where v is the maximum of values and k is the
-    corresponding key'''
-
-    #if values.size == 0:
-    if len(values) == 0:       
-        return (None, 0.0)
-    else:
-        index = np.argmax(values)
-        key = keys[index]
-        value = values[index]
-        return (key, value)
-
 # todo - remove this, make sure it is handled in the scrubber
 def clean_string(s):
     #t = s.replace("'","").replace('"','').replace(' ','')
@@ -447,6 +432,10 @@ class Evaluation:
             self.summary_all_cases['BASECASE']['obj']['val'] +
             np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg)
         self.summary2['infeas'] = np.sum([1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels])
+        print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
+                [self.summary_all_cases[k]['infeas']['val'] for k in ctg_labels]))
+        print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
+                [1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels]))
         self.summary2['total_bus_cost'] = (
             self.summary_all_cases['BASECASE']['total_bus_cost']['val'] +
             np.sum([self.summary_all_cases[k]['total_bus_cost']['val'] for k in ctg_labels]) / self.num_ctg)
@@ -683,7 +672,9 @@ class Evaluation:
         if infeas:
             curframe = inspect.currentframe()
             calframe = inspect.getouterframes(curframe, 2)
-            print_alert('fcn: {}, key: {}, val: {}'.format(calframe[1][3], key, val), check_passed=(not infeas), evaluation=self)
+            function = calframe[1][3]
+            self.summary['infeas'] = {'infeas': infeas, 'key': function, 'val': True}
+            print_alert('fcn: {}, key: {}, val: {}'.format(function, key, val), check_passed=(not infeas), evaluation=self)
 
     @timeit
     def set_data_for_base(self):
@@ -3895,7 +3886,9 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         print_info('Could not find input data files')
         print_info((raw_name, con_name, sup_name))
         #return (None, 1, False, {}, {})
-        return (None, 1, False, {})
+        rval = (None, 1, False, {})
+        print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
+        return rval
         #sys.exit()
 
     # read the data files
@@ -3950,7 +3943,9 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         e.summary2['solutions_exist'] = False
         print_info(f'{solution_path}/solution_BASECASE.txt could not be found')
         #return (None,  1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
-        return (None,  1, e.summary2['solutions_exist'], e.summary_all_cases)
+        rval = (None,  1, e.summary2['solutions_exist'], e.summary_all_cases)
+        print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
+        return rval
 
     if check_contingencies is not None:
         e.check_contingencies = check_contingencies
@@ -4035,8 +4030,11 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     #CHALLENGE2 - return here if solution1 validation is requested
     if not e.check_contingencies:
+        rval = (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
+        print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
         #return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
-        return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
+        #return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
+        return rval
 
     #if ctg_name is None:
     #    return True
@@ -4098,7 +4096,9 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
             print_info(f'Some solution files are missing. Exiting...')
         # todo - which ones? need to check that the solutions found are exactly the ones that are expected
         #return (None, 1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)   
-        return (None, 1, e.summary2['solutions_exist'], e.summary_all_cases)   
+        rval = (None, 1, e.summary2['solutions_exist'], e.summary_all_cases)   
+        print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
+        return rval
 
     if log_fileobject is not None:
        log_fileobject.close()
@@ -4330,8 +4330,11 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         print_info("obj: {}".format(e.summary2['obj_cumulative']))
         print_info("infeas: {}".format(e.summary2['infeas_cumulative']))
 
+    rval = (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
+    print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
     #return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)
-    return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
+    #return (e.summary2['obj_cumulative'],  1 if e.summary2['infeas_cumulative'] else 0, e.summary2['solutions_exist'], e.summary_all_cases)
+    return rval
 
 
 def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
@@ -4382,7 +4385,9 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
         var = traceback.format_exc()
         traceback.print_exc()
         print_alert(var, raise_exception=False)
-        return (None, 1, False, {})
+        rval = (None, 1, False, {})
+        print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
+        return rval
 
 def main():
     #arg_basepath = Path( '/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/Terrence/sandbox')
