@@ -1348,6 +1348,13 @@ class Raw:
             loads = self.get_loads()
             for r in loads:
                 if (r.pl == 0.0) and (r.ql == 0.0):
+                    alert(
+                        {'data_type':
+                             'Raw',
+                         'error_message':
+                             'removing load with pl == 0.0 and ql == 0.0',
+                         'diagnostics':
+                             {'i': r.i, 'id': r.id, 'pl': r.pl, 'ql': r.ql}})
                     del self.loads[r.i, r.id]
         for r in self.get_loads():
             r.scrub()
