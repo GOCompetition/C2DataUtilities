@@ -22,8 +22,8 @@
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
@@ -95,6 +95,7 @@ case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #case_dir=/pic/dtn/go/Adam/Challenge2/2021_01_08_GOScen12k/GOTx12k_a00001/
 #case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N00403/scenario_001/
 #case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenario_002/
+#case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N04441/scenario_001/
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
@@ -104,16 +105,18 @@ case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #grep Scenario: feasibility.log 
 #       Scenario:/pic/projects/goc/submission-manager/data//C2_Trial_1/C2T1N02312//scenario_254
 #sol_dir=/pic/dtn/go/Adam/Challenge2/2021_01_08_GOScen12k/GOTx12k_a00001/sol/
+#sol_dir=./tmpsol/sol8/
+#sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1612382444_1/C2T1N04441_output1/
 
 # set options
 strict_names=0
 refresh_data=1
 check_data=1
-scrub_data=1
-check_scrubbed_data=1
-make_new_sol=0
+scrub_data=0
+check_scrubbed_data=0
+make_new_sol=1
 copy_sol=0
-eval_sol=0
+eval_sol=1
 do_submission=0
 eval_submission=0
 division=1
@@ -121,7 +124,6 @@ num_proc=1
 
 py_dir=./data_utilities/
 work_dir=./tmp/
-stored_sol_dir=./tmpsol/sol
 raw1="${work_dir}/case.raw"
 raw2="${work_dir}/case.scrubbed.raw"
 sup1="${work_dir}/case.json"

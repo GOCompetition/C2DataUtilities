@@ -341,6 +341,32 @@ class Data:
         self.check_gen_cost_domain(scrub_mode=True)
         self.check_load_cost_domain(scrub_mode=True)
 
+    def print_summary(self):
+
+        print("buses: %u" % len(self.raw.buses))
+        print("loads: %u" % len(self.raw.loads))
+        print("fixed_shunts: %u" % len(self.raw.fixed_shunts))
+        print("generators: %u" % len(self.raw.generators))
+        print("nontransformer_branches: %u" % len(self.raw.nontransformer_branches))
+        print("transformers: %u" % len(self.raw.transformers))
+        print("transformer impedance correction tables: %u" % len(self.raw.transformer_impedance_correction_tables))
+        print("switched_shunts: %u" % len(self.raw.switched_shunts))
+        print("contingencies: %u" % len(self.con.contingencies))
+        print("generator contingencies: %u" % len([e for e in self.con.contingencies.values() if len(e.generator_out_events) > 0]))
+        branch_contingencies = [e for e in self.con.contingencies.values() if len(e.branch_out_events) > 0]
+        print("branch contingencies: %u" % len(branch_contingencies))
+        branch_contingency_events = [e.branch_out_events[0] for e in branch_contingencies]
+        branch_contingency_branches = [(e.i,e.j,e.ckt) for e in branch_contingency_events]
+        branch_contingency_branches = [((e[0], e[1], e[2]) if (e[0] < e[1]) else (e[1], e[0], e[2])) for e in branch_contingency_branches]
+        nontransformer_branches = [(e.i, e.j, e.ckt) for e in self.raw.nontransformer_branches.values()]
+        nontransformer_branches = [((e[0], e[1], e[2]) if (e[0] < e[1]) else (e[1], e[0], e[2])) for e in nontransformer_branches]
+        transformers = [(e.i, e.j, e.ckt) for e in self.raw.transformers.values()]
+        transformers = [((e[0], e[1], e[2]) if (e[0] < e[1]) else (e[1], e[0], e[2])) for e in transformers]
+        contingency_nontransformer_branches = list(set(branch_contingency_branches).intersection(set(nontransformer_branches)))
+        contingency_transformers = list(set(branch_contingency_branches).intersection(set(transformers)))
+        print("nontransformer branch contingencies: %u" % len(contingency_nontransformer_branches))
+        print("transformer contingencies: %u" % len(contingency_transformers))
+
     def check_gen_cost_domain(self, scrub_mode=False):
         
         cost_domain_tol = self.raw.case_identification.sbase * hard_constr_tol # + hard_constr_tol # todo: put in this extra?

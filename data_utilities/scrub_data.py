@@ -40,15 +40,7 @@ def main():
     print("read data time: %f" % time_elapsed)
     
     # show data stats
-    print("buses: %u" % len(p.raw.buses))
-    print("loads: %u" % len(p.raw.loads))
-    print("fixed_shunts: %u" % len(p.raw.fixed_shunts))
-    print("generators: %u" % len(p.raw.generators))
-    print("nontransformer_branches: %u" % len(p.raw.nontransformer_branches))
-    print("transformers: %u" % len(p.raw.transformers))
-    print("transformer impedance correction tables: %u" % len(p.raw.transformer_impedance_correction_tables))
-    print("switched_shunts: %u" % len(p.raw.switched_shunts))
-    print('contingencies: %u' % len(p.con.contingencies))
+    p.print_summary()
 
     start_time = time.time()
     p.check()

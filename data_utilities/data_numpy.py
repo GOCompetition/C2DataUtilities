@@ -477,6 +477,14 @@ class Data:
         self.ctg_num_lines_out = [len(self.ctg_lines_out[i]) for i in range(self.num_ctg)]
         self.ctg_num_xfmrs_out = [len(self.ctg_xfmrs_out[i]) for i in range(self.num_ctg)]
 
+        self.ctg_index_gen_out = [i for i in range(self.num_ctg) if self.ctg_num_gens_out[i] > 0]
+        self.ctg_index_line_out = [i for i in range(self.num_ctg) if self.ctg_num_lines_out[i] > 0]
+        self.ctg_index_xfmr_out = [i for i in range(self.num_ctg) if self.ctg_num_xfmrs_out[i] > 0]
+
+        self.ctg_gen_out = [self.ctg_gens_out[i][0] for i in self.ctg_index_gen_out]
+        self.ctg_line_out = [self.ctg_lines_out[i][0] for i in self.ctg_index_line_out]
+        self.ctg_xfmr_out = [self.ctg_xfmrs_out[i][0] for i in self.ctg_index_xfmr_out]
+
     @timeit
     def read(self, raw, sup, con):
         p = p_data.Data()

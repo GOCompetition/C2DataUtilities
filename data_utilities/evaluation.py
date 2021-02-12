@@ -432,10 +432,10 @@ class Evaluation:
             self.summary_all_cases['BASECASE']['obj']['val'] +
             np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg)
         self.summary2['infeas'] = np.sum([1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels])
-        print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
-                [self.summary_all_cases[k]['infeas']['val'] for k in ctg_labels]))
-        print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
-                [1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels]))
+        #print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
+        #        [self.summary_all_cases[k]['infeas']['val'] for k in ctg_labels]))
+        #print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
+        #        [1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels]))
         self.summary2['total_bus_cost'] = (
             self.summary_all_cases['BASECASE']['total_bus_cost']['val'] +
             np.sum([self.summary_all_cases[k]['total_bus_cost']['val'] for k in ctg_labels]) / self.num_ctg)
