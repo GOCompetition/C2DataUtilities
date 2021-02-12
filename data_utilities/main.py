@@ -193,17 +193,17 @@ def run():
 
         if process_rank == 0 and solutions_exist != False:
 
-            if obj > zinf_objective:   #larger than zinf and feasible
-                print("obj > infeasible_score and infeas == 0")
+            #if obj > zinf_objective:   #larger than zinf and feasible
+            #    print("obj > infeasible_score and infeas == 0")
+            #    score = obj
+            #elif abs(abs(zinf_objective) - MAXOBJ) < 1:       #zinf objective is not available, capture worst case score
+            #    print("infeasible score not available")
+            #    score = obj
+            #    infeas = 1
+            if obj < zinf_objective: #and infeas == 0:   #larger than zinf and feasible
+                print("obj < zinf_objective and infeas == 0")
                 score = obj
-            elif abs(abs(zinf_objective) - MAXOBJ) < 1:       #zinf objective is not available, capture worst case score
-                print("infeasible score not available")
-                score = obj
-                infeas = 1
-            if obj < slack_objective: #and infeas == 0:   #larger than slack and feasible
-                print("obj < slack_objective and infeas == 0")
-                score = obj
-                infeas = 1
+                #infeas = 1
             elif obj == float('nan'):
                 score = zinf_objective
             elif infeas == 1:
