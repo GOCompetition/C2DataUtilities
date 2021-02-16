@@ -89,8 +89,8 @@ hard_constr_tol = 1e-4
 pandas_float_precision=None
 #pandas_float_precision='round_trip'
 
-stop_on_errors = True
-#stop_on_errors = False
+#stop_on_errors = True
+stop_on_errors = False
 active_case = "BASECASE"
 active_solution_path = '.'
 log_fileobject = None
@@ -280,7 +280,8 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
         active_case, 
         message)
 
-    if raise_exception and check_passed != True:
+    #if raise_exception and check_passed != True:
+    if check_passed != True:
         formatted_message += "infeasibility:1\n\n"
 
 
@@ -289,6 +290,9 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
     try:
         log_fileobject.write(formatted_message)
     except:
+        # why might this fail?
+        #print(formatted_message)
+        #print('passing exception on writing to log_fileobject')
         pass  
 
     if raise_exception and check_passed != True:
@@ -296,13 +300,19 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
             if not evaluation.summary_written:
                 #evaluation.write_detail(eval_out_path, active_case, detail_csv=True)
                 evaluation.write_detail(eval_out_path, active_case, detail_json=True)
-                evaluation.json_to_summary_all_cases(eval_out_path)
-                evaluation.summary_all_cases_to_summary()
-                evaluation.write_summary_json(eval_out_path)
-                evaluation.write_summary_csv(eval_out_path)
-                evaluation.write_detail_all_cases_json(eval_out_path)
-                evaluation.write_detail_all_cases_csv(eval_out_path)
                 evaluation.summary_written = True
+
+                # todo 1
+                # move all this to a shutdown method
+                # call shutdown only when returning
+                # evaluation.json_to_summary_all_cases(eval_out_path)
+                # evaluation.summary_all_cases_to_summary()
+                # evaluation.write_summary_json(eval_out_path)
+                # evaluation.write_summary_csv(eval_out_path)
+                # evaluation.write_detail_all_cases_json(eval_out_path)
+                # evaluation.write_detail_all_cases_csv(eval_out_path)
+
+        print('stop_on_errors: {}, not raising exception')
         print(formatted_message)        
 
         #raise Exception(formatted_message)
@@ -417,6 +427,17 @@ class Evaluation:
         self.ctg_xfmr_switch_down_actual = 0.0
         self.ctg_xfmr_switch_down_max = 0.0
         '''
+
+    @timeit
+    def write_final_summary_and_detail(self, path):
+
+        self.json_to_summary_all_cases(path)
+        self.summary_all_cases_to_summary()
+        self.write_summary_json(path)
+        self.write_summary_csv(path)
+        self.write_detail_all_cases_json(path)
+        self.write_detail_all_cases_csv(path)
+        #self.json_to_csv(path)
 
     @timeit
     def summary_all_cases_to_summary(self):
@@ -4319,14 +4340,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     
         # todo : short circuit if infeas
 
-        e.json_to_summary_all_cases(eval_out_path)
-        e.summary_all_cases_to_summary()
-        e.write_summary_json(eval_out_path)
-        e.write_summary_csv(eval_out_path)
-        e.write_detail_all_cases_json(eval_out_path)
-        e.write_detail_all_cases_csv(eval_out_path)
-        #e.json_to_csv(eval_out_path)
-
+        e.write_final_summary_and_detail(eval_out_path)
+        
         print_info("obj: {}".format(e.summary2['obj_cumulative']))
         print_info("infeas: {}".format(e.summary2['infeas_cumulative']))
 
