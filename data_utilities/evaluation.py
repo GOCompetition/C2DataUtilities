@@ -280,6 +280,8 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
         active_case, 
         message)
 
+    # Note: the appearance of this message in the log can be used to trigger the termination of a submission.
+    # be careful
     #if raise_exception and check_passed != True:
     #if check_passed != True:
     if check_passed == False:
