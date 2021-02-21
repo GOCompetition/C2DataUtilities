@@ -281,7 +281,8 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
         message)
 
     #if raise_exception and check_passed != True:
-    if check_passed != True:
+    #if check_passed != True:
+    if check_passed == False:
         formatted_message += "infeasibility:1\n\n"
 
 
@@ -295,7 +296,8 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
         #print('passing exception on writing to log_fileobject')
         pass  
 
-    if raise_exception and check_passed != True:
+    #if raise_exception and check_passed != True:
+    if raise_exception and check_passed == False:
         if evaluation is not None:
             if not evaluation.summary_written:
                 #evaluation.write_detail(eval_out_path, active_case, detail_csv=True)
@@ -4419,7 +4421,6 @@ def main():
         arg_division = sys.argv[-3]
         arg_datapath = Path(sys.argv[-2])
         arg_basepath = Path(sys.argv[-1])
-        
 
     line_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
     xfmr_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
