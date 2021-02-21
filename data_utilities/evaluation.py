@@ -297,7 +297,7 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
         pass  
 
     #if raise_exception and check_passed != True:
-    if raise_exception and check_passed == False:
+    if check_passed == False:
         if evaluation is not None:
             if not evaluation.summary_written:
                 #evaluation.write_detail(eval_out_path, active_case, detail_csv=True)
@@ -314,8 +314,8 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
                 # evaluation.write_detail_all_cases_json(eval_out_path)
                 # evaluation.write_detail_all_cases_csv(eval_out_path)
 
-        print('stop_on_errors: {}, not raising exception')
-        print(formatted_message)        
+        #print('stop_on_errors: {}, not raising exception')
+        #print(formatted_message)        
 
         #raise Exception(formatted_message)
 
