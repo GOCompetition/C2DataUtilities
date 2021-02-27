@@ -525,6 +525,7 @@ class Evaluation:
     @timeit
     def json_to_summary_all_cases(self, path):
         '''read the json case summary files and create summary_all_cases from them'''
+        # note if we terminate early, we will not have all the contingency files
 
         json_files = [f for f in glob.glob(str('{}/eval_detail_*.json'.format(path))) if ('eval_detail_' in f) and ('json' in f)]
         json_contingency_files = [f for f in json_files if 'BASECASE' not in f]
@@ -537,6 +538,11 @@ class Evaluation:
         json_base_case_file = json_base_case_files[0]
         contingency_labels = [Path(f).resolve().stem.replace("eval_detail_","") for f in json_contingency_files]
         num_contingencies = len(contingency_labels)
+        
+        # filter out anything not from this run
+        contingency_labels = sorted(list(set(contingency_labels).intersection(set(self.ctg_label))))
+        num_contingencies = len(contingency_labels)
+        json_contingency_files = ["{}/eval_detail_{}.json".format(path, k) for k in contingency_labels]
         
         with open(json_base_case_file, 'r') as f:
             s = json.load(f)
@@ -573,7 +579,7 @@ class Evaluation:
 
     @timeit
     def json_to_csv(self, path):
-        ''''''
+        ''' '''
         # todo split this up
         # create_summary_all_cases(path)
         #     read the case summary json files into a dict structure

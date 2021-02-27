@@ -23,7 +23,7 @@
 
 # sandbox
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
@@ -140,7 +140,8 @@
 #case_dir=/pic/dtn/go/Adam/Challenge2/2021_02_11_Trial1pt5/v2_Feb15/GOTx12k/GOTx12k_a00033/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/scrubbed/TAMU/GOTx12k_v2/scenario_004/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/scrubbed/TAMU/GOTx12k_v2/scenario_005/
-case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenario_016/
+#case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenario_016/
+#case_dir=/people/holz501/gocomp/c2/data/carleton/2021-02-26/scenario_002/
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
@@ -190,16 +191,17 @@ case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenari
 #sol_dir=/pic/dtn/go/Adam/Challenge2/2021_02_11_Trial1pt5/GOTx600/GOTx600_a01018/sol/
 #sol_dir=/pic/dtn/go/Adam/Challenge2/2021_02_11_Trial1pt5/GOTx600/GOTx600_a01019/sol/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp//llmagos/393-1607136894_c2t1_1//Network_09R-195_S5000_20190923_output114/
-sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1613861359_1/C2T1N15810_output16/
+#sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1613861359_1/C2T1N15810_output16/
+#sol_dir=/people/holz501/gocomp/c2/data/carleton/2021-02-26/scenario_002/
 
 # set options
-strict_names=0
-refresh_data=1
+strict_names=1
+refresh_data=0
 check_data=0
 scrub_data=0
 check_scrubbed_data=0
-make_new_sol=0
-copy_sol=1
+make_new_sol=1
+copy_sol=0
 eval_sol=1
 do_submission=0
 eval_submission=0
