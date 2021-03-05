@@ -9,14 +9,15 @@
 #/pic/projects/goc/submission-manager/submission-manager-tmp/arunveeramany/TESTSUB9_1_1/C2S3N00014_output1/
 
 # C2DataUtilities test data
-#case_dir=./data/ieee14/scenario_1/
-#case_dir=./data/ieee14/scenario_2/
-#case_dir=./data/ieee14/scenario_3/
-#case_dir=./data/ieee14/scenario_4/
-#case_dir=./data/ieee14/scenario_5/
-#case_dir=./data/ieee14/scenario_6/
-#case_dir=./data/ieee14/scenario_7/
-#case_dir=./data/ieee14/scenario_8/
+#case_dir=./test_data/ieee14/scenario_1/
+#case_dir=./test_data/ieee14/scenario_2/
+#case_dir=./test_data/ieee14/scenario_3/
+#case_dir=./test_data/ieee14/scenario_4/
+#case_dir=./test_data/ieee14/scenario_5/
+#case_dir=./test_data/ieee14/scenario_6/
+#case_dir=./test_data/ieee14/scenario_7/
+#case_dir=./test_data/ieee14/scenario_8/
+case_dir=./test_data/ieee14/scenario_9/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
@@ -146,7 +147,7 @@
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/source/UW/HVMIOHIN/scenario_002/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/scrubbed/smallMIOHIN/scenario_002/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/scrubbed/HVMIOHIN/scenario_001/
-case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/2021-03-04/team/
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/2021-03-04/team/
 #case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/2021-03-04/source/
 #case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/2021-03-04/scrubbed/
 #HVMIOHIN
@@ -203,7 +204,7 @@ case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/2021-03-04/team/
 #sol_dir=/people/holz501/gocomp/c2/data/carleton/2021-02-26/scenario_002/
 
 # set options
-strict_names=0
+strict_names=1
 refresh_data=1
 check_data=1
 scrub_data=1

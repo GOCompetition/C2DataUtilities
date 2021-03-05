@@ -413,8 +413,6 @@ class Data:
 
         shortfall = pmax + tol - cblocks_total_pmax
         num_cblocks = len(cblocks)
-        if (shortfall <= 0.0) and (num_cblocks > 0):
-            return # no further check/scrub needed
 
         # check/scrub messages
         if len(cblocks) == 0:
@@ -423,7 +421,7 @@ class Data:
                      data_type,
                  'error_message': (
                         'Cost function has 0 blocks. We prefer to have at least 1 block.' + (
-                            ' Scrubbing by setting a wide enough cost block with default marginal cost {}.'.format(default_marginal_cost)
+                            ' Apply scrubber to set a wide enough cost block with default marginal cost {}.'.format(default_marginal_cost)
                             if scrub_mode else '')),
                  'diagnostics': diagnostics})
         elif shortfall > 0.0:
@@ -432,17 +430,33 @@ class Data:
                      data_type,
                  'error_message': (
                         'Cost function domain does not cover operating range with sufficient tolerance. please ensure the upper bound of the cost function domain exceeds the device operating range by more than the required tolerance.' + (
-                            ' Scrubbing by extending the most expensive cost block.' if scrub_mode else '')),
+                            ' Apply scrubber to extend the most expensive cost block.' if scrub_mode else '')),
                  'diagnostics': diagnostics})
+        elif max([b['pmax'] for b in cblocks]) > pmax + tol + 2.0:
+            alert(
+                {'data_type':
+                     data_type,
+                 'error_message': (
+                        'Cost function domain covers the operating range far beyond needed tolerance. We suggest to set the upper bound of the cost function domain to be a small tolerance beyond the device operating range.' + (
+                            ' Apply the scrubber to truncate the cost blocks so that no single one of them covers the operating range excessively.' if scrub_mode else '')),
+                 'diagnostics': diagnostics})
+        else:
+            # return as no scrubbing needed
+            return
+
         if not scrub_mode:
             return
 
         # scrubbing needed
+        
         if num_cblocks == 0:
             new_cblocks = [{'pmax': (shortfall + 1.0), 'c': default_marginal_cost}]
         elif shortfall > 0.0:
             new_cblocks = sorted(cblocks, key=(lambda x: x['c']))
             new_cblocks[num_cblocks - 1]['pmax'] += (shortfall + 1.0)
+        elif max([b['pmax'] for b in cblocks]) > pmax + tol + 1:
+            new_cblocks = [{'pmax': pmax + tol + 1.0, 'c': b['c']} for b in cblocks]
+        
         if data_type == 'Load':
             self.sup.loads[key]['cblocks'] = new_cblocks
         elif data_type == 'Generator':
