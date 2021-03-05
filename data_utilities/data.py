@@ -2870,6 +2870,7 @@ class Load:
         self.check_id_len_1_or_2()
         # need to check i in buses
         self.check_pl_nonnegative(scrub_mode=False)
+        self.check_pl_ql_at_least_one_nonzero()
 
     def scrub(self):
 
@@ -2887,6 +2888,18 @@ class Load:
                      'pl': self.pl}})
             if scrub_mode:
                 self.pl = 0.0
+
+    def check_pl_ql_at_least_one_nonzero(self):
+
+        if remove_loads_with_pq_eq_0:
+            if (self.pl == 0.0) and (self.ql == 0.0):
+                alert(
+                    {'data_type':
+                         'Raw',
+                     'error_message':
+                         'found a load with pl == 0.0 and ql == 0.0, will be removed when scrubber is applied',
+                     'diagnostics':
+                         {'i': self.i, 'id': self.id, 'pl': self.pl, 'ql': self.ql}})
 
     def check_id_len_1_or_2(self):
 

@@ -2955,7 +2955,7 @@ class Evaluation:
             ( - self.line_adm_real * self.line_cos_volt_ang_diff
               - self.line_adm_imag * self.line_sin_volt_ang_diff) *
             self.line_orig_dest_volt_mag_prod)
-        
+
         # C2 A1 S14 #47
         self.line_orig_pow_imag = self.line_xsw * (
             - self.line_adm_total_imag * self.line_orig_volt_mag_sq + # ** 2.0 +
@@ -2978,7 +2978,12 @@ class Evaluation:
               + self.line_adm_real * self.line_sin_volt_ang_diff) *
             self.line_orig_dest_volt_mag_prod)
 
-    # Real and reactive power ﬂows into a line e at the origin and destination buses in a case k are subject to apparent current rating constraints. Any exceedance of these current rating constraints is expressed as a quantity s+ ek of apparent power
+        # print('eval line orig pow real: {}'.format(self.line_orig_pow_real))
+        # print('eval line orig pow imag: {}'.format(self.line_orig_pow_imag))
+        # print('eval line dest pow real: {}'.format(self.line_dest_pow_real))
+        # print('eval line dest pow imag: {}'.format(self.line_dest_pow_imag))
+
+    # real and reactive power ﬂows into a line e at the origin and destination buses in a case k are subject to apparent current rating constraints. Any exceedance of these current rating constraints is expressed as a quantity s+ ek of apparent power
     # Current exceedance appears in the objective with a cost coeﬃcient
     # Compute minimal line rating exceedance variables
     # C2 A1 S16 #51 - #52
@@ -3036,6 +3041,13 @@ class Evaluation:
             (   self.xfmr_adm_imag / self.xfmr_tap_mag * self.xfmr_cos_volt_ang_diff
               + self.xfmr_adm_real / self.xfmr_tap_mag * self.xfmr_sin_volt_ang_diff) *
                 self.xfmr_orig_volt_mag * self.xfmr_dest_volt_mag)
+
+        # print('eval xfmr orig pow real: {}'.format(self.xfmr_orig_pow_real))
+        # print('eval xfmr orig pow imag: {}'.format(self.xfmr_orig_pow_imag))
+        # print('eval xfmr dest pow real: {}'.format(self.xfmr_dest_pow_real))
+        # print('eval xfmr dest pow imag: {}'.format(self.xfmr_dest_pow_imag))
+        # print('eval xfmr tap mag: {}'.format(self.xfmr_tap_mag))
+        # print('eval xfmr tap ang: {}'.format(self.xfmr_tap_ang))
 
     # Real and reactive power ﬂows into a transformer e at the origin and destination buses in a case k are subject to apparent current rating constraints. Any exceedance of these current rating constraints is expressed as a quantity s+ ek of apparent power
     # Current exceedance appears in the objective with a cost coeﬃcient
