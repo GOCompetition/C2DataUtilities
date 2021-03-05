@@ -17,7 +17,8 @@
 #case_dir=./test_data/ieee14/scenario_6/
 #case_dir=./test_data/ieee14/scenario_7/
 #case_dir=./test_data/ieee14/scenario_8/
-case_dir=./test_data/ieee14/scenario_9/
+#case_dir=./test_data/ieee14/scenario_9/
+case_dir=./test_data/ieee14/scenario_10/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/

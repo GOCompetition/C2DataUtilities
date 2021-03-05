@@ -75,6 +75,7 @@ do_check_bmin_le_binit_le_bmax = True # this is doable
 #do_combine_switched_shunt_blocks_steps = True # generally want this to be false
 do_fix_swsh_binit = True # now this sets binit to the closest feasible value of binit
 do_fix_xfmr_tau_theta_init = True # sets windv1/windv2 or ang1 to closest feasible value if cod1 == 1 or == 3
+do_scrub_ctg_labels = True # set to True to replace ctg labels with anonymous strings
 pg_qg_stat_mode = 1 # 0: do not scrub, 1: set pg=0 and qg=0, 2: set stat=1
 swsh_binit_feas_tol = 1e-4
 swsh_bmin_bmax_tol = 1e-8
@@ -2398,12 +2399,46 @@ class Con:
             r.check()
         self.check_for_duplicate_outaged_generators(scrub_mode=False)
         self.check_for_duplicate_outaged_branches(scrub_mode=False)
+        self.scrub_ctg_labels(scrub_mode=False)
 
     def scrub(self):
 
         self.check_for_duplicate_outaged_generators(scrub_mode=True)
         self.check_for_duplicate_outaged_branches(scrub_mode=True)
+        self.scrub_ctg_labels(scrub_mode=True)
 
+    def scrub_ctg_labels(self, scrub_mode=False):
+
+        if do_scrub_ctg_labels:
+            ctgs = self.get_contingencies()
+            num_ctgs = len(ctgs)
+            num_digits = max(1, len(str(num_ctgs)))
+            ctg_number = {ctgs[i]:i for i in range(num_ctgs)}
+            ctg_label = {ctgs[i]:ctgs[i].label for i in range(num_ctgs)}
+            label_format_str = 'CTG_%0' + str(num_digits) + 'u'
+            ctg_new_label = {ctgs[i]:(label_format_str % i) for i in range(num_ctgs)}
+            ctgs_with_label_change = [c for c in ctgs if ctg_new_label[c] != ctg_label[c]]
+            if len(ctgs_with_label_change) > 0:
+                if scrub_mode:
+                    alert(
+                        {'data_type':
+                             'Con',
+                         'error_message':
+                             'anonymizing contingency labels',
+                         'diagnostics':
+                             [{'old label': ctg_label[c], 'new label': ctg_new_label[c]} for c in ctgs_with_label_change]})
+                    self.contingencies = {ctg_new_label[c]:c for c in ctgs}
+                    for k, v in self.contingencies.items():
+                        v.label = k
+                else:
+                    alert(
+                        {'data_type':
+                             'Con',
+                         'error_message':
+                             'apply scrubber to anonymize contingency labels',
+                         'diagnostics':
+                             [{'old label': ctg_label[c], 'new label': ctg_new_label[c]} for c in ctgs_with_label_change]})
+                    
     def check_for_duplicate_outaged_generators(self, scrub_mode=False):
         '''Each contingency outages exactly one device, either a generator or a branch.
         This function checks that no two generator contingencies outage the same generator.
@@ -2416,7 +2451,6 @@ class Con:
         num_ctgs = len(ctgs)
         if num_ctgs < 2:
             return
-        ctgs_label = [c.label for c in ctgs]
         ctgs_key_map = {c:(c.generator_out_events[0].i, c.generator_out_events[0].id) for c in ctgs}
         ctgs_sorted = sorted(ctgs, key=(lambda c: ctgs_key_map[c]))
         i = 0
@@ -2460,19 +2494,12 @@ class Con:
         With scrub_mode=True it modifies the contingencies by removing any
         that outage a generator already outaged by a previously seen contingency.'''
 
-
-    # br_ctgs_to_remove = []
-    # br_ctgs = [c for c in ctgs if len(c.branch_out_events) > 0]
-    # br_ctgs_label = [c.label for c in br_ctgs]
-    # br_ctgs_key = {c:(c.branch_out_events[0].i, c.branch_out_events[0].j, c.branch_out_events[0].ckt) for c in br_ctgs}
-
         ctgs = self.get_contingencies()
         ctgs_to_remove = []
         ctgs = [c for c in ctgs if len(c.branch_out_events) > 0] # filter down to just br ctgs
         num_ctgs = len(ctgs)
         if num_ctgs < 2:
             return
-        ctgs_label = [c.label for c in ctgs]
         ctgs_key_map = {c:(c.branch_out_events[0].i, c.branch_out_events[0].j, c.branch_out_events[0].ckt) for c in ctgs}
         ctgs_key_map = {k:((v[0], v[1], v[2]) if (v[0] < v[1]) else (v[1], v[0], v[2])) for k, v in ctgs_key_map.items()}
         ctgs_sorted = sorted(ctgs, key=(lambda c: ctgs_key_map[c]))
@@ -2510,40 +2537,6 @@ class Con:
                      'diagnostics':
                          {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
                               [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
-    
-        #br_ctgs_key = 
-
-        # todo use this code
-        # ctgs_label_to_remove = []
-        # gens = self.raw.get_generators()
-        # gens_key = [(g.i, g.id) for g in gens]
-        # ctgs = self.con.get_contingencies()
-        # gen_ctgs = [c for c in ctgs if len(c.generator_out_events) > 0]
-        # gen_ctg_gen_key_map = {
-        #     c:(c.generator_out_events[0].i, c.generator_out_events[0].id)
-        #     for c in gen_ctgs}
-        # gen_ctg_gens_key = list(set(gen_ctg_gen_key_map.values()))
-        # gens_key_missing = list(set(gen_ctg_gens_key).difference(set(gens_key)))
-        # num_gens = len(gens_key)
-        # num_gens_missing = len(gens_key_missing)
-        # gens_dict = {gens_key[i]:i for i in range(num_gens)}
-        # gens_missing_dict = {gens_key_missing[i]:(num_gens + i) for i in range(num_gens_missing)}
-        # gens_dict.update(gens_missing_dict)      
-        # ctgs_to_remove = [c for c in gen_ctgs if gens_dict[gen_ctg_gen_key_map[c]] >= num_gens]
-        # ctgs_label_to_remove = [c.label for c in ctgs_to_remove]
-        # for k in ctgs_label_to_remove:
-        #     alert(
-        #         {'data_type':
-        #          'Data',
-        #          'error_message':
-        #          'removing generator contingency where the generator does not exist in the RAW file',
-        #          'diagnostics':
-        #          {'ctg label': k}})
-        #     del self.con.contingencies[k]
-
-
-
-
 
     '''
     def read_from_phase_0(self, file_name):
