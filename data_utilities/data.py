@@ -1666,8 +1666,8 @@ class Raw:
 
         #out_str = StringIO.StringIO()
         out_str = StringIO()
-        #writer = csv.writer(out_str, quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        #writer = csv.writer(out_str, lineterminator="\n", quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [self.case_identification.ic, self.case_identification.sbase,
@@ -1697,7 +1697,7 @@ class Raw:
         # values of None then are written as empty fields, which is what we want
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         
         if write_values_in_unused_fields:
             rows = [
@@ -1713,7 +1713,7 @@ class Raw:
                 [r.i, None, None, None, r.area, None, None, r.vm, r.va, r.nvhi, r.nvlo, r.evhi, r.evlo]
                 for r in self.get_buses()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF BUS DATA BEGIN LOAD DATA']]) # no comma allowed without escape character
         #out_str.write('0 / END OF BUS DATA, BEGIN LOAD DATA\n')
         return out_str.getvalue()
@@ -1721,7 +1721,7 @@ class Raw:
     def construct_load_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str,  quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, "'%s'" % r.id, r.status, r.area, r.zone, r.pl, r.ql, r.ip, r.iq, r.yp, r.yq, r.owner, r.scale, r.intrpt]
@@ -1735,14 +1735,14 @@ class Raw:
                 [r.i, "'%s'" % r.id, r.status, None, None, r.pl, r.ql, None, None, None, None, None, None, None]
                 for r in self.get_loads()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF LOAD DATA BEGIN FIXED SHUNT DATA']])
         return out_str.getvalue()
 
     def construct_fixed_shunt_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, "'%s'" % r.id, r.status, r.gl, r.bl]
@@ -1756,14 +1756,14 @@ class Raw:
                 [r.i, "'%s'" % r.id, r.status, r.gl, r.bl]
                 for r in self.get_fixed_shunts()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF FIXED SHUNT DATA BEGIN GENERATOR DATA']])
         return out_str.getvalue()
 
     def construct_generator_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, "'%s'" % r.id, r.pg, r.qg, r.qt, r.qb,
@@ -1786,14 +1786,14 @@ class Raw:
                  None, None, None, None, None, None, None]
                 for r in self.get_generators()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF GENERATOR DATA BEGIN BRANCH DATA']])
         return out_str.getvalue()
 
     def construct_nontransformer_branch_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, r.j, "'%s'" % r.ckt, r.r, r.x, r.b, r.ratea,
@@ -1813,14 +1813,14 @@ class Raw:
                  None, None, None, None, None, None, None, None ]
                 for r in self.get_nontransformer_branches()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF BRANCH DATA BEGIN TRANSFORMER DATA']])
         return out_str.getvalue()
 
     def construct_transformer_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 rr
@@ -1861,14 +1861,14 @@ class Raw:
                          None, None, None],
                         [r.windv2, None]]]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF TRANSFORMER DATA BEGIN AREA DATA']])
         return out_str.getvalue()
 
     def construct_area_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, r.isw, r.pdes, r.ptol, "'%s'" % r.arname]
@@ -1882,28 +1882,28 @@ class Raw:
                 [None, None, None, None, None]
                 for r in self.get_areas()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF AREA DATA BEGIN TWO-TERMINAL DC DATA']])
         return out_str.getvalue()
 
     def construct_two_terminal_dc_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF TWO-TERMINAL DC DATA BEGIN VSC DC LINE DATA']])
         return out_str.getvalue()
 
     def construct_vsc_dc_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF VSC DC LINE DATA BEGIN IMPEDANCE CORRECTION DATA']])
         return out_str.getvalue()
 
     def construct_transformer_impedance_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         # if write_values_in_unused_fields:
         #     pass # rows = []?
         # elif write_defaults_in_unused_fields:
@@ -1916,56 +1916,56 @@ class Raw:
              r.t11, r.f11][0:(2*r.tict_point_count + 1)]
             for r in self.get_transformer_impedance_correction_tables()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF IMPEDANCE CORRECTION DATA BEGIN MULTI-TERMINAL DC DATA']])
         return out_str.getvalue()
     
     def construct_multi_terminal_dc_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF MULTI-TERMINAL DC DATA BEGIN MULTI-SECTION LINE DATA']])
         return out_str.getvalue()
 
     def construct_multi_section_line_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF MULTI-SECTION LINE DATA BEGIN ZONE DATA']])
         return out_str.getvalue()
 
     def construct_zone_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF ZONE DATA BEGIN INTER-AREA TRANSFER DATA']])
         return out_str.getvalue()
 
     def construct_interarea_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF INTER-AREA TRANSFER DATA BEGIN OWNER DATA']])
         return out_str.getvalue()
 
     def construct_owner_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF OWNER DATA BEGIN FACTS DEVICE DATA']])
         return out_str.getvalue()
 
     def construct_facts_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF FACTS DEVICE DATA BEGIN SWITCHED SHUNT DATA']])
         return out_str.getvalue()
 
     def construct_switched_shunt_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, r.modsw, r.adjm, r.stat, r.vswhi, r.vswlo, r.swrem, r.rmpct, "'%s'" % r.rmidnt, r.binit] +
@@ -1982,28 +1982,28 @@ class Raw:
                 [r.n1, r.b1, r.n2, r.b2, r.n3, r.b3, r.n4, r.b4, r.n5, r.b5, r.n6, r.b6, r.n7, r.b7, r.n8, r.b8][0:(2*r.swsh_susc_count)]
                 for r in self.get_switched_shunts()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF SWITCHED SHUNT DATA BEGIN GNE DATA']])
         return out_str.getvalue()
 
     def construct_gne_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF GNE DATA BEGIN INDUCTION MACHINE DATA']])
         return out_str.getvalue()
 
     def construct_induction_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF INDUCTION MACHINE DATA']])
         return out_str.getvalue()
 
     def construct_q_record(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         rows = [['Q']]
         writer.writerows(rows)
         return out_str.getvalue()
@@ -2579,7 +2579,7 @@ class Con:
     def construct_data_records(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE, delimiter=' ')
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE, delimiter=' ')
         rows = [
             row
             for r in self.get_contingencies()
@@ -2590,7 +2590,7 @@ class Con:
     def construct_end_record(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE, delimiter=' ')
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE, delimiter=' ')
         rows = [['END']]
         writer.writerows(rows)
         return out_str.getvalue()        
