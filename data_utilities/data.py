@@ -324,6 +324,7 @@ class Data:
         #    self.raw.switched_shunts_combine_blocks_steps()
         self.raw.scrub()
         #self.sup.scrub()
+        self.con.scrub()
         #if gen_cost_revise:
         #    self.check_gen_cost_revise()
         #self.scrub_gen_costs()
@@ -2395,6 +2396,154 @@ class Con:
 
         for r in self.get_contingencies():
             r.check()
+        self.check_for_duplicate_outaged_generators(scrub_mode=False)
+        self.check_for_duplicate_outaged_branches(scrub_mode=False)
+
+    def scrub(self):
+
+        self.check_for_duplicate_outaged_generators(scrub_mode=True)
+        self.check_for_duplicate_outaged_branches(scrub_mode=True)
+
+    def check_for_duplicate_outaged_generators(self, scrub_mode=False):
+        '''Each contingency outages exactly one device, either a generator or a branch.
+        This function checks that no two generator contingencies outage the same generator.
+        With scrub_mode=True it modifies the contingencies by removing any
+        that outage a generator already outaged by a previously seen contingency.'''
+
+        ctgs = self.get_contingencies()
+        ctgs_to_remove = []
+        ctgs = [c for c in ctgs if len(c.generator_out_events) > 0] # filter down to just gen ctgs
+        num_ctgs = len(ctgs)
+        if num_ctgs < 2:
+            return
+        ctgs_label = [c.label for c in ctgs]
+        ctgs_key_map = {c:(c.generator_out_events[0].i, c.generator_out_events[0].id) for c in ctgs}
+        ctgs_sorted = sorted(ctgs, key=(lambda c: ctgs_key_map[c]))
+        i = 0
+        c_pre = ctgs_sorted[i]
+        k_pre = ctgs_key_map[c_pre]
+        i += 1 # next one to look at
+        while i < num_ctgs:
+            c = ctgs_sorted[i]
+            k = ctgs_key_map[c]
+            if k == k_pre:
+                ctgs_to_remove.append((c_pre, c))
+            else:
+                c_pre = c
+                k_pre = k
+            i += 1
+        if len(ctgs_to_remove) > 0:
+            if scrub_mode:
+                alert(
+                    {'data_type':
+                         'Con',
+                     'error_message':
+                         'Removing generator contingencies where the outaged device is the same as in a previously seen contingency',
+                     'diagnostics':
+                         {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
+                              [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
+                for c in ctgs_to_remove:
+                    del self.contingencies[c[1].label]
+            else:
+                alert(
+                    {'data_type':
+                         'Con',
+                     'error_message':
+                         'Found generator contingencies where the outaged device is the same as in a previously seen contingency',
+                     'diagnostics':
+                         {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
+                              [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
+
+    def check_for_duplicate_outaged_branches(self, scrub_mode=False):
+        '''Each contingency outages exactly one device, either a generator or a branch.
+        This function checks that no two generator contingencies outage the same generator.
+        With scrub_mode=True it modifies the contingencies by removing any
+        that outage a generator already outaged by a previously seen contingency.'''
+
+
+    # br_ctgs_to_remove = []
+    # br_ctgs = [c for c in ctgs if len(c.branch_out_events) > 0]
+    # br_ctgs_label = [c.label for c in br_ctgs]
+    # br_ctgs_key = {c:(c.branch_out_events[0].i, c.branch_out_events[0].j, c.branch_out_events[0].ckt) for c in br_ctgs}
+
+        ctgs = self.get_contingencies()
+        ctgs_to_remove = []
+        ctgs = [c for c in ctgs if len(c.branch_out_events) > 0] # filter down to just br ctgs
+        num_ctgs = len(ctgs)
+        if num_ctgs < 2:
+            return
+        ctgs_label = [c.label for c in ctgs]
+        ctgs_key_map = {c:(c.branch_out_events[0].i, c.branch_out_events[0].j, c.branch_out_events[0].ckt) for c in ctgs}
+        ctgs_key_map = {k:((v[0], v[1], v[2]) if (v[0] < v[1]) else (v[1], v[0], v[2])) for k, v in ctgs_key_map.items()}
+        ctgs_sorted = sorted(ctgs, key=(lambda c: ctgs_key_map[c]))
+        i = 0
+        c_pre = ctgs_sorted[i]
+        k_pre = ctgs_key_map[c_pre]
+        i += 1 # next one to look at
+        while i < num_ctgs:
+            c = ctgs_sorted[i]
+            k = ctgs_key_map[c]
+            if k == k_pre:
+                ctgs_to_remove.append((c_pre, c))
+            else:
+                c_pre = c
+                k_pre = k
+            i += 1
+        if len(ctgs_to_remove) > 0:
+            if scrub_mode:
+                alert(
+                    {'data_type':
+                         'Con',
+                     'error_message':
+                         'Removing branch contingencies where the outaged device is the same as in a previously seen contingency',
+                     'diagnostics':
+                         {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
+                              [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
+                for c in ctgs_to_remove:
+                    del self.contingencies[c[1].label]
+            else:
+                alert(
+                    {'data_type':
+                         'Con',
+                     'error_message':
+                         'Found branch contingencies where the outaged device is the same as in a previously seen contingency',
+                     'diagnostics':
+                         {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
+                              [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
+    
+        #br_ctgs_key = 
+
+        # todo use this code
+        # ctgs_label_to_remove = []
+        # gens = self.raw.get_generators()
+        # gens_key = [(g.i, g.id) for g in gens]
+        # ctgs = self.con.get_contingencies()
+        # gen_ctgs = [c for c in ctgs if len(c.generator_out_events) > 0]
+        # gen_ctg_gen_key_map = {
+        #     c:(c.generator_out_events[0].i, c.generator_out_events[0].id)
+        #     for c in gen_ctgs}
+        # gen_ctg_gens_key = list(set(gen_ctg_gen_key_map.values()))
+        # gens_key_missing = list(set(gen_ctg_gens_key).difference(set(gens_key)))
+        # num_gens = len(gens_key)
+        # num_gens_missing = len(gens_key_missing)
+        # gens_dict = {gens_key[i]:i for i in range(num_gens)}
+        # gens_missing_dict = {gens_key_missing[i]:(num_gens + i) for i in range(num_gens_missing)}
+        # gens_dict.update(gens_missing_dict)      
+        # ctgs_to_remove = [c for c in gen_ctgs if gens_dict[gen_ctg_gen_key_map[c]] >= num_gens]
+        # ctgs_label_to_remove = [c.label for c in ctgs_to_remove]
+        # for k in ctgs_label_to_remove:
+        #     alert(
+        #         {'data_type':
+        #          'Data',
+        #          'error_message':
+        #          'removing generator contingency where the generator does not exist in the RAW file',
+        #          'diagnostics':
+        #          {'ctg label': k}})
+        #     del self.con.contingencies[k]
+
+
+
+
 
     '''
     def read_from_phase_0(self, file_name):
