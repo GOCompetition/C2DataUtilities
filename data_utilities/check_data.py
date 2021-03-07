@@ -96,11 +96,11 @@ def main():
         max_bus_pow_real_imbalance,
         bus_max_bus_pow_imag_imbalance,
         max_bus_pow_imag_imbalance)
-    if max(abs(max_bus_pow_real_imbalance), abs(max_bus_pow_imag_imbalance)) > data.pow_imbalance_tol:
+    if max(abs(max_bus_pow_real_imbalance), abs(max_bus_pow_imag_imbalance)) > data.prior_point_pow_imbalance_tol:
         data.alert(
             {'data_type': 'Raw',
              'error_message': 'power imbalance in prior point exceeds tolerance',
-             'diagnostics': (power_balance_report + ', tol: {}'.format(data.pow_imbalance_tol))})
+             'diagnostics': (power_balance_report + ', tol: {}'.format(data.prior_point_pow_imbalance_tol))})
     time_elapsed = time.time() - start_time
     print("check data power balance time: %f" % time_elapsed)
 

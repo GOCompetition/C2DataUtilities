@@ -89,7 +89,7 @@ ratec_ratea_2=False   #report error only once
 ratc1_rata1 = False
 default_load_marginal_cost = 8000.0
 default_generator_marginal_cost = 1000.0
-pow_imbalance_tol = 1e-2 # MVA
+prior_point_pow_imbalance_tol = 1e-2 # MVA
 
 def timeit(function):
     def timed(*args, **kw):
