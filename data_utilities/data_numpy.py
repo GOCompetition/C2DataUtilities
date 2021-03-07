@@ -334,7 +334,10 @@ class Data:
         self.xfmr_pow_mag_max_base = np.array([r.rata1 for r in xfmrs]) / self.base_mva # todo check normalization
         self.xfmr_pow_mag_max_ctg = np.array([r.ratc1 for r in xfmrs]) / self.base_mva # todo check normalization
         
+        # max num steps on each side of control range
         self.xfmr_xst_max = np.array([round(0.5 * (r.ntp1 - 1.0)) if (r.cod1 in [-3, -1, 1, 3]) else 0 for r in xfmrs], dtype=int)
+
+        # midpoint of control range
         self.xfmr_tap_mag_mid = np.array(
             [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 in [-1, 1]) else (r.windv1 / r.windv2) for r in xfmrs])
         self.xfmr_tap_ang_mid = np.array(
@@ -344,6 +347,8 @@ class Data:
              (0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 in [-3, 3]) else
              0.0
              for r in xfmrs])
+
+        # control step size
         self.xfmr_tap_mag_step_size = np.array(
             [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 in [-1, 1]) else 0.0 for r in xfmrs])
         self.xfmr_tap_ang_step_size = np.array(
@@ -353,6 +358,7 @@ class Data:
              ((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 in [-3, 3]) else
              0.0
              for r in xfmrs])
+
         # to facilitate division by step size
         self.xfmr_xst_max[self.xfmr_step_size == 0.0] = 0
         self.xfmr_step_size[self.xfmr_step_size == 0.0] = 1.0
@@ -375,20 +381,21 @@ class Data:
         self.xfmr_service_status = np.ones(shape=(self.num_xfmr,))
 
         # todo transformer impedance correction
+        # todo which of these 2 options is best?
+        #self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if (xfmrs[ind].tab1 > 0 and xfmrs[ind].cod1 in [-3, -1, 1, 3])]
         self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if xfmrs[ind].tab1 > 0]
+        #self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 0]
         self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 not in [-3, -1, 1, 3]]
         self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-1, 1]]
         self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-3, 3]]
-        #print('xfmr index')
-        #print([r.cod1 for r in xfmrs])
-        #print(self.xfmr_index_var_tap_ratio)
-        #print(self.xfmr_index_var_phase_shift)
         self.xfmr_index_imp_corr_var_tap_ratio = sorted(
             list(set(self.xfmr_index_imp_corr).intersection(
                     set(self.xfmr_index_var_tap_ratio))))
         self.xfmr_index_imp_corr_var_phase_shift = sorted(
             list(set(self.xfmr_index_imp_corr).intersection(
                     set(self.xfmr_index_var_phase_shift))))
+
+        # some topology information
         self.bus_xfmrs_orig = [[] for i in range(self.num_bus)]
         self.bus_xfmrs_dest = [[] for i in range(self.num_bus)]
         for j in range(self.num_xfmr):

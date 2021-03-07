@@ -18,14 +18,14 @@
 #case_dir=./test_data/ieee14/scenario_7/
 #case_dir=./test_data/ieee14/scenario_8/
 #case_dir=./test_data/ieee14/scenario_9/
-case_dir=./test_data/ieee14/scenario_10/
+#case_dir=./test_data/ieee14/scenario_10/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
@@ -208,8 +208,8 @@ case_dir=./test_data/ieee14/scenario_10/
 strict_names=1
 refresh_data=1
 check_data=1
-scrub_data=1
-check_scrubbed_data=1
+scrub_data=0
+check_scrubbed_data=0
 make_new_sol=0
 copy_sol=0
 eval_sol=0
