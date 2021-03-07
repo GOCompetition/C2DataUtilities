@@ -9,21 +9,23 @@
 #/pic/projects/goc/submission-manager/submission-manager-tmp/arunveeramany/TESTSUB9_1_1/C2S3N00014_output1/
 
 # C2DataUtilities test data
-#case_dir=./data/ieee14/scenario_1/
-#case_dir=./data/ieee14/scenario_2/
-#case_dir=./data/ieee14/scenario_3/
-#case_dir=./data/ieee14/scenario_4/
-#case_dir=./data/ieee14/scenario_5/
-#case_dir=./data/ieee14/scenario_6/
-#case_dir=./data/ieee14/scenario_7/
-#case_dir=./data/ieee14/scenario_8/
+#case_dir=./test_data/ieee14/scenario_1/
+#case_dir=./test_data/ieee14/scenario_2/
+#case_dir=./test_data/ieee14/scenario_3/
+#case_dir=./test_data/ieee14/scenario_4/
+#case_dir=./test_data/ieee14/scenario_5/
+#case_dir=./test_data/ieee14/scenario_6/
+#case_dir=./test_data/ieee14/scenario_7/
+#case_dir=./test_data/ieee14/scenario_8/
+#case_dir=./test_data/ieee14/scenario_9/
+#case_dir=./test_data/ieee14/scenario_10/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
@@ -140,7 +142,16 @@
 #case_dir=/pic/dtn/go/Adam/Challenge2/2021_02_11_Trial1pt5/v2_Feb15/GOTx12k/GOTx12k_a00033/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/scrubbed/TAMU/GOTx12k_v2/scenario_004/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/scrubbed/TAMU/GOTx12k_v2/scenario_005/
-case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenario_016/
+#case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenario_016/
+#case_dir=/people/holz501/gocomp/c2/data/carleton/2021-02-26/scenario_002/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/source/UW/smallMIOHIN/scenario_002/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/source/UW/HVMIOHIN/scenario_002/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/scrubbed/smallMIOHIN/scenario_002/
+#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/scrubbed/HVMIOHIN/scenario_001/
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/2021-03-04/team/
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/2021-03-04/source/
+#case_dir=/people/holz501/gocomp/c2/data/UWMAD_GO2/2021-03-04/scrubbed/
+#HVMIOHIN
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
@@ -190,17 +201,18 @@ case_dir=/pic/projects/goc/submission-manager/data/C2_Trial_1/C2T1N15810/scenari
 #sol_dir=/pic/dtn/go/Adam/Challenge2/2021_02_11_Trial1pt5/GOTx600/GOTx600_a01018/sol/
 #sol_dir=/pic/dtn/go/Adam/Challenge2/2021_02_11_Trial1pt5/GOTx600/GOTx600_a01019/sol/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp//llmagos/393-1607136894_c2t1_1//Network_09R-195_S5000_20190923_output114/
-sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1613861359_1/C2T1N15810_output16/
+#sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1613861359_1/C2T1N15810_output16/
+#sol_dir=/people/holz501/gocomp/c2/data/carleton/2021-02-26/scenario_002/
 
 # set options
-strict_names=0
+strict_names=1
 refresh_data=1
-check_data=0
+check_data=1
 scrub_data=0
 check_scrubbed_data=0
 make_new_sol=0
-copy_sol=1
-eval_sol=1
+copy_sol=0
+eval_sol=0
 do_submission=0
 eval_submission=0
 division=1

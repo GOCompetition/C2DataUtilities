@@ -75,6 +75,7 @@ do_check_bmin_le_binit_le_bmax = True # this is doable
 #do_combine_switched_shunt_blocks_steps = True # generally want this to be false
 do_fix_swsh_binit = True # now this sets binit to the closest feasible value of binit
 do_fix_xfmr_tau_theta_init = True # sets windv1/windv2 or ang1 to closest feasible value if cod1 == 1 or == 3
+do_scrub_ctg_labels = True # set to True to replace ctg labels with anonymous strings
 pg_qg_stat_mode = 1 # 0: do not scrub, 1: set pg=0 and qg=0, 2: set stat=1
 swsh_binit_feas_tol = 1e-4
 swsh_bmin_bmax_tol = 1e-8
@@ -88,6 +89,7 @@ ratec_ratea_2=False   #report error only once
 ratc1_rata1 = False
 default_load_marginal_cost = 8000.0
 default_generator_marginal_cost = 1000.0
+prior_point_pow_imbalance_tol = 1e-2 # MVA
 
 def timeit(function):
     def timed(*args, **kw):
@@ -324,6 +326,7 @@ class Data:
         #    self.raw.switched_shunts_combine_blocks_steps()
         self.raw.scrub()
         #self.sup.scrub()
+        self.con.scrub()
         #if gen_cost_revise:
         #    self.check_gen_cost_revise()
         #self.scrub_gen_costs()
@@ -413,8 +416,6 @@ class Data:
 
         shortfall = pmax + tol - cblocks_total_pmax
         num_cblocks = len(cblocks)
-        if (shortfall <= 0.0) and (num_cblocks > 0):
-            return # no further check/scrub needed
 
         # check/scrub messages
         if len(cblocks) == 0:
@@ -423,7 +424,7 @@ class Data:
                      data_type,
                  'error_message': (
                         'Cost function has 0 blocks. We prefer to have at least 1 block.' + (
-                            ' Scrubbing by setting a wide enough cost block with default marginal cost {}.'.format(default_marginal_cost)
+                            ' Apply scrubber to set a wide enough cost block with default marginal cost {}.'.format(default_marginal_cost)
                             if scrub_mode else '')),
                  'diagnostics': diagnostics})
         elif shortfall > 0.0:
@@ -432,17 +433,33 @@ class Data:
                      data_type,
                  'error_message': (
                         'Cost function domain does not cover operating range with sufficient tolerance. please ensure the upper bound of the cost function domain exceeds the device operating range by more than the required tolerance.' + (
-                            ' Scrubbing by extending the most expensive cost block.' if scrub_mode else '')),
+                            ' Apply scrubber to extend the most expensive cost block.' if scrub_mode else '')),
                  'diagnostics': diagnostics})
+        elif max([b['pmax'] for b in cblocks]) > pmax + tol + 2.0:
+            alert(
+                {'data_type':
+                     data_type,
+                 'error_message': (
+                        'Cost function domain covers the operating range far beyond needed tolerance. We suggest to set the upper bound of the cost function domain to be a small tolerance beyond the device operating range.' + (
+                            ' Apply the scrubber to truncate the cost blocks so that no single one of them covers the operating range excessively.' if scrub_mode else '')),
+                 'diagnostics': diagnostics})
+        else:
+            # return as no scrubbing needed
+            return
+
         if not scrub_mode:
             return
 
         # scrubbing needed
+        
         if num_cblocks == 0:
             new_cblocks = [{'pmax': (shortfall + 1.0), 'c': default_marginal_cost}]
         elif shortfall > 0.0:
             new_cblocks = sorted(cblocks, key=(lambda x: x['c']))
             new_cblocks[num_cblocks - 1]['pmax'] += (shortfall + 1.0)
+        elif max([b['pmax'] for b in cblocks]) > pmax + tol + 1:
+            new_cblocks = [{'pmax': pmax + tol + 1.0, 'c': b['c']} for b in cblocks]
+        
         if data_type == 'Load':
             self.sup.loads[key]['cblocks'] = new_cblocks
         elif data_type == 'Generator':
@@ -1650,8 +1667,8 @@ class Raw:
 
         #out_str = StringIO.StringIO()
         out_str = StringIO()
-        #writer = csv.writer(out_str, quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        #writer = csv.writer(out_str, lineterminator="\n", quotechar="'", quoting=csv.QUOTE_NONNUMERIC)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [self.case_identification.ic, self.case_identification.sbase,
@@ -1681,7 +1698,7 @@ class Raw:
         # values of None then are written as empty fields, which is what we want
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         
         if write_values_in_unused_fields:
             rows = [
@@ -1697,7 +1714,7 @@ class Raw:
                 [r.i, None, None, None, r.area, None, None, r.vm, r.va, r.nvhi, r.nvlo, r.evhi, r.evlo]
                 for r in self.get_buses()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF BUS DATA BEGIN LOAD DATA']]) # no comma allowed without escape character
         #out_str.write('0 / END OF BUS DATA, BEGIN LOAD DATA\n')
         return out_str.getvalue()
@@ -1705,7 +1722,7 @@ class Raw:
     def construct_load_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str,  quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, "'%s'" % r.id, r.status, r.area, r.zone, r.pl, r.ql, r.ip, r.iq, r.yp, r.yq, r.owner, r.scale, r.intrpt]
@@ -1719,14 +1736,14 @@ class Raw:
                 [r.i, "'%s'" % r.id, r.status, None, None, r.pl, r.ql, None, None, None, None, None, None, None]
                 for r in self.get_loads()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF LOAD DATA BEGIN FIXED SHUNT DATA']])
         return out_str.getvalue()
 
     def construct_fixed_shunt_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, "'%s'" % r.id, r.status, r.gl, r.bl]
@@ -1740,14 +1757,14 @@ class Raw:
                 [r.i, "'%s'" % r.id, r.status, r.gl, r.bl]
                 for r in self.get_fixed_shunts()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF FIXED SHUNT DATA BEGIN GENERATOR DATA']])
         return out_str.getvalue()
 
     def construct_generator_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, "'%s'" % r.id, r.pg, r.qg, r.qt, r.qb,
@@ -1770,14 +1787,14 @@ class Raw:
                  None, None, None, None, None, None, None]
                 for r in self.get_generators()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF GENERATOR DATA BEGIN BRANCH DATA']])
         return out_str.getvalue()
 
     def construct_nontransformer_branch_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, r.j, "'%s'" % r.ckt, r.r, r.x, r.b, r.ratea,
@@ -1797,14 +1814,14 @@ class Raw:
                  None, None, None, None, None, None, None, None ]
                 for r in self.get_nontransformer_branches()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF BRANCH DATA BEGIN TRANSFORMER DATA']])
         return out_str.getvalue()
 
     def construct_transformer_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 rr
@@ -1845,14 +1862,14 @@ class Raw:
                          None, None, None],
                         [r.windv2, None]]]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF TRANSFORMER DATA BEGIN AREA DATA']])
         return out_str.getvalue()
 
     def construct_area_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, r.isw, r.pdes, r.ptol, "'%s'" % r.arname]
@@ -1866,28 +1883,28 @@ class Raw:
                 [None, None, None, None, None]
                 for r in self.get_areas()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF AREA DATA BEGIN TWO-TERMINAL DC DATA']])
         return out_str.getvalue()
 
     def construct_two_terminal_dc_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF TWO-TERMINAL DC DATA BEGIN VSC DC LINE DATA']])
         return out_str.getvalue()
 
     def construct_vsc_dc_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF VSC DC LINE DATA BEGIN IMPEDANCE CORRECTION DATA']])
         return out_str.getvalue()
 
     def construct_transformer_impedance_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         # if write_values_in_unused_fields:
         #     pass # rows = []?
         # elif write_defaults_in_unused_fields:
@@ -1900,56 +1917,56 @@ class Raw:
              r.t11, r.f11][0:(2*r.tict_point_count + 1)]
             for r in self.get_transformer_impedance_correction_tables()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF IMPEDANCE CORRECTION DATA BEGIN MULTI-TERMINAL DC DATA']])
         return out_str.getvalue()
     
     def construct_multi_terminal_dc_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF MULTI-TERMINAL DC DATA BEGIN MULTI-SECTION LINE DATA']])
         return out_str.getvalue()
 
     def construct_multi_section_line_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF MULTI-SECTION LINE DATA BEGIN ZONE DATA']])
         return out_str.getvalue()
 
     def construct_zone_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF ZONE DATA BEGIN INTER-AREA TRANSFER DATA']])
         return out_str.getvalue()
 
     def construct_interarea_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF INTER-AREA TRANSFER DATA BEGIN OWNER DATA']])
         return out_str.getvalue()
 
     def construct_owner_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF OWNER DATA BEGIN FACTS DEVICE DATA']])
         return out_str.getvalue()
 
     def construct_facts_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF FACTS DEVICE DATA BEGIN SWITCHED SHUNT DATA']])
         return out_str.getvalue()
 
     def construct_switched_shunt_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         if write_values_in_unused_fields:
             rows = [
                 [r.i, r.modsw, r.adjm, r.stat, r.vswhi, r.vswlo, r.swrem, r.rmpct, "'%s'" % r.rmidnt, r.binit] +
@@ -1966,28 +1983,28 @@ class Raw:
                 [r.n1, r.b1, r.n2, r.b2, r.n3, r.b3, r.n4, r.b4, r.n5, r.b5, r.n6, r.b6, r.n7, r.b7, r.n8, r.b8][0:(2*r.swsh_susc_count)]
                 for r in self.get_switched_shunts()]
         writer.writerows(rows)
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF SWITCHED SHUNT DATA BEGIN GNE DATA']])
         return out_str.getvalue()
 
     def construct_gne_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF GNE DATA BEGIN INDUCTION MACHINE DATA']])
         return out_str.getvalue()
 
     def construct_induction_section(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF INDUCTION MACHINE DATA']])
         return out_str.getvalue()
 
     def construct_q_record(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         rows = [['Q']]
         writer.writerows(rows)
         return out_str.getvalue()
@@ -2381,6 +2398,146 @@ class Con:
 
         for r in self.get_contingencies():
             r.check()
+        self.check_for_duplicate_outaged_generators(scrub_mode=False)
+        self.check_for_duplicate_outaged_branches(scrub_mode=False)
+        self.scrub_ctg_labels(scrub_mode=False)
+
+    def scrub(self):
+
+        self.check_for_duplicate_outaged_generators(scrub_mode=True)
+        self.check_for_duplicate_outaged_branches(scrub_mode=True)
+        self.scrub_ctg_labels(scrub_mode=True)
+
+    def scrub_ctg_labels(self, scrub_mode=False):
+
+        if do_scrub_ctg_labels:
+            ctgs = self.get_contingencies()
+            num_ctgs = len(ctgs)
+            num_digits = max(1, len(str(num_ctgs)))
+            ctg_number = {ctgs[i]:i for i in range(num_ctgs)}
+            ctg_label = {ctgs[i]:ctgs[i].label for i in range(num_ctgs)}
+            label_format_str = 'CTG_%0' + str(num_digits) + 'u'
+            ctg_new_label = {ctgs[i]:(label_format_str % i) for i in range(num_ctgs)}
+            ctgs_with_label_change = [c for c in ctgs if ctg_new_label[c] != ctg_label[c]]
+            if len(ctgs_with_label_change) > 0:
+                if scrub_mode:
+                    alert(
+                        {'data_type':
+                             'Con',
+                         'error_message':
+                             'anonymizing contingency labels',
+                         'diagnostics':
+                             [{'old label': ctg_label[c], 'new label': ctg_new_label[c]} for c in ctgs_with_label_change]})
+                    self.contingencies = {ctg_new_label[c]:c for c in ctgs}
+                    for k, v in self.contingencies.items():
+                        v.label = k
+                else:
+                    alert(
+                        {'data_type':
+                             'Con',
+                         'error_message':
+                             'apply scrubber to anonymize contingency labels',
+                         'diagnostics':
+                             [{'old label': ctg_label[c], 'new label': ctg_new_label[c]} for c in ctgs_with_label_change]})
+                    
+    def check_for_duplicate_outaged_generators(self, scrub_mode=False):
+        '''Each contingency outages exactly one device, either a generator or a branch.
+        This function checks that no two generator contingencies outage the same generator.
+        With scrub_mode=True it modifies the contingencies by removing any
+        that outage a generator already outaged by a previously seen contingency.'''
+
+        ctgs = self.get_contingencies()
+        ctgs_to_remove = []
+        ctgs = [c for c in ctgs if len(c.generator_out_events) > 0] # filter down to just gen ctgs
+        num_ctgs = len(ctgs)
+        if num_ctgs < 2:
+            return
+        ctgs_key_map = {c:(c.generator_out_events[0].i, c.generator_out_events[0].id) for c in ctgs}
+        ctgs_sorted = sorted(ctgs, key=(lambda c: ctgs_key_map[c]))
+        i = 0
+        c_pre = ctgs_sorted[i]
+        k_pre = ctgs_key_map[c_pre]
+        i += 1 # next one to look at
+        while i < num_ctgs:
+            c = ctgs_sorted[i]
+            k = ctgs_key_map[c]
+            if k == k_pre:
+                ctgs_to_remove.append((c_pre, c))
+            else:
+                c_pre = c
+                k_pre = k
+            i += 1
+        if len(ctgs_to_remove) > 0:
+            if scrub_mode:
+                alert(
+                    {'data_type':
+                         'Con',
+                     'error_message':
+                         'Removing generator contingencies where the outaged device is the same as in a previously seen contingency',
+                     'diagnostics':
+                         {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
+                              [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
+                for c in ctgs_to_remove:
+                    del self.contingencies[c[1].label]
+            else:
+                alert(
+                    {'data_type':
+                         'Con',
+                     'error_message':
+                         'Found generator contingencies where the outaged device is the same as in a previously seen contingency',
+                     'diagnostics':
+                         {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
+                              [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
+
+    def check_for_duplicate_outaged_branches(self, scrub_mode=False):
+        '''Each contingency outages exactly one device, either a generator or a branch.
+        This function checks that no two generator contingencies outage the same generator.
+        With scrub_mode=True it modifies the contingencies by removing any
+        that outage a generator already outaged by a previously seen contingency.'''
+
+        ctgs = self.get_contingencies()
+        ctgs_to_remove = []
+        ctgs = [c for c in ctgs if len(c.branch_out_events) > 0] # filter down to just br ctgs
+        num_ctgs = len(ctgs)
+        if num_ctgs < 2:
+            return
+        ctgs_key_map = {c:(c.branch_out_events[0].i, c.branch_out_events[0].j, c.branch_out_events[0].ckt) for c in ctgs}
+        ctgs_key_map = {k:((v[0], v[1], v[2]) if (v[0] < v[1]) else (v[1], v[0], v[2])) for k, v in ctgs_key_map.items()}
+        ctgs_sorted = sorted(ctgs, key=(lambda c: ctgs_key_map[c]))
+        i = 0
+        c_pre = ctgs_sorted[i]
+        k_pre = ctgs_key_map[c_pre]
+        i += 1 # next one to look at
+        while i < num_ctgs:
+            c = ctgs_sorted[i]
+            k = ctgs_key_map[c]
+            if k == k_pre:
+                ctgs_to_remove.append((c_pre, c))
+            else:
+                c_pre = c
+                k_pre = k
+            i += 1
+        if len(ctgs_to_remove) > 0:
+            if scrub_mode:
+                alert(
+                    {'data_type':
+                         'Con',
+                     'error_message':
+                         'Removing branch contingencies where the outaged device is the same as in a previously seen contingency',
+                     'diagnostics':
+                         {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
+                              [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
+                for c in ctgs_to_remove:
+                    del self.contingencies[c[1].label]
+            else:
+                alert(
+                    {'data_type':
+                         'Con',
+                     'error_message':
+                         'Found branch contingencies where the outaged device is the same as in a previously seen contingency',
+                     'diagnostics':
+                         {'[(previous ctg label, duplicate ctg label, device key) for all duplicates]':
+                              [(c[0].label, c[1].label, ctgs_key_map[c[1]]) for c in ctgs_to_remove]}})
 
     '''
     def read_from_phase_0(self, file_name):
@@ -2423,7 +2580,7 @@ class Con:
     def construct_data_records(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE, delimiter=' ')
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE, delimiter=' ')
         rows = [
             row
             for r in self.get_contingencies()
@@ -2434,7 +2591,7 @@ class Con:
     def construct_end_record(self):
 
         out_str = StringIO()
-        writer = csv.writer(out_str, quoting=csv.QUOTE_NONE, delimiter=' ')
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE, delimiter=' ')
         rows = [['END']]
         writer.writerows(rows)
         return out_str.getvalue()        
@@ -2870,6 +3027,7 @@ class Load:
         self.check_id_len_1_or_2()
         # need to check i in buses
         self.check_pl_nonnegative(scrub_mode=False)
+        self.check_pl_ql_at_least_one_nonzero()
 
     def scrub(self):
 
@@ -2887,6 +3045,18 @@ class Load:
                      'pl': self.pl}})
             if scrub_mode:
                 self.pl = 0.0
+
+    def check_pl_ql_at_least_one_nonzero(self):
+
+        if remove_loads_with_pq_eq_0:
+            if (self.pl == 0.0) and (self.ql == 0.0):
+                alert(
+                    {'data_type':
+                         'Raw',
+                     'error_message':
+                         'found a load with pl == 0.0 and ql == 0.0, will be removed when scrubber is applied',
+                     'diagnostics':
+                         {'i': self.i, 'id': self.id, 'pl': self.pl, 'ql': self.ql}})
 
     def check_id_len_1_or_2(self):
 

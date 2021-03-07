@@ -41,9 +41,11 @@ from scipy import sparse as sp
 try:
     import data_utilities.data as data
     from data_utilities.cost_utils import CostEvaluator
+    from data_utilities.swsh_utils import solve_py as swsh_solve
 except:
     import data
     from cost_utils import CostEvaluator
+    from swsh_utils import solve_py as swsh_solve
 
 try:
     from cStringIO import StringIO
@@ -94,6 +96,8 @@ stop_on_errors = False
 active_case = "BASECASE"
 active_solution_path = '.'
 log_fileobject = None
+
+swsh_binit_tol = 1e-4
 
 # todo just make some summary classes
 summary_keys = [
@@ -210,6 +214,20 @@ summary2_keys = [
 ]
 check_summary_keys = True
 #<base/ctg>_<gen/line/xfmr>_switch_<up/down>_<actual/max>
+
+def compute_swsh_block_xst(h_b0, ha_n, ha_b):
+
+    num_swsh = ha_n.shape[0]
+    num_block = ha_n.shape[1]
+    assert(ha_n.shape[0] == ha_b.shape[0])
+    assert(ha_n.shape[1] == ha_b.shape[1])
+    assert(h_b0.shape[0] == num_swsh)
+    ha_x = np.zeros(shape=(num_swsh, num_block), dtype=int)
+    h_r = np.zeros(shape=(num_swsh,), dtype=float)
+    h_r_abs = np.zeros(shape=(num_swsh,), dtype=float)
+    tol = swsh_binit_tol
+    swsh_solve(h_b0, ha_n, ha_b, ha_x, h_r, h_r_abs, tol)
+    return ha_x
 
 def create_new_summary():
     
@@ -525,6 +543,7 @@ class Evaluation:
     @timeit
     def json_to_summary_all_cases(self, path):
         '''read the json case summary files and create summary_all_cases from them'''
+        # note if we terminate early, we will not have all the contingency files
 
         json_files = [f for f in glob.glob(str('{}/eval_detail_*.json'.format(path))) if ('eval_detail_' in f) and ('json' in f)]
         json_contingency_files = [f for f in json_files if 'BASECASE' not in f]
@@ -537,6 +556,11 @@ class Evaluation:
         json_base_case_file = json_base_case_files[0]
         contingency_labels = [Path(f).resolve().stem.replace("eval_detail_","") for f in json_contingency_files]
         num_contingencies = len(contingency_labels)
+        
+        # filter out anything not from this run
+        contingency_labels = sorted(list(set(contingency_labels).intersection(set(self.ctg_label))))
+        num_contingencies = len(contingency_labels)
+        json_contingency_files = ["{}/eval_detail_{}.json".format(path, k) for k in contingency_labels]
         
         with open(json_base_case_file, 'r') as f:
             s = json.load(f)
@@ -573,7 +597,7 @@ class Evaluation:
 
     @timeit
     def json_to_csv(self, path):
-        ''''''
+        ''' '''
         # todo split this up
         # create_summary_all_cases(path)
         #     read the case summary json files into a dict structure
@@ -760,6 +784,8 @@ class Evaluation:
         self.bus_i = [r.i for r in buses]
         self.bus_key = self.bus_i
         self.bus_map = {self.bus_i[i]:i for i in range(len(self.bus_i))}
+        self.bus_volt_mag_0 = np.array([r.vm for r in buses])
+        self.bus_volt_ang_0 = np.array([np.pi * r.va / 180.0 for r in buses])
         self.bus_volt_mag_max_base = np.array([r.nvhi for r in buses])
         self.bus_volt_mag_min_base = np.array([r.nvlo for r in buses])
         self.bus_volt_mag_max_ctg = np.array([r.evhi for r in buses])
@@ -852,6 +878,7 @@ class Evaluation:
 
         # real power output in given operating point prior to the base case
         self.gen_pow_real_0 = np.array([r.pg for r in gens]) / self.base_mva
+        self.gen_pow_imag_0 = np.array([r.qg for r in gens]) / self.base_mva
 
         self.gen_service_status = np.ones(shape=(self.num_gen,))
         self.bus_gen_matrix = sp.csr_matrix(
@@ -933,16 +960,36 @@ class Evaluation:
         self.xfmr_pow_mag_max_base = np.array([r.rata1 for r in xfmrs]) / self.base_mva # todo check normalization
         self.xfmr_pow_mag_max_ctg = np.array([r.ratc1 for r in xfmrs]) / self.base_mva # todo check normalization
         
-        self.xfmr_xst_max = np.array([round(0.5 * (r.ntp1 - 1.0)) for r in xfmrs])
+        # max num steps on each side of control range
+        self.xfmr_xst_max = np.array([round(0.5 * (r.ntp1 - 1.0)) if (r.cod1 in [-3, -1, 1, 3]) else 0 for r in xfmrs], dtype=int)
+
+        # midpoint of control range
         self.xfmr_tap_mag_mid = np.array(
             [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 in [-1, 1]) else (r.windv1 / r.windv2) for r in xfmrs])
-        self.xfmr_tap_mag_step_size = np.array(
-            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 in [-1, 1]) else 0.0 for r in xfmrs])
         self.xfmr_tap_ang_mid = np.array(
             [(0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 in [-3, 3]) else (r.ang1 * math.pi / 180.0) for r in xfmrs])
+        self.xfmr_mid = np.array(
+            [(0.5 * (r.rma1 + r.rmi1)) if (r.cod1 in [-1, 1]) else
+             (0.5 * (r.rma1 + r.rmi1) * math.pi / 180.0) if (r.cod1 in [-3, 3]) else
+             0.0
+             for r in xfmrs])
+
+        # control step size
+        self.xfmr_tap_mag_step_size = np.array(
+            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 in [-1, 1]) else 0.0 for r in xfmrs])
         self.xfmr_tap_ang_step_size = np.array(
             [((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 in [-3, 3]) else 0.0 for r in xfmrs])
+        self.xfmr_step_size = np.array(
+            [((r.rma1 - r.rmi1) / (r.ntp1 - 1.0)) if (r.cod1 in [-1, 1]) else
+             ((r.rma1 - r.rmi1) * math.pi / 180.0 / (r.ntp1 - 1.0)) if (r.cod1 in [-3, 3]) else
+             0.0
+             for r in xfmrs])
 
+        # to facilitate division by step size
+        self.xfmr_xst_max[self.xfmr_step_size == 0.0] = 0
+        self.xfmr_step_size[self.xfmr_step_size == 0.0] = 1.0
+
+        # topology and switching
         self.bus_xfmr_orig_matrix = sp.csr_matrix(
             ([1.0 for i in range(self.num_xfmr)],
              (self.xfmr_orig_bus, list(range(self.num_xfmr)))),
@@ -959,8 +1006,11 @@ class Evaluation:
         self.xfmr_service_status = np.ones(shape=(self.num_xfmr,))
 
         # todo transformer impedance correction
+        # todo which of these 2 options is best?
         self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if (xfmrs[ind].tab1 > 0 and xfmrs[ind].cod1 in [-3, -1, 1, 3])]
+        #self.xfmr_index_imp_corr = [ind for ind in range(self.num_xfmr) if xfmrs[ind].tab1 > 0]
         self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 == 0]
+        #self.xfmr_index_fixed_tap_ratio_and_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 not in [-3, -1, 1, 3]]
         self.xfmr_index_var_tap_ratio = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-1, 1]]
         self.xfmr_index_var_phase_shift = [ind for ind in range(self.num_xfmr) if xfmrs[ind].cod1 in [-3, 3]]
         self.xfmr_index_imp_corr_var_tap_ratio = sorted(
@@ -969,6 +1019,28 @@ class Evaluation:
         self.xfmr_index_imp_corr_var_phase_shift = sorted(
             list(set(self.xfmr_index_imp_corr).intersection(
                     set(self.xfmr_index_var_phase_shift))))
+
+        self.compute_xfmr_xst_0_from_tau_phi_0()
+
+    def compute_xfmr_xst_0_from_tau_phi_0(self):
+
+        #print('xfmr_xst_max:')
+        #print(self.data.xfmr_xst_max)
+        #
+        self.xfmr_temp = np.zeros(shape=(self.num_xfmr,))
+        self.xfmr_temp[self.xfmr_index_var_tap_ratio] = self.xfmr_tap_mag_0[self.xfmr_index_var_tap_ratio]
+        self.xfmr_temp[self.xfmr_index_var_phase_shift] = self.xfmr_tap_ang_0[self.xfmr_index_var_phase_shift]
+        np.subtract(self.xfmr_temp, self.xfmr_mid, out=self.xfmr_temp)
+        np.divide(self.xfmr_temp, self.xfmr_step_size, out=self.xfmr_temp)
+        np.round(self.xfmr_temp, out=self.xfmr_temp)
+        np.minimum(self.xfmr_temp, self.xfmr_xst_max, out=self.xfmr_temp)
+        np.negative(self.xfmr_temp, out=self.xfmr_temp)
+        np.minimum(self.xfmr_temp, self.xfmr_xst_max, out=self.xfmr_temp)
+        np.negative(self.xfmr_temp, out=self.xfmr_temp)
+        self.xfmr_xst_0 = self.xfmr_temp # should be 0 on fixed tap, fixed phase
+        #self.xfmr_xst[:] = 0
+        #self.xfmr_xst[self.data.xfmr_index_var_tap_ratio] = self.xfmr_temp[self.data.xfmr_index_var_tap_ratio]
+        #self.xfmr_xst[self.data.xfmr_index_var_phase_shift] = self.xfmr_temp[self.data.xfmr_index_var_phase_shift]
 
     @timeit
     def set_data_swsh_params(self, data):
@@ -979,6 +1051,8 @@ class Evaluation:
         self.swsh_key = self.swsh_i
         self.swsh_bus = [self.bus_map[self.swsh_i[i]] for i in range(self.num_swsh)]
         self.swsh_map = {self.swsh_i[i]:i for i in range(self.num_swsh)}
+        self.swsh_b_0 = np.array([r.binit for r in swshs]) / self.base_mva # ?????)
+        #print(self.swsh_b_0)
         self.swsh_block_adm_imag = np.array(
             [[r.b1, r.b2, r.b3, r.b4, r.b5, r.b6, r.b7, r.b8]
              for r in swshs]) / self.base_mva
@@ -988,6 +1062,11 @@ class Evaluation:
         if self.num_swsh == 0:
             self.swsh_block_adm_imag = np.zeros(shape=(0, 8))
             self.swsh_block_num_steps = np.zeros(shape=(0, 8))
+        #print(self.swsh_block_adm_imag)
+        #print(self.swsh_block_num_steps)
+        self.swsh_block_xst_0 = compute_swsh_block_xst(
+            self.swsh_b_0, self.swsh_block_num_steps, self.swsh_block_adm_imag)
+        #print(self.swsh_block_xst_0)
         self.swsh_num_blocks = np.array(
             [r.swsh_susc_count for r in swshs])
         self.bus_swsh_matrix = sp.csr_matrix(
@@ -1241,6 +1320,32 @@ class Evaluation:
         self.xfmr_xsw[:] = sol.xfmr_xsw
         self.xfmr_xst[:] = sol.xfmr_xst
         self.swsh_block_xst[:] = sol.swsh_xst
+
+    @timeit
+    def set_sol_from_data(self): #????????
+
+        self.bus_volt_mag[:] = self.bus_volt_mag_0
+        self.bus_volt_ang[:] = self.bus_volt_ang_0
+        self.load_t[:] = 1.0
+        self.gen_pow_real[:] = self.gen_pow_real_0
+        self.gen_pow_imag[:] = self.gen_pow_imag_0
+        self.gen_xon[:] = self.gen_xon_0
+        self.line_xsw[:] = self.line_xsw_0
+        self.xfmr_xsw[:] = self.xfmr_xsw_0
+        self.xfmr_xst[:] = self.xfmr_xst_0
+        self.swsh_block_xst[:] = self.swsh_block_xst_0
+
+        # for debugging
+        # print('bus volt mag: {}'.format(self.bus_volt_mag))
+        # print('bus volt ang: {}'.format(self.bus_volt_ang))
+        # print('load t: {}'.format(self.load_t))
+        # print('gen pow real: {}'.format(self.gen_pow_real))
+        # print('gen pow imag: {}'.format(self.gen_pow_imag))
+        # print('gen xon: {}'.format(self.gen_xon))
+        # print('line xsw: {}'.format(self.line_xsw))
+        # print('xfmr xsw: {}'.format(self.xfmr_xsw))
+        # print('xfmr xst: {}'.format(self.xfmr_xst))
+        # print('swsh block xst: {}'.format(self.swsh_block_xst))
 
     @timeit
     def round_sol(self):
@@ -2949,7 +3054,7 @@ class Evaluation:
             ( - self.line_adm_real * self.line_cos_volt_ang_diff
               - self.line_adm_imag * self.line_sin_volt_ang_diff) *
             self.line_orig_dest_volt_mag_prod)
-        
+
         # C2 A1 S14 #47
         self.line_orig_pow_imag = self.line_xsw * (
             - self.line_adm_total_imag * self.line_orig_volt_mag_sq + # ** 2.0 +
@@ -2972,7 +3077,12 @@ class Evaluation:
               + self.line_adm_real * self.line_sin_volt_ang_diff) *
             self.line_orig_dest_volt_mag_prod)
 
-    # Real and reactive power ﬂows into a line e at the origin and destination buses in a case k are subject to apparent current rating constraints. Any exceedance of these current rating constraints is expressed as a quantity s+ ek of apparent power
+        # print('eval line orig pow real: {}'.format(self.line_orig_pow_real))
+        # print('eval line orig pow imag: {}'.format(self.line_orig_pow_imag))
+        # print('eval line dest pow real: {}'.format(self.line_dest_pow_real))
+        # print('eval line dest pow imag: {}'.format(self.line_dest_pow_imag))
+
+    # real and reactive power ﬂows into a line e at the origin and destination buses in a case k are subject to apparent current rating constraints. Any exceedance of these current rating constraints is expressed as a quantity s+ ek of apparent power
     # Current exceedance appears in the objective with a cost coeﬃcient
     # Compute minimal line rating exceedance variables
     # C2 A1 S16 #51 - #52
@@ -3030,6 +3140,13 @@ class Evaluation:
             (   self.xfmr_adm_imag / self.xfmr_tap_mag * self.xfmr_cos_volt_ang_diff
               + self.xfmr_adm_real / self.xfmr_tap_mag * self.xfmr_sin_volt_ang_diff) *
                 self.xfmr_orig_volt_mag * self.xfmr_dest_volt_mag)
+
+        # print('eval xfmr orig pow real: {}'.format(self.xfmr_orig_pow_real))
+        # print('eval xfmr orig pow imag: {}'.format(self.xfmr_orig_pow_imag))
+        # print('eval xfmr dest pow real: {}'.format(self.xfmr_dest_pow_real))
+        # print('eval xfmr dest pow imag: {}'.format(self.xfmr_dest_pow_imag))
+        # print('eval xfmr tap mag: {}'.format(self.xfmr_tap_mag))
+        # print('eval xfmr tap ang: {}'.format(self.xfmr_tap_ang))
 
     # Real and reactive power ﬂows into a transformer e at the origin and destination buses in a case k are subject to apparent current rating constraints. Any exceedance of these current rating constraints is expressed as a quantity s+ ek of apparent power
     # Current exceedance appears in the objective with a cost coeﬃcient
@@ -3104,6 +3221,27 @@ class Evaluation:
         self.bus_pow_imag_imbalance[:] -= self.bus_swsh_matrix.dot(self.swsh_pow_imag)
         np.absolute(self.bus_pow_imag_imbalance, out=self.bus_pow_imag_imbalance)
         self.summarize('bus_pow_imag_imbalance', self.bus_pow_imag_imbalance, self.bus_key)        
+
+        # for debugging
+        # print('bus volt mag: {}'.format(self.bus_volt_mag))
+        # print('bus volt ang: {}'.format(self.bus_volt_ang))
+        # print('gen pow real: {}'.format(self.gen_pow_real))
+        # print('load pow real: {}'.format(self.load_pow_real))
+        # print('fxsh pow real: {}'.format(self.fxsh_pow_real))
+        # print('line orig pow real: {}'.format(self.line_orig_pow_real))
+        # print('line dest pow real: {}'.format(self.line_dest_pow_real))
+        # print('xfmr orig pow real: {}'.format(self.xfmr_orig_pow_real))
+        # print('xfmr dest pow real: {}'.format(self.xfmr_dest_pow_real))
+        # print('bus pow real imbalance: {}'.format(self.bus_pow_real_imbalance))
+        # print('gen pow imag: {}'.format(self.gen_pow_imag))
+        # print('load pow imag: {}'.format(self.load_pow_imag))
+        # print('fxsh pow imag: {}'.format(self.fxsh_pow_imag))
+        # print('line orig pow imag: {}'.format(self.line_orig_pow_imag))
+        # print('line dest pow imag: {}'.format(self.line_dest_pow_imag))
+        # print('xfmr orig pow imag: {}'.format(self.xfmr_orig_pow_imag))
+        # print('xfmr dest pow imag: {}'.format(self.xfmr_dest_pow_imag))
+        # print('swsh pow imag: {}'.format(self.swsh_pow_imag))
+        # print('bus pow imag imbalance: {}'.format(self.bus_pow_imag_imbalance))
 
 class CaseSolution:
     '''In model units, i.e. not the physical units of the data convention (different from C1)'''
