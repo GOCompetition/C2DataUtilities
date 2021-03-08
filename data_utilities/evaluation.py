@@ -763,9 +763,25 @@ class Evaluation:
         self.summary2['ctg_total_line_cost'] = np.sum([self.summary_all_cases[k]['total_line_cost']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['total_line_cost'] = self.summary2['base_total_line_cost'] + self.summary2['ctg_total_line_cost']
 
+        self.summary2['base_total_line_limit_cost'] = self.summary_all_cases['BASECASE']['total_line_limit_cost']['val']
+        self.summary2['ctg_total_line_limit_cost'] = np.sum([self.summary_all_cases[k]['total_line_limit_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_line_limit_cost'] = self.summary2['base_total_line_limit_cost'] + self.summary2['ctg_total_line_limit_cost']
+
+        self.summary2['base_total_line_switch_cost'] = self.summary_all_cases['BASECASE']['total_line_switch_cost']['val']
+        self.summary2['ctg_total_line_switch_cost'] = np.sum([self.summary_all_cases[k]['total_line_switch_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_line_switch_cost'] = self.summary2['base_total_line_switch_cost'] + self.summary2['ctg_total_line_switch_cost']
+
         self.summary2['base_total_xfmr_cost'] = self.summary_all_cases['BASECASE']['total_xfmr_cost']['val']
         self.summary2['ctg_total_xfmr_cost'] = np.sum([self.summary_all_cases[k]['total_xfmr_cost']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['total_xfmr_cost'] = self.summary2['base_total_xfmr_cost'] + self.summary2['ctg_total_xfmr_cost']
+
+        self.summary2['base_total_xfmr_limit_cost'] = self.summary_all_cases['BASECASE']['total_xfmr_limit_cost']['val']
+        self.summary2['ctg_total_xfmr_limit_cost'] = np.sum([self.summary_all_cases[k]['total_xfmr_limit_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_xfmr_limit_cost'] = self.summary2['base_total_xfmr_limit_cost'] + self.summary2['ctg_total_xfmr_limit_cost']
+
+        self.summary2['base_total_xfmr_switch_cost'] = self.summary_all_cases['BASECASE']['total_xfmr_switch_cost']['val']
+        self.summary2['ctg_total_xfmr_switch_cost'] = np.sum([self.summary_all_cases[k]['total_xfmr_switch_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_xfmr_switch_cost'] = self.summary2['base_total_xfmr_switch_cost'] + self.summary2['ctg_total_xfmr_switch_cost']
 
         self.summary2['base_min_total_load_benefit'] = self.summary_all_cases['BASECASE']['min_total_load_benefit']['val']
         self.summary2['ctg_min_total_load_benefit'] = np.sum([self.summary_all_cases[k]['min_total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg
