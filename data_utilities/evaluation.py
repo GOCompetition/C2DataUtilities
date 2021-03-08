@@ -104,10 +104,20 @@ summary_keys = [
     'obj',
     'infeas',
     'total_bus_cost',
+    'total_bus_real_cost',
+    'total_bus_imag_cost',
     'total_load_benefit',
     'total_gen_cost',
+    'total_gen_energy_cost',
+    'total_gen_on_cost',
+    'total_gen_su_cost',
+    'total_gen_sd_cost',
     'total_line_cost',
+    'total_line_limit_cost',
+    'total_line_switch_cost',
     'total_xfmr_cost',
+    'total_xfmr_limit_cost',
+    'total_xfmr_switch_cost',
     'min_total_load_benefit',
     'bus_volt_mag_max_viol',
     'bus_volt_mag_min_viol',
@@ -162,20 +172,68 @@ summary_out = {
     'val':0.0,
 }
 summary_out_keys = sorted(list(summary_out.keys()))
+
+# new key order
+'''
 summary2_keys = [
     'solutions_exist',
     'infeas_cumulative',
     'infeas_all_cases',
     'obj_cumulative',
     'obj_all_cases',
-
+    'base_obj',
+    'ctg_obj',
     'obj',
+    'base_infeas',
+    'ctg_infeas',
     'infeas',
+    'base_total_bus_cost',
+    'ctg_total_bus_cost',
     'total_bus_cost',
+    'base_total_bus_real_cost',
+    'ctg_total_bus_real_cost',
+    'total_bus_real_cost',
+    'base_total_bus_imag_cost',
+    'ctg_total_bus_imag_cost',
+    'total_bus_imag_cost',
+    'base_total_load_benefit',
+    'ctg_total_load_benefit',
     'total_load_benefit',
+    'base_total_gen_cost',
+    'ctg_total_gen_cost',
     'total_gen_cost',
+    'base_total_gen_energy_cost',
+    'ctg_total_gen_energy_cost',
+    'total_gen_energy_cost',
+    'base_total_gen_on_cost',
+    'ctg_total_gen_on_cost',
+    'total_gen_on_cost',
+    'base_total_gen_su_cost',
+    'ctg_total_gen_su_cost',
+    'total_gen_su_cost',
+    'base_total_gen_sd_cost',
+    'ctg_total_gen_sd_cost',
+    'total_gen_sd_cost',
+    'base_total_line_cost',
+    'ctg_total_line_cost',
     'total_line_cost',
+    'base_total_line_limit_cost',
+    'ctg_total_line_limit_cost',
+    'total_line_limit_cost',
+    'base_total_line_switch_cost',
+    'ctg_total_line_switch_cost',
+    'total_line_switch_cost',
+    'base_total_xfmr_cost',
+    'ctg_total_xfmr_cost',
     'total_xfmr_cost',
+    'base_total_xfmr_limit_cost',
+    'ctg_total_xfmr_limit_cost',
+    'total_xfmr_limit_cost',
+    'base_total_xfmr_switch_cost',
+    'ctg_total_xfmr_switch_cost',
+    'total_xfmr_switch_cost',
+    'base_min_total_load_benefit',
+    'ctg_min_total_load_benefit',
     'min_total_load_benefit',
 
     'base_gen_switch_up_actual',
@@ -212,6 +270,110 @@ summary2_keys = [
     'ctg_total_switches',
     'total_switches',
 ]
+'''
+
+# original key order
+#'''
+summary2_keys = [
+    "solutions_exist",
+    "infeas_cumulative",
+    "infeas_all_cases",
+    "obj_cumulative",
+    "obj_all_cases",
+    "obj",
+    "infeas",
+    "total_bus_cost",
+    "total_load_benefit",
+    "total_gen_cost",
+    "total_line_cost",
+    "total_xfmr_cost",
+    "min_total_load_benefit",
+    "base_gen_switch_up_actual",
+    "base_gen_switch_up_max",
+    "base_gen_switch_down_actual",
+    "base_gen_switch_down_max",
+    "base_line_switch_up_actual",
+    "base_line_switch_up_max",
+    "base_line_switch_down_actual",
+    "base_line_switch_down_max",
+    "base_xfmr_switch_up_actual",
+    "base_xfmr_switch_up_max",
+    "base_xfmr_switch_down_actual",
+    "base_xfmr_switch_down_max",
+    "ctg_gen_switch_up_actual",
+    "ctg_gen_switch_up_max",
+    "ctg_gen_switch_down_actual",
+    "ctg_gen_switch_down_max",
+    "ctg_line_switch_up_actual",
+    "ctg_line_switch_up_max",
+    "ctg_line_switch_down_actual",
+    "ctg_line_switch_down_max",
+    "ctg_xfmr_switch_up_actual",
+    "ctg_xfmr_switch_up_max",
+    "ctg_xfmr_switch_down_actual",
+    "ctg_xfmr_switch_down_max",
+    "base_gen_switches",
+    "base_line_switches",
+    "base_xfmr_switches",
+    "ctg_gen_switches",
+    "ctg_line_switches",
+    "ctg_xfmr_switches",
+    "base_total_switches",
+    "ctg_total_switches",
+    "total_switches",
+    "base_obj",
+    "ctg_obj",
+    "base_infeas",
+    "ctg_infeas",
+    "base_total_bus_cost",
+    "ctg_total_bus_cost",
+    "base_total_bus_real_cost",
+    "ctg_total_bus_real_cost",
+    "total_bus_real_cost",
+    "base_total_bus_imag_cost",
+    "ctg_total_bus_imag_cost",
+    "total_bus_imag_cost",
+    "base_total_load_benefit",
+    "ctg_total_load_benefit",
+    "base_total_gen_cost",
+    "ctg_total_gen_cost",
+    "base_total_gen_energy_cost",
+    "ctg_total_gen_energy_cost",
+    "total_gen_energy_cost",
+    "base_total_gen_on_cost",
+    "ctg_total_gen_on_cost",
+    "total_gen_on_cost",
+    "base_total_gen_su_cost",
+    "ctg_total_gen_su_cost",
+    "total_gen_su_cost",
+    "base_total_gen_sd_cost",
+    "ctg_total_gen_sd_cost",
+    "total_gen_sd_cost",
+    "base_total_line_cost",
+    "ctg_total_line_cost",
+    "total_line_limit_cost",
+    "base_total_line_limit_cost",
+    "ctg_total_line_limit_cost",
+    "base_total_line_switch_cost",
+    "ctg_total_line_switch_cost",
+    "total_line_switch_cost",
+    "base_total_xfmr_cost",
+    "ctg_total_xfmr_cost",
+    "base_total_xfmr_limit_cost",
+    "ctg_total_xfmr_limit_cost",
+    "total_xfmr_limit_cost",
+    "base_total_xfmr_switch_cost",
+    "ctg_total_xfmr_switch_cost",
+    "total_xfmr_switch_cost",
+    "base_min_total_load_benefit",
+    "ctg_min_total_load_benefit"
+]
+#'''
+
+# old key order coming from JSON file
+#with open('./data_utilities/summary_fields.json') as f:
+#    summary2_keys = json.load(f)
+
 check_summary_keys = True
 #<base/ctg>_<gen/line/xfmr>_switch_<up/down>_<actual/max>
 
@@ -470,33 +632,144 @@ class Evaluation:
         # unless terminating early due to infeasibility
         ctg_labels = sorted(list(set(self.summary_all_cases.keys()).difference(['BASECASE'])))
 
-        #self.summary2['obj'] = 
-        self.summary2['obj'] = (
-            self.summary_all_cases['BASECASE']['obj']['val'] +
-            np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg)
-        self.summary2['infeas'] = np.sum([1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels])
+        '''
+    'solutions_exist',
+    'infeas_cumulative',
+    'infeas_all_cases',
+    'obj_cumulative',
+    'obj_all_cases',
+
+    'base_obj',
+    'ctg_obj',
+    'obj',
+
+    'base_infeas',
+    'ctg_infeas',
+    'infeas',
+
+    'base_total_bus_cost',
+    'ctg_total_bus_cost',
+    'total_bus_cost',
+
+    'base_total_bus_real_cost',
+    'ctg_total_bus_real_cost',
+    'total_bus_real_cost',
+
+    'base_total_bus_imag_cost',
+    'ctg_total_bus_imag_cost',
+    'total_bus_imag_cost',
+
+    'base_total_load_benefit',
+    'ctg_total_load_benefit',
+    'total_load_benefit',
+
+    'base_total_gen_cost',
+    'ctg_total_gen_cost',
+    'total_gen_cost',
+
+    'base_total_gen_energy_cost',
+    'ctg_total_gen_energy_cost',
+    'total_gen_energy_cost',
+
+    'base_total_gen_on_cost',
+    'ctg_total_gen_on_cost',
+    'total_gen_on_cost',
+
+    'base_total_gen_su_cost',
+    'ctg_total_gen_su_cost',
+    'total_gen_su_cost',
+
+    'base_total_gen_sd_cost',
+    'ctg_total_gen_sd_cost',
+    'total_gen_sd_cost',
+
+    'base_total_line_cost',
+    'ctg_total_line_cost',
+    'total_line_cost',
+    'base_total_line_limit_cost',
+    'ctg_total_line_limit_cost',
+    'total_line_limit_cost',
+    'base_total_line_switch_cost',
+    'ctg_total_line_switch_cost',
+    'total_line_switch_cost',
+
+    'base_total_xfmr_cost',
+    'ctg_total_xfmr_cost',
+    'total_xfmr_cost',
+    'base_total_xfmr_limit_cost',
+    'ctg_total_xfmr_limit_cost',
+    'total_xfmr_limit_cost',
+    'base_total_xfmr_switch_cost',
+    'ctg_total_xfmr_switch_cost',
+    'total_xfmr_switch_cost',
+
+    'base_min_total_load_benefit',
+    'ctg_min_total_load_benefit',
+    'min_total_load_benefit',
+        '''
+
+
+
+        self.summary2['base_obj'] = self.summary_all_cases['BASECASE']['obj']['val']
+        self.summary2['ctg_obj'] = np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['obj'] = self.summary2['base_obj'] + self.summary2['ctg_obj']
+
+        self.summary2['base_infeas'] = (1.0 if self.summary_all_cases['BASECASE']['infeas']['val'] else 0.0)
+        self.summary2['ctg_infeas'] = np.sum([1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels])
+        self.summary2['infeas'] = self.summary2['base_infeas'] + self.summary2['ctg_infeas']
+
         #print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
         #        [self.summary_all_cases[k]['infeas']['val'] for k in ctg_labels]))
         #print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
         #        [1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels]))
-        self.summary2['total_bus_cost'] = (
-            self.summary_all_cases['BASECASE']['total_bus_cost']['val'] +
-            np.sum([self.summary_all_cases[k]['total_bus_cost']['val'] for k in ctg_labels]) / self.num_ctg)
-        self.summary2['total_load_benefit'] = (
-            self.summary_all_cases['BASECASE']['total_load_benefit']['val'] +
-            np.sum([self.summary_all_cases[k]['total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg)
-        self.summary2['total_gen_cost'] = (
-            self.summary_all_cases['BASECASE']['total_gen_cost']['val'] +
-            np.sum([self.summary_all_cases[k]['total_gen_cost']['val'] for k in ctg_labels]) / self.num_ctg)
-        self.summary2['total_line_cost'] = (
-            self.summary_all_cases['BASECASE']['total_line_cost']['val'] +
-            np.sum([self.summary_all_cases[k]['total_line_cost']['val'] for k in ctg_labels]) / self.num_ctg)
-        self.summary2['total_xfmr_cost'] = (
-            self.summary_all_cases['BASECASE']['total_xfmr_cost']['val'] +
-            np.sum([self.summary_all_cases[k]['total_xfmr_cost']['val'] for k in ctg_labels]) / self.num_ctg)
-        self.summary2['min_total_load_benefit'] = (
-            self.summary_all_cases['BASECASE']['min_total_load_benefit']['val'] +
-            np.sum([self.summary_all_cases[k]['min_total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg)
+
+        self.summary2['base_total_bus_cost'] = self.summary_all_cases['BASECASE']['total_bus_cost']['val']
+        self.summary2['ctg_total_bus_cost'] = np.sum([self.summary_all_cases[k]['total_bus_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_bus_cost'] = self.summary2['base_total_bus_cost'] + self.summary2['ctg_total_bus_cost']
+
+        self.summary2['base_total_bus_real_cost'] = self.summary_all_cases['BASECASE']['total_bus_real_cost']['val']
+        self.summary2['ctg_total_bus_real_cost'] = np.sum([self.summary_all_cases[k]['total_bus_real_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_bus_real_cost'] = self.summary2['base_total_bus_real_cost'] + self.summary2['ctg_total_bus_real_cost']
+
+        self.summary2['base_total_bus_imag_cost'] = self.summary_all_cases['BASECASE']['total_bus_imag_cost']['val']
+        self.summary2['ctg_total_bus_imag_cost'] = np.sum([self.summary_all_cases[k]['total_bus_imag_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_bus_imag_cost'] = self.summary2['base_total_bus_imag_cost'] + self.summary2['ctg_total_bus_imag_cost']
+
+        self.summary2['base_total_load_benefit'] = self.summary_all_cases['BASECASE']['total_load_benefit']['val']
+        self.summary2['ctg_total_load_benefit'] = np.sum([self.summary_all_cases[k]['total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_load_benefit'] = self.summary2['base_total_load_benefit'] + self.summary2['ctg_total_load_benefit']
+
+        self.summary2['base_total_gen_cost'] = self.summary_all_cases['BASECASE']['total_gen_cost']['val']
+        self.summary2['ctg_total_gen_cost'] = np.sum([self.summary_all_cases[k]['total_gen_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_gen_cost'] = self.summary2['base_total_gen_cost'] + self.summary2['ctg_total_gen_cost']
+
+        self.summary2['base_total_gen_energy_cost'] = self.summary_all_cases['BASECASE']['total_gen_energy_cost']['val']
+        self.summary2['ctg_total_gen_energy_cost'] = np.sum([self.summary_all_cases[k]['total_gen_energy_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_gen_energy_cost'] = self.summary2['base_total_gen_energy_cost'] + self.summary2['ctg_total_gen_energy_cost']
+
+        self.summary2['base_total_gen_on_cost'] = self.summary_all_cases['BASECASE']['total_gen_on_cost']['val']
+        self.summary2['ctg_total_gen_on_cost'] = np.sum([self.summary_all_cases[k]['total_gen_on_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_gen_on_cost'] = self.summary2['base_total_gen_on_cost'] + self.summary2['ctg_total_gen_on_cost']
+
+        self.summary2['base_total_gen_su_cost'] = self.summary_all_cases['BASECASE']['total_gen_su_cost']['val']
+        self.summary2['ctg_total_gen_su_cost'] = np.sum([self.summary_all_cases[k]['total_gen_su_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_gen_su_cost'] = self.summary2['base_total_gen_su_cost'] + self.summary2['ctg_total_gen_su_cost']
+
+        self.summary2['base_total_gen_sd_cost'] = self.summary_all_cases['BASECASE']['total_gen_sd_cost']['val']
+        self.summary2['ctg_total_gen_sd_cost'] = np.sum([self.summary_all_cases[k]['total_gen_sd_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_gen_sd_cost'] = self.summary2['base_total_gen_sd_cost'] + self.summary2['ctg_total_gen_sd_cost']
+
+        self.summary2['base_total_line_cost'] = self.summary_all_cases['BASECASE']['total_line_cost']['val']
+        self.summary2['ctg_total_line_cost'] = np.sum([self.summary_all_cases[k]['total_line_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_line_cost'] = self.summary2['base_total_line_cost'] + self.summary2['ctg_total_line_cost']
+
+        self.summary2['base_total_xfmr_cost'] = self.summary_all_cases['BASECASE']['total_xfmr_cost']['val']
+        self.summary2['ctg_total_xfmr_cost'] = np.sum([self.summary_all_cases[k]['total_xfmr_cost']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['total_xfmr_cost'] = self.summary2['base_total_xfmr_cost'] + self.summary2['ctg_total_xfmr_cost']
+
+        self.summary2['base_min_total_load_benefit'] = self.summary_all_cases['BASECASE']['min_total_load_benefit']['val']
+        self.summary2['ctg_min_total_load_benefit'] = np.sum([self.summary_all_cases[k]['min_total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['min_total_load_benefit'] = self.summary2['base_min_total_load_benefit'] + self.summary2['ctg_min_total_load_benefit']
 
         self.summary2['base_gen_switch_up_actual'] = self.summary_all_cases['BASECASE']['gen_switch_up_actual']['val']
         self.summary2['base_gen_switch_up_max'] = self.summary_all_cases['BASECASE']['gen_switch_up_max']['val']
@@ -2721,15 +2994,20 @@ class Evaluation:
         self.load_cost_evaluator.eval_benefit(self.load_pow_real, self.load_benefit)
         #print_info(self.load_pow_real)
         #print_info(self.load_benefit)
+        total_load_benefit = np.sum(self.load_benefit) * self.delta
+        self.summarize('total_load_benefit', total_load_benefit)
 
         # scale by time interval
         np.multiply(self.load_benefit, self.delta, out=self.load_benefit)
 
         self.summarize('load_benefit', self.load_benefit, self.load_key)
-        self.summarize('min_total_load_benefit', self.min_total_load_benefit)
+        self.summarize('min_total_load_benefit', self.min_total_load_benefit * self.delta) # apply delta here
 
     @timeit
     def eval_min_total_load_benefit(self):
+        # call this only in the base case
+        # report it in every case
+        # apply delta in each case not here
 
         np.multiply(self.load_pow_real_0, self.load_t_min, out=self.load_temp)
         self.load_cost_evaluator.eval_benefit(self.load_temp, self.load_benefit)
@@ -2790,10 +3068,14 @@ class Evaluation:
 
         # start with energy cost
         self.gen_cost_evaluator.eval_cost(self.gen_pow_real, self.gen_cost)
+        total_gen_energy_cost = np.sum(self.gen_cost) * self.delta
+        self.summarize('total_gen_energy_cost', total_gen_energy_cost)
 
         # add on (no load) cost
         np.multiply(self.gen_on_cost, self.gen_xon, out=self.gen_temp)
         np.add(self.gen_cost, self.gen_temp, out=self.gen_cost)
+        total_gen_on_cost = np.sum(self.gen_temp) * self.delta
+        self.summarize('total_gen_on_cost', total_gen_on_cost)
 
         # scale by time interval
         np.multiply(self.gen_cost, self.delta, out=self.gen_cost)
@@ -2801,12 +3083,18 @@ class Evaluation:
         # add su cost
         np.multiply(self.gen_su_cost, self.gen_xsu, out=self.gen_temp)
         np.add(self.gen_cost, self.gen_temp, out=self.gen_cost)
+        total_gen_su_cost = np.sum(self.gen_temp)
+        self.summarize('total_gen_su_cost', total_gen_su_cost)
 
         # add sd cost
         np.multiply(self.gen_sd_cost, self.gen_xsd, out=self.gen_temp)
         np.add(self.gen_cost, self.gen_temp, out=self.gen_cost)
+        total_gen_sd_cost = np.sum(self.gen_temp)
+        self.summarize('total_gen_sd_cost', total_gen_sd_cost)
 
         self.summarize('gen_cost', self.gen_cost, self.gen_key)
+        total_gen_cost = np.sum(self.gen_cost)
+        self.summarize('total_gen_cost', total_gen_cost)
 
     @timeit
     def eval_line_cost(self):
@@ -2814,6 +3102,8 @@ class Evaluation:
 
         # start with limit exceedance
         self.line_cost_evaluator.eval_cost(self.line_pow_mag_max_viol, self.line_cost)
+        total_line_limit_cost = np.sum(self.line_cost) * self.delta
+        self.summarize('total_line_limit_cost', total_line_limit_cost)
 
         # scale by time interval
         np.multiply(self.line_cost, self.delta, out=self.line_cost)
@@ -2822,9 +3112,13 @@ class Evaluation:
         np.subtract(self.line_xsw, self.line_xsw_prior, out=self.line_temp)
         np.absolute(self.line_temp, out=self.line_temp)
         np.multiply(self.line_sw_cost, self.line_temp, out=self.line_temp)
-        np.add(self.line_cost, self.line_temp)
+        np.add(self.line_cost, self.line_temp, out=self.line_cost) # fixed a bug here - we were not adding switching cost in to total cost
+        total_line_switch_cost = np.sum(self.line_temp)
+        self.summarize('total_line_switch_cost', total_line_switch_cost)
 
         self.summarize('line_cost', self.line_cost, self.line_key)
+        total_line_cost = np.sum(self.line_cost)
+        self.summarize('total_line_cost', total_line_cost)
 
     @timeit
     def eval_xfmr_cost(self):
@@ -2832,6 +3126,8 @@ class Evaluation:
 
         # start with limit exceedance
         self.xfmr_cost_evaluator.eval_cost(self.xfmr_pow_mag_max_viol, self.xfmr_cost)
+        total_xfmr_limit_cost = np.sum(self.xfmr_cost) * self.delta
+        self.summarize('total_xfmr_limit_cost', total_xfmr_limit_cost)
 
         # scale by time interval
         np.multiply(self.xfmr_cost, self.delta, out=self.xfmr_cost)
@@ -2840,9 +3136,13 @@ class Evaluation:
         np.subtract(self.xfmr_xsw, self.xfmr_xsw_prior, out=self.xfmr_temp)
         np.absolute(self.xfmr_temp, out=self.xfmr_temp)
         np.multiply(self.xfmr_sw_cost, self.xfmr_temp, out=self.xfmr_temp)
-        np.add(self.xfmr_cost, self.xfmr_temp)
+        np.add(self.xfmr_cost, self.xfmr_temp, out=self.xfmr_cost) # fixed a bug here - we were not adding switching cost in to total cost
+        total_xfmr_switch_cost = np.sum(self.xfmr_temp)
+        self.summarize('total_xfmr_switch_cost', total_xfmr_switch_cost)
 
         self.summarize('xfmr_cost', self.xfmr_cost, self.xfmr_key)
+        total_xfmr_cost = np.sum(self.xfmr_cost)
+        self.summarize('total_xfmr_cost', total_xfmr_cost)
 
     @timeit
     def eval_bus_cost(self):
@@ -2854,15 +3154,21 @@ class Evaluation:
 
         # start with real power imbalance
         self.bus_real_cost_evaluator.eval_cost(self.bus_pow_real_imbalance, self.bus_cost)
+        total_bus_real_cost = np.sum(self.bus_cost) * self.delta
+        self.summarize('total_bus_real_cost', total_bus_real_cost)
 
         # add imaginary power imbalance
         self.bus_imag_cost_evaluator.eval_cost(self.bus_pow_imag_imbalance, self.bus_temp)
         np.add(self.bus_cost, self.bus_temp, out=self.bus_cost)
+        total_bus_imag_cost = np.sum(self.bus_temp) * self.delta
+        self.summarize('total_bus_imag_cost', total_bus_imag_cost)
 
         # scale by time interval
         np.multiply(self.bus_cost, self.delta, out=self.bus_cost)
 
         self.summarize('bus_cost', self.bus_cost, self.bus_key)
+        total_bus_cost = np.sum(self.bus_cost)
+        self.summarize('total_bus_cost', total_bus_cost)
 
     @timeit
     def eval_obj(self):
@@ -2875,11 +3181,11 @@ class Evaluation:
         line_cost = np.sum(self.line_cost)
         xfmr_cost = np.sum(self.xfmr_cost)
         self.obj = - bus_cost + load_benefit - gen_cost - line_cost - xfmr_cost
-        self.summarize('total_bus_cost', bus_cost)
-        self.summarize('total_load_benefit', load_benefit)
-        self.summarize('total_gen_cost', gen_cost)
-        self.summarize('total_line_cost', line_cost)
-        self.summarize('total_xfmr_cost', xfmr_cost)
+        #self.summarize('total_bus_cost', bus_cost)
+        #self.summarize('total_load_benefit', load_benefit)
+        #self.summarize('total_gen_cost', gen_cost)
+        #self.summarize('total_line_cost', line_cost)
+        #self.summarize('total_xfmr_cost', xfmr_cost)
         self.summarize('obj', self.obj)
 
     @timeit
