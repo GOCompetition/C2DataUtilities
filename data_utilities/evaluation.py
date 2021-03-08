@@ -4356,7 +4356,10 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         print_info((raw_name, con_name, sup_name))
         #return (None, 1, False, {}, {})
         rval = (None, 1, False, {})
-        print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
+        #print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
+        print('obj: {}'.format(rval[0]))
+        print('infeasibility: {}'.format(rval[1]))
+        print('solutions exist: {}'.format(rval[2]))
         return rval
         #sys.exit()
 
