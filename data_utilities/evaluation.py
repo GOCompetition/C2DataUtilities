@@ -829,6 +829,8 @@ class Evaluation:
             self.summary2['ctg_xfmr_switches'])
         self.summary2['total_switches'] = self.summary2['base_total_switches'] + self.summary2['ctg_total_switches']
 
+        # hard constraint violations
+
     @timeit
     def json_to_summary_all_cases(self, path):
         '''read the json case summary files and create summary_all_cases from them'''
@@ -2767,13 +2769,13 @@ class Evaluation:
         self.summarize('line_switch_up_actual', self.line_xsu.sum())
         self.summarize('line_switch_down_actual', self.line_xsd.sum())
 
-        #su_max = sw_qual * (1 - x_prior) * stat
+        #su_max = sw_qual * (1 - x_prior) * stat - this is not checking a constraint, just getting problem info
         np.subtract(1, self.line_xsw_prior, out=self.line_temp)
         np.multiply(self.line_temp, self.line_sw_qual, out=self.line_temp)
         np.multiply(self.line_temp, self.line_service_status, out=self.line_temp)
         self.summarize('line_switch_up_max', self.line_temp.sum())
 
-        #sd_max = sw_qual * x_prior * stat
+        #sd_max = sw_qual * x_prior * stat - this is not checking a constraint, just getting problem info
         np.multiply(self.line_xsw_prior, self.line_sw_qual, out=self.line_temp)
         np.multiply(self.line_temp, self.line_service_status, out=self.line_temp)
         self.summarize('line_switch_down_max', self.line_temp.sum())
@@ -2782,41 +2784,6 @@ class Evaluation:
         np.add(self.line_xsu, self.line_xsd, out=self.line_temp) # absolute value
         np.subtract(self.line_temp, self.line_sw_qual, out=self.line_temp) # exceedance
         self.summarize('line_sw_qual', self.line_temp, self.line_key, self.epsilon)
-
-
-
-
-
-
-        #orig
-        # np.subtract(self.line_xsw, self.line_xsw_prior, out=self.line_temp)
-        # np.absolute(self.line_temp, out=self.line_temp)
-        # np.multiply(self.line_temp, self.line_service_status, out=self.line_temp)
-        # np.subtract(self.line_temp, self.line_sw_qual, out=self.line_temp)
-        # self.summarize('line_sw_qual', self.line_temp, self.line_key, self.epsilon)
-
-        # # todo fix these
-        # self.summarize('line_switch_up_actual', 0.0)
-        # self.summarize('line_switch_down_actual', 0.0)
-        # self.summarize('line_switch_up_max', 0.0)
-        # self.summarize('line_switch_down_max', 0.0)
-
-
-        '''
-        self.summarize('gen_switch_up_actual', self.gen_xsu.sum())
-        self.summarize('gen_switch_down_actual', self.gen_xsd.sum())
-
-        #su_max = su_qual * (1 - x_prior) * stat
-        np.subtract(1, self.gen_xon_prior, out=self.gen_temp)
-        np.multiply(self.gen_temp, self.gen_su_qual, out=self.gen_temp)
-        np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
-        self.summarize('gen_switch_up_max', self.gen_temp.sum())
-
-        #sd_max = sd_qual * x_prior * stat
-        np.multiply(self.gen_xon_prior, self.gen_sd_qual, out=self.gen_temp)
-        np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
-        self.summarize('gen_switch_down_max', self.gen_temp.sum())
-        '''
     
     @timeit
     def eval_xfmr_xsw_qual(self):
@@ -2831,13 +2798,13 @@ class Evaluation:
         self.summarize('xfmr_switch_up_actual', self.xfmr_xsu.sum())
         self.summarize('xfmr_switch_down_actual', self.xfmr_xsd.sum())
 
-        #su_max = sw_qual * (1 - x_prior) * stat
+        #su_max = sw_qual * (1 - x_prior) * stat - this is not checking a constraint, just getting problem info
         np.subtract(1, self.xfmr_xsw_prior, out=self.xfmr_temp)
         np.multiply(self.xfmr_temp, self.xfmr_sw_qual, out=self.xfmr_temp)
         np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
         self.summarize('xfmr_switch_up_max', self.xfmr_temp.sum())
 
-        #sd_max = sw_qual * x_prior * stat
+        #sd_max = sw_qual * x_prior * stat - this is not checking a constraint, just getting problem info
         np.multiply(self.xfmr_xsw_prior, self.xfmr_sw_qual, out=self.xfmr_temp)
         np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
         self.summarize('xfmr_switch_down_max', self.xfmr_temp.sum())
@@ -2846,22 +2813,6 @@ class Evaluation:
         np.add(self.xfmr_xsu, self.xfmr_xsd, out=self.xfmr_temp) # absolute value
         np.subtract(self.xfmr_temp, self.xfmr_sw_qual, out=self.xfmr_temp) # exceedance
         self.summarize('xfmr_sw_qual', self.xfmr_temp, self.xfmr_key, self.epsilon)
-
-
-
-
-
-        #orig
-        # np.subtract(self.xfmr_xsw, self.xfmr_xsw_prior, out=self.xfmr_temp)
-        # np.absolute(self.xfmr_temp, out=self.xfmr_temp)
-        # np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
-        # np.subtract(self.xfmr_temp, self.xfmr_sw_qual, out=self.xfmr_temp)
-        # self.summarize('xfmr_sw_qual', self.xfmr_temp, self.xfmr_key, self.epsilon)
-        # # todo fix these
-        # self.summarize('xfmr_switch_up_actual', 0.0)
-        # self.summarize('xfmr_switch_down_actual', 0.0)
-        # self.summarize('xfmr_switch_up_max', 0.0)
-        # self.summarize('xfmr_switch_down_max', 0.0)
 
     @timeit
     def eval_gen_xon_bounds(self):
@@ -3126,6 +3077,7 @@ class Evaluation:
 
         # add switching
         np.subtract(self.line_xsw, self.line_xsw_prior, out=self.line_temp)
+        np.multiply(self.line_service_status, self.line_temp, out=self.line_temp) # fixed a bug here - switching cost was being counted even on branches outaged by a contingency
         np.absolute(self.line_temp, out=self.line_temp)
         np.multiply(self.line_sw_cost, self.line_temp, out=self.line_temp)
         np.add(self.line_cost, self.line_temp, out=self.line_cost) # fixed a bug here - we were not adding switching cost in to total cost
@@ -3150,6 +3102,7 @@ class Evaluation:
 
         # add switching
         np.subtract(self.xfmr_xsw, self.xfmr_xsw_prior, out=self.xfmr_temp)
+        np.multiply(self.xfmr_service_status, self.xfmr_temp, out=self.xfmr_temp) # fixed a bug here - switching cost was being counted even on branches outaged by a contingency
         np.absolute(self.xfmr_temp, out=self.xfmr_temp)
         np.multiply(self.xfmr_sw_cost, self.xfmr_temp, out=self.xfmr_temp)
         np.add(self.xfmr_cost, self.xfmr_temp, out=self.xfmr_cost) # fixed a bug here - we were not adding switching cost in to total cost
