@@ -377,6 +377,28 @@ summary2_keys = [
 check_summary_keys = True
 #<base/ctg>_<gen/line/xfmr>_switch_<up/down>_<actual/max>
 
+def get_summary_keys():
+
+    return summary2_keys
+
+def write_summary_keys(file_name):
+
+    if file_name.endswith('.json'):
+        with open(file_name, 'w') as out_file:
+            json.dump(summary2_keys, out_file)
+    elif file_name.endswith('.csv'):
+        #import csv
+        with open(file_name, mode='w') as out_file:
+            writer = csv.writer(out_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(summary2_keys)        
+    else:
+        revised_file_name = file_name + '.json'
+        print('unsupported file type: {}'.format(file_name))
+        print('supported output file types are: {}'.format(['csv', 'json']))
+        print('writing summary keys to {}'.format(revised_file_name))
+        with open(revised_file_name, 'w') as out_file:
+            json.dump(summary2_keys, out_file)
+
 def compute_swsh_block_xst(h_b0, ha_n, ha_b):
 
     num_swsh = ha_n.shape[0]
