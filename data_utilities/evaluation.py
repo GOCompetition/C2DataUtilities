@@ -165,6 +165,14 @@ summary_keys = [
     'xfmr_switch_down_actual',
     'swsh_xst_max',
     'swsh_xst_min',
+    'max_bus_pow_real_over',
+    'max_bus_pow_real_under',
+    'max_bus_pow_imag_over',
+    'max_bus_pow_imag_under',
+    'sum_bus_pow_real_over',
+    'sum_bus_pow_real_under',
+    'sum_bus_pow_imag_over',
+    'sum_bus_pow_imag_under',
 ]
 summary_out = {
     'infeas':False,
@@ -173,107 +181,6 @@ summary_out = {
 }
 summary_out_keys = sorted(list(summary_out.keys()))
 
-# new key order
-'''
-summary2_keys = [
-    'solutions_exist',
-    'infeas_cumulative',
-    'infeas_all_cases',
-    'obj_cumulative',
-    'obj_all_cases',
-    'base_obj',
-    'ctg_obj',
-    'obj',
-    'base_infeas',
-    'ctg_infeas',
-    'infeas',
-    'base_total_bus_cost',
-    'ctg_total_bus_cost',
-    'total_bus_cost',
-    'base_total_bus_real_cost',
-    'ctg_total_bus_real_cost',
-    'total_bus_real_cost',
-    'base_total_bus_imag_cost',
-    'ctg_total_bus_imag_cost',
-    'total_bus_imag_cost',
-    'base_total_load_benefit',
-    'ctg_total_load_benefit',
-    'total_load_benefit',
-    'base_total_gen_cost',
-    'ctg_total_gen_cost',
-    'total_gen_cost',
-    'base_total_gen_energy_cost',
-    'ctg_total_gen_energy_cost',
-    'total_gen_energy_cost',
-    'base_total_gen_on_cost',
-    'ctg_total_gen_on_cost',
-    'total_gen_on_cost',
-    'base_total_gen_su_cost',
-    'ctg_total_gen_su_cost',
-    'total_gen_su_cost',
-    'base_total_gen_sd_cost',
-    'ctg_total_gen_sd_cost',
-    'total_gen_sd_cost',
-    'base_total_line_cost',
-    'ctg_total_line_cost',
-    'total_line_cost',
-    'base_total_line_limit_cost',
-    'ctg_total_line_limit_cost',
-    'total_line_limit_cost',
-    'base_total_line_switch_cost',
-    'ctg_total_line_switch_cost',
-    'total_line_switch_cost',
-    'base_total_xfmr_cost',
-    'ctg_total_xfmr_cost',
-    'total_xfmr_cost',
-    'base_total_xfmr_limit_cost',
-    'ctg_total_xfmr_limit_cost',
-    'total_xfmr_limit_cost',
-    'base_total_xfmr_switch_cost',
-    'ctg_total_xfmr_switch_cost',
-    'total_xfmr_switch_cost',
-    'base_min_total_load_benefit',
-    'ctg_min_total_load_benefit',
-    'min_total_load_benefit',
-
-    'base_gen_switch_up_actual',
-    'base_gen_switch_up_max',
-    'base_gen_switch_down_actual',
-    'base_gen_switch_down_max',
-    'base_line_switch_up_actual',
-    'base_line_switch_up_max',
-    'base_line_switch_down_actual',
-    'base_line_switch_down_max',
-    'base_xfmr_switch_up_actual',
-    'base_xfmr_switch_up_max',
-    'base_xfmr_switch_down_actual',
-    'base_xfmr_switch_down_max',
-    'ctg_gen_switch_up_actual',
-    'ctg_gen_switch_up_max',
-    'ctg_gen_switch_down_actual',
-    'ctg_gen_switch_down_max',
-    'ctg_line_switch_up_actual',
-    'ctg_line_switch_up_max',
-    'ctg_line_switch_down_actual',
-    'ctg_line_switch_down_max',
-    'ctg_xfmr_switch_up_actual',
-    'ctg_xfmr_switch_up_max',
-    'ctg_xfmr_switch_down_actual',
-    'ctg_xfmr_switch_down_max',
-    'base_gen_switches',
-    'base_line_switches',
-    'base_xfmr_switches',
-    'ctg_gen_switches',
-    'ctg_line_switches',
-    'ctg_xfmr_switches',
-    'base_total_switches',
-    'ctg_total_switches',
-    'total_switches',
-]
-'''
-
-# original key order
-#'''
 summary2_keys = [
     "solutions_exist",
     "infeas_cumulative",
@@ -366,13 +273,29 @@ summary2_keys = [
     "ctg_total_xfmr_switch_cost",
     "total_xfmr_switch_cost",
     "base_min_total_load_benefit",
-    "ctg_min_total_load_benefit"
+    "ctg_min_total_load_benefit",
+    "base_max_bus_pow_real_over",
+    "ctg_max_bus_pow_real_over",
+    "max_bus_pow_real_over",
+    "base_max_bus_pow_real_under",
+    "ctg_max_bus_pow_real_under",
+    "max_bus_pow_real_under",
+    "base_max_bus_pow_real",
+    "ctg_max_bus_pow_real",
+    "max_bus_pow_real",
+    "base_max_bus_pow_imag_over",
+    "ctg_max_bus_pow_imag_over",
+    "max_bus_pow_imag_over",
+    "base_max_bus_pow_imag_under",
+    "ctg_max_bus_pow_imag_under",
+    "max_bus_pow_imag_under",
+    "base_max_bus_pow_imag",
+    "ctg_max_bus_pow_imag",
+    "max_bus_pow_imag",
+    "base_max_bus_pow",
+    "ctg_max_bus_pow",
+    "max_bus_pow",
 ]
-#'''
-
-# old key order coming from JSON file
-#with open('./data_utilities/summary_fields.json') as f:
-#    summary2_keys = json.load(f)
 
 check_summary_keys = True
 #<base/ctg>_<gen/line/xfmr>_switch_<up/down>_<actual/max>
@@ -654,84 +577,6 @@ class Evaluation:
         # unless terminating early due to infeasibility
         ctg_labels = sorted(list(set(self.summary_all_cases.keys()).difference(['BASECASE'])))
 
-        '''
-    'solutions_exist',
-    'infeas_cumulative',
-    'infeas_all_cases',
-    'obj_cumulative',
-    'obj_all_cases',
-
-    'base_obj',
-    'ctg_obj',
-    'obj',
-
-    'base_infeas',
-    'ctg_infeas',
-    'infeas',
-
-    'base_total_bus_cost',
-    'ctg_total_bus_cost',
-    'total_bus_cost',
-
-    'base_total_bus_real_cost',
-    'ctg_total_bus_real_cost',
-    'total_bus_real_cost',
-
-    'base_total_bus_imag_cost',
-    'ctg_total_bus_imag_cost',
-    'total_bus_imag_cost',
-
-    'base_total_load_benefit',
-    'ctg_total_load_benefit',
-    'total_load_benefit',
-
-    'base_total_gen_cost',
-    'ctg_total_gen_cost',
-    'total_gen_cost',
-
-    'base_total_gen_energy_cost',
-    'ctg_total_gen_energy_cost',
-    'total_gen_energy_cost',
-
-    'base_total_gen_on_cost',
-    'ctg_total_gen_on_cost',
-    'total_gen_on_cost',
-
-    'base_total_gen_su_cost',
-    'ctg_total_gen_su_cost',
-    'total_gen_su_cost',
-
-    'base_total_gen_sd_cost',
-    'ctg_total_gen_sd_cost',
-    'total_gen_sd_cost',
-
-    'base_total_line_cost',
-    'ctg_total_line_cost',
-    'total_line_cost',
-    'base_total_line_limit_cost',
-    'ctg_total_line_limit_cost',
-    'total_line_limit_cost',
-    'base_total_line_switch_cost',
-    'ctg_total_line_switch_cost',
-    'total_line_switch_cost',
-
-    'base_total_xfmr_cost',
-    'ctg_total_xfmr_cost',
-    'total_xfmr_cost',
-    'base_total_xfmr_limit_cost',
-    'ctg_total_xfmr_limit_cost',
-    'total_xfmr_limit_cost',
-    'base_total_xfmr_switch_cost',
-    'ctg_total_xfmr_switch_cost',
-    'total_xfmr_switch_cost',
-
-    'base_min_total_load_benefit',
-    'ctg_min_total_load_benefit',
-    'min_total_load_benefit',
-        '''
-
-
-
         self.summary2['base_obj'] = self.summary_all_cases['BASECASE']['obj']['val']
         self.summary2['ctg_obj'] = np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['obj'] = self.summary2['base_obj'] + self.summary2['ctg_obj']
@@ -788,7 +633,6 @@ class Evaluation:
         self.summary2['base_total_line_limit_cost'] = self.summary_all_cases['BASECASE']['total_line_limit_cost']['val']
         self.summary2['ctg_total_line_limit_cost'] = np.sum([self.summary_all_cases[k]['total_line_limit_cost']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['total_line_limit_cost'] = self.summary2['base_total_line_limit_cost'] + self.summary2['ctg_total_line_limit_cost']
-
         self.summary2['base_total_line_switch_cost'] = self.summary_all_cases['BASECASE']['total_line_switch_cost']['val']
         self.summary2['ctg_total_line_switch_cost'] = np.sum([self.summary_all_cases[k]['total_line_switch_cost']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['total_line_switch_cost'] = self.summary2['base_total_line_switch_cost'] + self.summary2['ctg_total_line_switch_cost']
@@ -852,6 +696,40 @@ class Evaluation:
         self.summary2['total_switches'] = self.summary2['base_total_switches'] + self.summary2['ctg_total_switches']
 
         # hard constraint violations
+
+        # maximum penalized bus power balance violations
+        self.summary2['base_max_bus_pow_real_over'] = self.summary_all_cases['BASECASE']['max_bus_pow_real_over']['val']
+        self.summary2['ctg_max_bus_pow_real_over'] = np.amax([self.summary_all_cases[k]['max_bus_pow_real_over']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['max_bus_pow_real_over'] = max(self.summary2['base_max_bus_pow_real_over'], self.summary2['ctg_max_bus_pow_real_over'])
+
+        self.summary2['base_max_bus_pow_real_under'] = self.summary_all_cases['BASECASE']['max_bus_pow_real_under']['val']
+        self.summary2['ctg_max_bus_pow_real_under'] = np.amax([self.summary_all_cases[k]['max_bus_pow_real_under']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['max_bus_pow_real_under'] = max(self.summary2['base_max_bus_pow_real_under'], self.summary2['ctg_max_bus_pow_real_under'])
+
+        self.summary2['base_max_bus_pow_real'] = max(self.summary2['base_max_bus_pow_real_over'], self.summary2['base_max_bus_pow_real_under'])
+        self.summary2['ctg_max_bus_pow_real'] = max(self.summary2['ctg_max_bus_pow_real_over'], self.summary2['ctg_max_bus_pow_real_under'])
+        self.summary2['max_bus_pow_real'] = max(self.summary2['base_max_bus_pow_real'], self.summary2['ctg_max_bus_pow_real'])
+
+        self.summary2['base_max_bus_pow_imag_over'] = self.summary_all_cases['BASECASE']['max_bus_pow_imag_over']['val']
+        self.summary2['ctg_max_bus_pow_imag_over'] = np.amax([self.summary_all_cases[k]['max_bus_pow_imag_over']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['max_bus_pow_imag_over'] = max(self.summary2['base_max_bus_pow_imag_over'], self.summary2['ctg_max_bus_pow_imag_over'])
+
+        self.summary2['base_max_bus_pow_imag_under'] = self.summary_all_cases['BASECASE']['max_bus_pow_imag_under']['val']
+        self.summary2['ctg_max_bus_pow_imag_under'] = np.amax([self.summary_all_cases[k]['max_bus_pow_imag_under']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['max_bus_pow_imag_under'] = max(self.summary2['base_max_bus_pow_imag_under'], self.summary2['ctg_max_bus_pow_imag_under'])
+
+        self.summary2['base_max_bus_pow_imag'] = max(self.summary2['base_max_bus_pow_imag_over'], self.summary2['base_max_bus_pow_imag_under'])
+        self.summary2['ctg_max_bus_pow_imag'] = max(self.summary2['ctg_max_bus_pow_imag_over'], self.summary2['ctg_max_bus_pow_imag_under'])
+        self.summary2['max_bus_pow_imag'] = max(self.summary2['base_max_bus_pow_imag'], self.summary2['ctg_max_bus_pow_imag'])
+
+        self.summary2['base_max_bus_pow'] = max(self.summary2['base_max_bus_pow_real'], self.summary2['base_max_bus_pow_imag'])
+        self.summary2['ctg_max_bus_pow'] = max(self.summary2['ctg_max_bus_pow_real'], self.summary2['ctg_max_bus_pow_imag'])
+        self.summary2['max_bus_pow'] = max(self.summary2['base_max_bus_pow'], self.summary2['ctg_max_bus_pow'])
+
+        # maximum penalized line limit violations
+
+        # maximum penalized xfmr limit violations
+
 
     @timeit
     def json_to_summary_all_cases(self, path):
@@ -3491,6 +3369,16 @@ class Evaluation:
         self.bus_pow_real_imbalance[:] -= self.bus_line_dest_matrix.dot(self.line_dest_pow_real)
         self.bus_pow_real_imbalance[:] -= self.bus_xfmr_orig_matrix.dot(self.xfmr_orig_pow_real)
         self.bus_pow_real_imbalance[:] -= self.bus_xfmr_dest_matrix.dot(self.xfmr_dest_pow_real)
+
+        np.maximum(self.bus_pow_real_imbalance, 0.0, out=self.bus_temp)
+        self.summarize('max_bus_pow_real_over', self.bus_temp, self.bus_key)
+        sum_bus_pow_real_over = np.sum(self.bus_temp)
+        self.summarize('sum_bus_pow_real_over', sum_bus_pow_real_over)
+        np.negative(self.bus_pow_real_imbalance, out=self.bus_temp)
+        np.maximum(self.bus_temp, 0.0, out=self.bus_temp)
+        self.summarize('max_bus_pow_real_under', self.bus_temp, self.bus_key)
+        sum_bus_pow_real_under = np.sum(self.bus_temp)
+        self.summarize('sum_bus_pow_real_under', sum_bus_pow_real_under)
         np.absolute(self.bus_pow_real_imbalance, out=self.bus_pow_real_imbalance)
         self.summarize('bus_pow_real_imbalance', self.bus_pow_real_imbalance, self.bus_key)        
 
@@ -3516,6 +3404,16 @@ class Evaluation:
         self.bus_pow_imag_imbalance[:] -= self.bus_xfmr_orig_matrix.dot(self.xfmr_orig_pow_imag)
         self.bus_pow_imag_imbalance[:] -= self.bus_xfmr_dest_matrix.dot(self.xfmr_dest_pow_imag)
         self.bus_pow_imag_imbalance[:] -= self.bus_swsh_matrix.dot(self.swsh_pow_imag)
+
+        np.maximum(self.bus_pow_imag_imbalance, 0.0, out=self.bus_temp)
+        self.summarize('max_bus_pow_imag_over', self.bus_temp, self.bus_key)
+        sum_bus_pow_imag_over = np.sum(self.bus_temp)
+        self.summarize('sum_bus_pow_imag_over', sum_bus_pow_imag_over)
+        np.negative(self.bus_pow_imag_imbalance, out=self.bus_temp)
+        np.maximum(self.bus_temp, 0.0, out=self.bus_temp)
+        self.summarize('max_bus_pow_imag_under', self.bus_temp, self.bus_key)
+        sum_bus_pow_imag_under = np.sum(self.bus_temp)
+        self.summarize('sum_bus_pow_imag_under', sum_bus_pow_imag_under)
         np.absolute(self.bus_pow_imag_imbalance, out=self.bus_pow_imag_imbalance)
         self.summarize('bus_pow_imag_imbalance', self.bus_pow_imag_imbalance, self.bus_key)        
 
