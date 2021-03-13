@@ -139,6 +139,8 @@ summary_keys = [
     'gen_pow_real_min_viol',
     'gen_pow_imag_max_viol',
     'gen_pow_imag_min_viol',
+    'gen_pow_real_0_if_x_0_viol',
+    'gen_pow_imag_0_if_x_0_viol',
     'gen_ramp_up_max_viol',
     'gen_ramp_down_max_viol',
     'gen_cost',
@@ -173,6 +175,14 @@ summary_keys = [
     'sum_bus_pow_real_under',
     'sum_bus_pow_imag_over',
     'sum_bus_pow_imag_under',
+    'bus_volt_mag_delta_to_prior',
+    'bus_volt_ang_delta_to_prior',
+    'load_t_delta_to_prior',
+    'gen_pow_real_delta_to_prior',
+    'gen_pow_imag_delta_to_prior',
+    'xfmr_tau_delta_to_prior',
+    'xfmr_phi_delta_to_prior',
+    'swsh_b_delta_to_prior',
 ]
 summary_out = {
     'infeas':False,
@@ -295,10 +305,137 @@ summary2_keys = [
     "base_max_bus_pow",
     "ctg_max_bus_pow",
     "max_bus_pow",
+    "base_sum_bus_pow_real_over",
+    "ctg_sum_bus_pow_real_over",
+    "sum_bus_pow_real_over",
+    "base_sum_bus_pow_real_under",
+    "ctg_sum_bus_pow_real_under",
+    "sum_bus_pow_real_under",
+    "base_sum_bus_pow_real_net",
+    "ctg_sum_bus_pow_real_net",
+    "sum_bus_pow_real_net",
+    "base_sum_bus_pow_imag_over",
+    "ctg_sum_bus_pow_imag_over",
+    "sum_bus_pow_imag_over",
+    "base_sum_bus_pow_imag_under",
+    "ctg_sum_bus_pow_imag_under",
+    "sum_bus_pow_imag_under",
+    "base_sum_bus_pow_imag_net",
+    "ctg_sum_bus_pow_imag_net",
+    "sum_bus_pow_imag_net",
+    "base_bus_volt_mag_max_viol",
+    "ctg_bus_volt_mag_max_viol",
+    "bus_volt_mag_max_viol",
+    "base_bus_volt_mag_min_viol",
+    "ctg_bus_volt_mag_min_viol",
+    "bus_volt_mag_min_viol",
+    "base_load_t_max_viol",
+    "ctg_load_t_max_viol",
+    "load_t_max_viol",
+    "base_load_t_min_viol",
+    "ctg_load_t_min_viol",
+    "load_t_min_viol",
+    "base_load_ramp_up_max_viol",
+    "ctg_load_ramp_up_max_viol",
+    "load_ramp_up_max_viol",
+    "base_load_ramp_down_max_viol",
+    "ctg_load_ramp_down_max_viol",
+    "load_ramp_down_max_viol",
+    "base_gen_pow_real_max_viol",
+    "ctg_gen_pow_real_max_viol",
+    "gen_pow_real_max_viol",
+    "base_gen_pow_real_min_viol",
+    "ctg_gen_pow_real_min_viol",
+    "gen_pow_real_min_viol",
+    "base_gen_pow_imag_max_viol",
+    "ctg_gen_pow_imag_max_viol",
+    "gen_pow_imag_max_viol",
+    "base_gen_pow_imag_min_viol",
+    "ctg_gen_pow_imag_min_viol",
+    "gen_pow_imag_min_viol",
+    "base_gen_pow_real_0_if_x_0_viol",
+    "ctg_gen_pow_real_0_if_x_0_viol",
+    "gen_pow_real_0_if_x_0_viol",
+    "base_gen_pow_imag_0_if_x_0_viol",
+    "ctg_gen_pow_imag_0_if_x_0_viol",
+    "gen_pow_imag_0_if_x_0_viol",
+    "base_gen_ramp_up_max_viol",
+    "ctg_gen_ramp_up_max_viol",
+    "gen_ramp_up_max_viol",
+    "base_gen_ramp_down_max_viol",
+    "ctg_gen_ramp_down_max_viol",
+    "gen_ramp_down_max_viol",
+    "worst_case_ctg_obj",
+    "worst_case_obj",
+    "num_bus",
+    "num_branch",
+    "num_line",
+    "num_xfmr",
+    "num_xfmr_fx_tau_fx_phi",
+    "num_xfmr_var_tau_fx_phi",
+    "num_xfmr_fx_tau_var_phi",
+    "num_xfmr_imp_corr",
+    "num_gen",
+    "num_load",
+    "num_sh",
+    "num_fxsh",
+    "num_swsh",
+    "num_ctg",
+    "num_ctg_gen",
+    "num_ctg_line",
+    "num_ctg_xfmr",
+    "num_ctg_branch",
+    "prior_point_pow_real_over",
+    "prior_point_pow_real_under",
+    "prior_point_pow_imag_over",
+    "prior_point_pow_imag_under",
+    "prior_point_pow_real_net",
+    "prior_point_pow_imag_net",
+    "base_bus_volt_mag_delta_to_prior",
+    "ctg_bus_volt_mag_delta_to_prior",
+    "bus_volt_mag_delta_to_prior",
+    "base_bus_volt_ang_delta_to_prior",
+    "ctg_bus_volt_ang_delta_to_prior",
+    "bus_volt_ang_delta_to_prior",
+    "base_load_t_delta_to_prior",
+    "ctg_load_t_delta_to_prior",
+    "load_t_delta_to_prior",
+    "base_gen_pow_real_delta_to_prior",
+    "ctg_gen_pow_real_delta_to_prior",
+    "gen_pow_real_delta_to_prior",
+    "base_gen_pow_imag_delta_to_prior",
+    "ctg_gen_pow_imag_delta_to_prior",
+    "gen_pow_imag_delta_to_prior",
+    "base_xfmr_tau_delta_to_prior",
+    "ctg_xfmr_tau_delta_to_prior",
+    "xfmr_tau_delta_to_prior",
+    "base_xfmr_phi_delta_to_prior",
+    "ctg_xfmr_phi_delta_to_prior",
+    "xfmr_phi_delta_to_prior",
+    "base_swsh_b_delta_to_prior",
+    "ctg_swsh_b_delta_to_prior",
+    "swsh_b_delta_to_prior",
 ]
 
 check_summary_keys = True
 #<base/ctg>_<gen/line/xfmr>_switch_<up/down>_<actual/max>
+
+class Configuration():
+
+    def __init__(self):
+        
+        # current default is to project all integer variables
+        # but not cts variables
+
+        self.proj_bus_v = False
+        self.proj_gen_x = True
+        self.proj_gen_p = False # just pmin/pmax
+        self.proj_gen_p_ramp = False # includes ramping constraints: project current p relative to fixed prior p
+        self.proj_gen_q = False
+        self.proj_line_x = True
+        self.proj_xfmr_x = True
+        self.proj_xfmr_xst = True
+        self.proj_swsh_xst = True
 
 def get_summary_keys():
 
@@ -516,6 +653,7 @@ class Evaluation:
 
     def __init__(self):
 
+        self.config = Configuration()
         self.check_contingencies = True # set to false to check only the base case and then return
         self.line_switching_allowed = True
         self.xfmr_switching_allowed = True
@@ -569,8 +707,52 @@ class Evaluation:
         #self.json_to_csv(path)
 
     @timeit
+    def add_case_info_to_summary(self):
+        '''
+        num_bus
+        num_branch
+        etc.
+        '''
+
+        self.summary2['num_bus'] = self.num_bus
+        self.summary2['num_branch'] = self.num_line + self.num_xfmr
+        self.summary2['num_line'] = self.num_line
+        self.summary2['num_xfmr'] = self.num_xfmr
+        self.summary2['num_xfmr_fx_tau_fx_phi'] = len(self.xfmr_index_fixed_tap_ratio_and_phase_shift)
+        self.summary2['num_xfmr_var_tau_fx_phi'] = len(self.xfmr_index_var_tap_ratio)
+        self.summary2['num_xfmr_fx_tau_var_phi'] = len(self.xfmr_index_var_phase_shift)
+        self.summary2['num_xfmr_imp_corr'] = len(self.xfmr_index_imp_corr)
+        self.summary2['num_gen'] = self.num_gen
+        self.summary2['num_load'] = self.num_load
+        self.summary2['num_sh'] = self.num_fxsh + self.num_swsh
+        self.summary2['num_fxsh'] = self.num_fxsh
+        self.summary2['num_swsh'] = self.num_swsh
+        self.summary2['num_ctg'] = self.num_ctg
+        self.summary2['num_ctg_gen'] = len([i for i in range(self.num_ctg) if self.ctg_num_gens_out[i] > 0])
+        self.summary2['num_ctg_line'] = len([i for i in range(self.num_ctg) if self.ctg_num_lines_out[i] > 0])
+        self.summary2['num_ctg_xfmr'] = len([i for i in range(self.num_ctg) if self.ctg_num_xfmrs_out[i] > 0])
+        self.summary2['num_ctg_branch'] = self.summary2['num_ctg_line'] + self.summary2['num_ctg_xfmr']
+
+    @timit
+    def add_prior_point_imbalance_to_summary(self):
+        '''
+        TODO
+        implement this in such a way as to enable the same method to be used in data checker
+        move the code from the data checker into a function here
+        '''
+
+        self.summary2["prior_point_pow_real_over"] = 0.0
+        self.summary2["prior_point_pow_real_under"] = 0.0
+        self.summary2["prior_point_pow_imag_over"] = 0.0
+        self.summary2["prior_point_pow_imag_under"] = 0.0
+        self.summary2["prior_point_pow_real_net"] = 0.0
+        self.summary2["prior_point_pow_imag_net"] = 0.0
+
+    @timeit
     def summary_all_cases_to_summary(self):
         '''construct whole problem summary from summary_all_cases'''
+
+        self.add_case_info_to_summary()
 
         # can only use contingencies represented in the details
         # this should be the same as the set of all contingencies
@@ -579,7 +761,9 @@ class Evaluation:
 
         self.summary2['base_obj'] = self.summary_all_cases['BASECASE']['obj']['val']
         self.summary2['ctg_obj'] = np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['worst_case_ctg_obj'] = np.amin([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels], initial=0.0)
         self.summary2['obj'] = self.summary2['base_obj'] + self.summary2['ctg_obj']
+        self.summary2['worst_case_obj'] = self.summary2['base_obj'] + self.summary2['worst_case_ctg_obj']
 
         self.summary2['base_infeas'] = (1.0 if self.summary_all_cases['BASECASE']['infeas']['val'] else 0.0)
         self.summary2['ctg_infeas'] = np.sum([1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels])
@@ -696,6 +880,61 @@ class Evaluation:
         self.summary2['total_switches'] = self.summary2['base_total_switches'] + self.summary2['ctg_total_switches']
 
         # hard constraint violations
+        self.summary2['base_bus_volt_mag_max_viol'] = self.summary_all_cases['BASECASE']['bus_volt_mag_max_viol']['val']
+        self.summary2['ctg_bus_volt_mag_max_viol'] = np.amax([self.summary_all_cases[k]['bus_volt_mag_max_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['bus_volt_mag_max_viol'] = max(self.summary2['base_bus_volt_mag_max_viol'], self.summary2['ctg_bus_volt_mag_max_viol'])
+
+        self.summary2['base_bus_volt_mag_min_viol'] = self.summary_all_cases['BASECASE']['bus_volt_mag_min_viol']['val']
+        self.summary2['ctg_bus_volt_mag_min_viol'] = np.amax([self.summary_all_cases[k]['bus_volt_mag_min_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['bus_volt_mag_min_viol'] = max(self.summary2['base_bus_volt_mag_min_viol'], self.summary2['ctg_bus_volt_mag_min_viol'])
+
+        self.summary2['base_load_t_max_viol'] = self.summary_all_cases['BASECASE']['load_t_max_viol']['val']
+        self.summary2['ctg_load_t_max_viol'] = np.amax([self.summary_all_cases[k]['load_t_max_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['load_t_max_viol'] = max(self.summary2['base_load_t_max_viol'], self.summary2['ctg_load_t_max_viol'])
+
+        self.summary2['base_load_t_min_viol'] = self.summary_all_cases['BASECASE']['load_t_min_viol']['val']
+        self.summary2['ctg_load_t_min_viol'] = np.amax([self.summary_all_cases[k]['load_t_min_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['load_t_min_viol'] = max(self.summary2['base_load_t_min_viol'], self.summary2['ctg_load_t_min_viol'])
+
+        self.summary2['base_load_ramp_up_max_viol'] = self.summary_all_cases['BASECASE']['load_ramp_up_max_viol']['val']
+        self.summary2['ctg_load_ramp_up_max_viol'] = np.amax([self.summary_all_cases[k]['load_ramp_up_max_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['load_ramp_up_max_viol'] = max(self.summary2['base_load_ramp_up_max_viol'], self.summary2['ctg_load_ramp_up_max_viol'])
+
+        self.summary2['base_load_ramp_down_max_viol'] = self.summary_all_cases['BASECASE']['load_ramp_down_max_viol']['val']
+        self.summary2['ctg_load_ramp_down_max_viol'] = np.amax([self.summary_all_cases[k]['load_ramp_down_max_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['load_ramp_down_max_viol'] = max(self.summary2['base_load_ramp_down_max_viol'], self.summary2['ctg_load_ramp_down_max_viol'])
+
+        self.summary2['base_gen_pow_real_max_viol'] = self.summary_all_cases['BASECASE']['gen_pow_real_max_viol']['val']
+        self.summary2['ctg_gen_pow_real_max_viol'] = np.amax([self.summary_all_cases[k]['gen_pow_real_max_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_pow_real_max_viol'] = max(self.summary2['base_gen_pow_real_max_viol'], self.summary2['ctg_gen_pow_real_max_viol'])
+
+        self.summary2['base_gen_pow_real_min_viol'] = self.summary_all_cases['BASECASE']['gen_pow_real_min_viol']['val']
+        self.summary2['ctg_gen_pow_real_min_viol'] = np.amax([self.summary_all_cases[k]['gen_pow_real_min_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_pow_real_min_viol'] = max(self.summary2['base_gen_pow_real_min_viol'], self.summary2['ctg_gen_pow_real_min_viol'])
+
+        self.summary2['base_gen_pow_imag_max_viol'] = self.summary_all_cases['BASECASE']['gen_pow_imag_max_viol']['val']
+        self.summary2['ctg_gen_pow_imag_max_viol'] = np.amax([self.summary_all_cases[k]['gen_pow_imag_max_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_pow_imag_max_viol'] = max(self.summary2['base_gen_pow_imag_max_viol'], self.summary2['ctg_gen_pow_imag_max_viol'])
+
+        self.summary2['base_gen_pow_imag_min_viol'] = self.summary_all_cases['BASECASE']['gen_pow_imag_min_viol']['val']
+        self.summary2['ctg_gen_pow_imag_min_viol'] = np.amax([self.summary_all_cases[k]['gen_pow_imag_min_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_pow_imag_min_viol'] = max(self.summary2['base_gen_pow_imag_min_viol'], self.summary2['ctg_gen_pow_imag_min_viol'])
+
+        self.summary2['base_gen_pow_real_0_if_x_0_viol'] = self.summary_all_cases['BASECASE']['gen_pow_real_0_if_x_0_viol']['val']
+        self.summary2['ctg_gen_pow_real_0_if_x_0_viol'] = np.amax([self.summary_all_cases[k]['gen_pow_real_0_if_x_0_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_pow_real_0_if_x_0_viol'] = max(self.summary2['base_gen_pow_real_0_if_x_0_viol'], self.summary2['ctg_gen_pow_real_0_if_x_0_viol'])
+
+        self.summary2['base_gen_pow_imag_0_if_x_0_viol'] = self.summary_all_cases['BASECASE']['gen_pow_imag_0_if_x_0_viol']['val']
+        self.summary2['ctg_gen_pow_imag_0_if_x_0_viol'] = np.amax([self.summary_all_cases[k]['gen_pow_imag_0_if_x_0_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_pow_imag_0_if_x_0_viol'] = max(self.summary2['base_gen_pow_imag_0_if_x_0_viol'], self.summary2['ctg_gen_pow_imag_0_if_x_0_viol'])
+
+        self.summary2['base_gen_ramp_up_max_viol'] = self.summary_all_cases['BASECASE']['gen_ramp_up_max_viol']['val']
+        self.summary2['ctg_gen_ramp_up_max_viol'] = np.amax([self.summary_all_cases[k]['gen_ramp_up_max_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_ramp_up_max_viol'] = max(self.summary2['base_gen_ramp_up_max_viol'], self.summary2['ctg_gen_ramp_up_max_viol'])
+
+        self.summary2['base_gen_ramp_down_max_viol'] = self.summary_all_cases['BASECASE']['gen_ramp_down_max_viol']['val']
+        self.summary2['ctg_gen_ramp_down_max_viol'] = np.amax([self.summary_all_cases[k]['gen_ramp_down_max_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_ramp_down_max_viol'] = max(self.summary2['base_gen_ramp_down_max_viol'], self.summary2['ctg_gen_ramp_down_max_viol'])
 
         # maximum penalized bus power balance violations
         self.summary2['base_max_bus_pow_real_over'] = self.summary_all_cases['BASECASE']['max_bus_pow_real_over']['val']
@@ -730,6 +969,62 @@ class Evaluation:
 
         # maximum penalized xfmr limit violations
 
+        # net penalized bus power balance violations
+        self.summary2['base_sum_bus_pow_real_over'] = self.summary_all_cases['BASECASE']['sum_bus_pow_real_over']['val']
+        self.summary2['ctg_sum_bus_pow_real_over'] = np.sum([self.summary_all_cases[k]['sum_bus_pow_real_over']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['sum_bus_pow_real_over'] = self.summary2['base_sum_bus_pow_real_over'] + self.summary2['ctg_sum_bus_pow_real_over']
+
+        self.summary2['base_sum_bus_pow_real_under'] = self.summary_all_cases['BASECASE']['sum_bus_pow_real_under']['val']
+        self.summary2['ctg_sum_bus_pow_real_under'] = np.sum([self.summary_all_cases[k]['sum_bus_pow_real_under']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['sum_bus_pow_real_under'] = self.summary2['base_sum_bus_pow_real_under'] + self.summary2['ctg_sum_bus_pow_real_under']
+
+        self.summary2['base_sum_bus_pow_real_net'] = self.summary2['base_sum_bus_pow_real_over'] - self.summary2['base_sum_bus_pow_real_under']
+        self.summary2['ctg_sum_bus_pow_real_net'] = self.summary2['ctg_sum_bus_pow_real_over'] - self.summary2['ctg_sum_bus_pow_real_under']
+        self.summary2['sum_bus_pow_real_net'] = self.summary2['sum_bus_pow_real_over'] - self.summary2['sum_bus_pow_real_under']
+
+        self.summary2['base_sum_bus_pow_imag_over'] = self.summary_all_cases['BASECASE']['sum_bus_pow_imag_over']['val']
+        self.summary2['ctg_sum_bus_pow_imag_over'] = np.sum([self.summary_all_cases[k]['sum_bus_pow_imag_over']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['sum_bus_pow_imag_over'] = self.summary2['base_sum_bus_pow_imag_over'] + self.summary2['ctg_sum_bus_pow_imag_over']
+
+        self.summary2['base_sum_bus_pow_imag_under'] = self.summary_all_cases['BASECASE']['sum_bus_pow_imag_under']['val']
+        self.summary2['ctg_sum_bus_pow_imag_under'] = np.sum([self.summary_all_cases[k]['sum_bus_pow_imag_under']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['sum_bus_pow_imag_under'] = self.summary2['base_sum_bus_pow_imag_under'] + self.summary2['ctg_sum_bus_pow_imag_under']
+
+        self.summary2['base_sum_bus_pow_imag_net'] = self.summary2['base_sum_bus_pow_imag_over'] - self.summary2['base_sum_bus_pow_imag_under']
+        self.summary2['ctg_sum_bus_pow_imag_net'] = self.summary2['ctg_sum_bus_pow_imag_over'] - self.summary2['ctg_sum_bus_pow_imag_under']
+        self.summary2['sum_bus_pow_imag_net'] = self.summary2['sum_bus_pow_imag_over'] - self.summary2['sum_bus_pow_imag_under']
+
+        self.summary2['base_bus_volt_mag_delta_to_prior'] = self.summary_all_cases['BASECASE']['bus_volt_mag_delta_to_prior']['val']
+        self.summary2['ctg_bus_volt_mag_delta_to_prior'] = np.amax([self.summary_all_cases[k]['bus_volt_mag_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['bus_volt_mag_delta_to_prior'] = max(self.summary2['base_bus_volt_mag_delta_to_prior'], self.summary2['bus_volt_mag_delta_to_prior'])
+
+        self.summary2['base_bus_volt_ang_delta_to_prior'] = self.summary_all_cases['BASECASE']['bus_volt_ang_delta_to_prior']['val']
+        self.summary2['ctg_bus_volt_ang_delta_to_prior'] = np.amax([self.summary_all_cases[k]['bus_volt_ang_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['bus_volt_ang_delta_to_prior'] = max(self.summary2['base_bus_volt_ang_delta_to_prior'], self.summary2['bus_volt_ang_delta_to_prior'])
+
+        self.summary2['base_load_t_delta_to_prior'] = self.summary_all_cases['BASECASE']['load_t_delta_to_prior']['val']
+        self.summary2['ctg_load_t_delta_to_prior'] = np.amax([self.summary_all_cases[k]['load_t_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['load_t_delta_to_prior'] = max(self.summary2['base_load_t_delta_to_prior'], self.summary2['load_t_delta_to_prior'])
+
+        self.summary2['base_gen_pow_real_delta_to_prior'] = self.summary_all_cases['BASECASE']['gen_pow_real_delta_to_prior']['val']
+        self.summary2['ctg_gen_pow_real_delta_to_prior'] = np.amax([self.summary_all_cases[k]['gen_pow_real_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_pow_real_delta_to_prior'] = max(self.summary2['base_gen_pow_real_delta_to_prior'], self.summary2['gen_pow_real_delta_to_prior'])
+
+        self.summary2['base_gen_pow_imag_delta_to_prior'] = self.summary_all_cases['BASECASE']['gen_pow_imag_delta_to_prior']['val']
+        self.summary2['ctg_gen_pow_imag_delta_to_prior'] = np.amax([self.summary_all_cases[k]['gen_pow_imag_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['gen_pow_imag_delta_to_prior'] = max(self.summary2['base_gen_pow_imag_delta_to_prior'], self.summary2['gen_pow_imag_delta_to_prior'])
+
+        self.summary2['base_xfmr_tau_delta_to_prior'] = self.summary_all_cases['BASECASE']['xfmr_tau_delta_to_prior']['val']
+        self.summary2['ctg_xfmr_tau_delta_to_prior'] = np.amax([self.summary_all_cases[k]['xfmr_tau_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['xfmr_tau_delta_to_prior'] = max(self.summary2['base_xfmr_tau_delta_to_prior'], self.summary2['xfmr_tau_delta_to_prior'])
+
+        self.summary2['base_xfmr_phi_delta_to_prior'] = self.summary_all_cases['BASECASE']['xfmr_phi_delta_to_prior']['val']
+        self.summary2['ctg_xfmr_phi_delta_to_prior'] = np.amax([self.summary_all_cases[k]['xfmr_phi_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['xfmr_phi_delta_to_prior'] = max(self.summary2['base_xfmr_phi_delta_to_prior'], self.summary2['xfmr_phi_delta_to_prior'])
+
+        self.summary2['base_swsh_b_delta_to_prior'] = self.summary_all_cases['BASECASE']['swsh_b_delta_to_prior']['val']
+        self.summary2['ctg_swsh_b_delta_to_prior'] = np.amax([self.summary_all_cases[k]['swsh_b_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['swsh_b_delta_to_prior'] = max(self.summary2['base_swsh_b_delta_to_prior'], self.summary2['swsh_b_delta_to_prior'])
 
     @timeit
     def json_to_summary_all_cases(self, path):
@@ -3116,6 +3411,26 @@ class Evaluation:
         self.eval_infeas()
         #print_info(self.summary)
 
+        # delta to prior
+        self.eval_delta_to_prior()
+
+    @timeit
+    def eval_delta_to_prior(self):
+        '''
+        Compute deltas, as max abs over individual elements, called delta_to_prior
+        Most important is deltas in bus theta, bus v, load t, gen p, gen q
+        Gen x, line x, xfmr x are already considered in switching
+        '''
+
+        #todo
+        self.summarize('bus_volt_mag_delta_to_prior', 0.0)
+        self.summarize('bus_volt_ang_delta_to_prior', 0.0)
+        self.summarize('load_t_delta_to_prior', 0.0)
+        self.summarize('gen_pow_real_delta_to_prior', 0.0)
+        self.summarize('gen_pow_imag_delta_to_prior', 0.0)
+        self.summarize('xfmr_xst_imag_delta_to_prior', 0.0)
+        self.summarize('swsh_xst_imag_delta_to_prior', 0.0)
+
     @timeit
     def eval_infeas(self):
 
@@ -3196,6 +3511,13 @@ class Evaluation:
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
         self.summarize('gen_pow_real_max_viol', self.gen_temp, self.gen_key, self.epsilon)
 
+        # info - p = 0 if x = 0
+        np.subtract(1.0, self.gen_xon, out=self.gen_temp)
+        np.multiply(self.gen_pow_real, self.gen_temp, out=self.gen_temp)
+        np.absolute(self.gen_temp, out=self.gen_temp)
+        p_0_if_x_0_viol = np.amax(self.gen_temp)
+        self.summarize('gen_pow_real_0_if_x_0_viol', p_0_if_x_0_viol)
+
         # q min
         np.multiply(self.gen_pow_imag_min, self.gen_xon, out=self.gen_temp)
         np.subtract(self.gen_temp, self.gen_pow_imag, out=self.gen_temp)
@@ -3207,6 +3529,13 @@ class Evaluation:
         np.subtract(self.gen_pow_imag, self.gen_temp, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_temp)
         self.summarize('gen_pow_imag_max_viol', self.gen_temp, self.gen_key, self.epsilon)
+
+        # info - q = 0 if x = 0
+        np.subtract(1.0, self.gen_xon, out=self.gen_temp)
+        np.multiply(self.gen_pow_imag, self.gen_temp, out=self.gen_temp)
+        np.absolute(self.gen_temp, out=self.gen_temp)
+        q_0_if_x_0_viol = np.amax(self.gen_temp)
+        self.summarize('gen_pow_imag_0_if_x_0_viol', q_0_if_x_0_viol)
 
     # Real and reactive power ﬂows into a line e at the origin and destination buses in a case k 
     # Compute line and transformer real and reactive power ﬂow variables poek, pd ek, qo ek, qd ek, pofk, pdfk, qofk, qd fk

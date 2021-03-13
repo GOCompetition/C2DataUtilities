@@ -19,19 +19,20 @@
 #case_dir=./test_data/ieee14/scenario_8/
 #case_dir=./test_data/ieee14/scenario_9/
 #case_dir=./test_data/ieee14/scenario_10/
-case_dir=./test_data/ieee14/scenario_11/
+#case_dir=./test_data/ieee14/scenario_11/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_004/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_005/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00617/scenario_010/ # testing new eval output
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_003/
@@ -215,7 +216,8 @@ case_dir=./test_data/ieee14/scenario_11/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp//llmagos/393-1607136894_c2t1_1//Network_09R-195_S5000_20190923_output114/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1613861359_1/C2T1N15810_output16/
 #sol_dir=/people/holz501/gocomp/c2/data/carleton/2021-02-26/scenario_002/
-sol_dir=./test_data/ieee14/scenario_11/
+#sol_dir=./test_data/ieee14/scenario_11/
+sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1613964238_3/C2S6N00617_output10/
 
 # set options
 strict_names=1
@@ -223,8 +225,8 @@ refresh_data=1
 check_data=0
 scrub_data=0
 check_scrubbed_data=0
-make_new_sol=0
-copy_sol=1
+make_new_sol=1
+copy_sol=0
 eval_sol=1
 do_submission=0
 eval_submission=0
