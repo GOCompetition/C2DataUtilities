@@ -177,7 +177,7 @@ summary_keys = [
     'sum_bus_pow_imag_under',
     'bus_volt_mag_delta_to_prior',
     'bus_volt_ang_delta_to_prior',
-    'load_t_delta_to_prior',
+    'load_pow_real_delta_to_prior',
     'gen_pow_real_delta_to_prior',
     'gen_pow_imag_delta_to_prior',
     'xfmr_tau_delta_to_prior',
@@ -399,9 +399,9 @@ summary2_keys = [
     "base_bus_volt_ang_delta_to_prior",
     "ctg_bus_volt_ang_delta_to_prior",
     "bus_volt_ang_delta_to_prior",
-    "base_load_t_delta_to_prior",
-    "ctg_load_t_delta_to_prior",
-    "load_t_delta_to_prior",
+    "base_load_pow_real_delta_to_prior",
+    "ctg_load_pow_real_delta_to_prior",
+    "load_pow_real_delta_to_prior",
     "base_gen_pow_real_delta_to_prior",
     "ctg_gen_pow_real_delta_to_prior",
     "gen_pow_real_delta_to_prior",
@@ -767,6 +767,7 @@ class Evaluation:
         # unless terminating early due to infeasibility
         ctg_labels = sorted(list(set(self.summary_all_cases.keys()).difference(['BASECASE'])))
 
+        # top level objective and feasibility
         self.summary2['base_obj'] = self.summary_all_cases['BASECASE']['obj']['val']
         self.summary2['ctg_obj'] = np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['worst_case_ctg_obj'] = np.amin([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels], initial=0.0)
@@ -777,11 +778,7 @@ class Evaluation:
         self.summary2['ctg_infeas'] = np.sum([1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels])
         self.summary2['infeas'] = self.summary2['base_infeas'] + self.summary2['ctg_infeas']
 
-        #print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
-        #        [self.summary_all_cases[k]['infeas']['val'] for k in ctg_labels]))
-        #print("summary_all_cases[k]['infeas']['val'] for k: {}".format(
-        #        [1.0 if self.summary_all_cases[k]['infeas']['val'] else 0.0 for k in ctg_labels]))
-
+        # objective components
         self.summary2['base_total_bus_cost'] = self.summary_all_cases['BASECASE']['total_bus_cost']['val']
         self.summary2['ctg_total_bus_cost'] = np.sum([self.summary_all_cases[k]['total_bus_cost']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['total_bus_cost'] = self.summary2['base_total_bus_cost'] + self.summary2['ctg_total_bus_cost']
@@ -845,6 +842,7 @@ class Evaluation:
         self.summary2['ctg_min_total_load_benefit'] = np.sum([self.summary_all_cases[k]['min_total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['min_total_load_benefit'] = self.summary2['base_min_total_load_benefit'] + self.summary2['ctg_min_total_load_benefit']
 
+        # switching
         self.summary2['base_gen_switch_up_actual'] = self.summary_all_cases['BASECASE']['gen_switch_up_actual']['val']
         self.summary2['base_gen_switch_up_max'] = self.summary_all_cases['BASECASE']['gen_switch_up_max']['val']
         self.summary2['base_gen_switch_down_actual'] = self.summary_all_cases['BASECASE']['gen_switch_down_actual']['val']
@@ -973,10 +971,6 @@ class Evaluation:
         self.summary2['ctg_max_bus_pow'] = max(self.summary2['ctg_max_bus_pow_real'], self.summary2['ctg_max_bus_pow_imag'])
         self.summary2['max_bus_pow'] = max(self.summary2['base_max_bus_pow'], self.summary2['ctg_max_bus_pow'])
 
-        # maximum penalized line limit violations
-
-        # maximum penalized xfmr limit violations
-
         # net penalized bus power balance violations
         self.summary2['base_sum_bus_pow_real_over'] = self.summary_all_cases['BASECASE']['sum_bus_pow_real_over']['val']
         self.summary2['ctg_sum_bus_pow_real_over'] = np.sum([self.summary_all_cases[k]['sum_bus_pow_real_over']['val'] for k in ctg_labels]) / self.num_ctg
@@ -1002,6 +996,7 @@ class Evaluation:
         self.summary2['ctg_sum_bus_pow_imag_net'] = self.summary2['ctg_sum_bus_pow_imag_over'] - self.summary2['ctg_sum_bus_pow_imag_under']
         self.summary2['sum_bus_pow_imag_net'] = self.summary2['sum_bus_pow_imag_over'] - self.summary2['sum_bus_pow_imag_under']
 
+        # delta to prior
         self.summary2['base_bus_volt_mag_delta_to_prior'] = self.summary_all_cases['BASECASE']['bus_volt_mag_delta_to_prior']['val']
         self.summary2['ctg_bus_volt_mag_delta_to_prior'] = np.amax([self.summary_all_cases[k]['bus_volt_mag_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
         self.summary2['bus_volt_mag_delta_to_prior'] = max(self.summary2['base_bus_volt_mag_delta_to_prior'], self.summary2['bus_volt_mag_delta_to_prior'])
@@ -1010,9 +1005,9 @@ class Evaluation:
         self.summary2['ctg_bus_volt_ang_delta_to_prior'] = np.amax([self.summary_all_cases[k]['bus_volt_ang_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
         self.summary2['bus_volt_ang_delta_to_prior'] = max(self.summary2['base_bus_volt_ang_delta_to_prior'], self.summary2['bus_volt_ang_delta_to_prior'])
 
-        self.summary2['base_load_t_delta_to_prior'] = self.summary_all_cases['BASECASE']['load_t_delta_to_prior']['val']
-        self.summary2['ctg_load_t_delta_to_prior'] = np.amax([self.summary_all_cases[k]['load_t_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
-        self.summary2['load_t_delta_to_prior'] = max(self.summary2['base_load_t_delta_to_prior'], self.summary2['load_t_delta_to_prior'])
+        self.summary2['base_load_pow_real_delta_to_prior'] = self.summary_all_cases['BASECASE']['load_pow_real_delta_to_prior']['val']
+        self.summary2['ctg_load_pow_real_delta_to_prior'] = np.amax([self.summary_all_cases[k]['load_pow_real_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['load_pow_real_delta_to_prior'] = max(self.summary2['base_load_pow_real_delta_to_prior'], self.summary2['load_pow_real_delta_to_prior'])
 
         self.summary2['base_gen_pow_real_delta_to_prior'] = self.summary_all_cases['BASECASE']['gen_pow_real_delta_to_prior']['val']
         self.summary2['ctg_gen_pow_real_delta_to_prior'] = np.amax([self.summary_all_cases[k]['gen_pow_real_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
@@ -1034,10 +1029,12 @@ class Evaluation:
         self.summary2['ctg_swsh_b_delta_to_prior'] = np.amax([self.summary_all_cases[k]['swsh_b_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
         self.summary2['swsh_b_delta_to_prior'] = max(self.summary2['base_swsh_b_delta_to_prior'], self.summary2['swsh_b_delta_to_prior'])
 
+        # maximum penalized line limit violations
         self.summary2['base_max_line_viol'] = self.summary_all_cases['BASECASE']['max_line_viol']['val']
         self.summary2['ctg_max_line_viol'] = np.amax([self.summary_all_cases[k]['max_line_viol']['val'] for k in ctg_labels], initial=0.0)
         self.summary2['max_line_viol'] = max(self.summary2['base_max_line_viol'], self.summary2['ctg_max_line_viol'])
 
+        # maximum penalized xfmr limit violations
         self.summary2['base_max_xfmr_viol'] = self.summary_all_cases['BASECASE']['max_xfmr_viol']['val']
         self.summary2['ctg_max_xfmr_viol'] = np.amax([self.summary_all_cases[k]['max_xfmr_viol']['val'] for k in ctg_labels], initial=0.0)
         self.summary2['max_xfmr_viol'] = max(self.summary2['base_max_xfmr_viol'], self.summary2['ctg_max_xfmr_viol'])
@@ -1701,6 +1698,8 @@ class Evaluation:
         self.bus_temp = np.zeros(shape=(self.num_bus,))
         self.bus_volt_mag = np.zeros(shape=(self.num_bus,))
         self.bus_volt_ang = np.zeros(shape=(self.num_bus,))
+        self.bus_volt_mag_prior = np.zeros(shape=(self.num_bus,))
+        self.bus_volt_ang_prior = np.zeros(shape=(self.num_bus,))
         self.bus_pow_real_imbalance = np.zeros(shape=(self.num_bus,))
         self.bus_pow_imag_imbalance = np.zeros(shape=(self.num_bus,))
         self.bus_cost = np.zeros(shape=(self.num_bus,))
@@ -1728,6 +1727,7 @@ class Evaluation:
         self.gen_xsd_prior = np.zeros(shape=(self.num_gen,))
         self.gen_xsd = np.zeros(shape=(self.num_gen,))
         self.gen_pow_real_prior = np.zeros(shape=(self.num_gen,))
+        self.gen_pow_imag_prior = np.zeros(shape=(self.num_gen,))
         self.gen_pow_real = np.zeros(shape=(self.num_gen,))
         self.gen_pow_imag = np.zeros(shape=(self.num_gen,))
         self.gen_cost = np.zeros(shape=(self.num_gen,))
@@ -1758,6 +1758,8 @@ class Evaluation:
         self.xfmr_xst = np.zeros(shape=(self.num_xfmr,))
         self.xfmr_tap_mag = np.ones(shape=(self.num_xfmr,))
         self.xfmr_tap_ang = np.zeros(shape=(self.num_xfmr,))
+        self.xfmr_tap_mag_prior = np.ones(shape=(self.num_xfmr,))
+        self.xfmr_tap_ang_prior = np.zeros(shape=(self.num_xfmr,))
         self.xfmr_imp_corr = np.ones(shape=(self.num_xfmr,))
         self.xfmr_adm_real = np.zeros(shape=(self.num_xfmr,))
         self.xfmr_adm_imag = np.zeros(shape=(self.num_xfmr,))
@@ -1777,18 +1779,25 @@ class Evaluation:
         self.swsh_block_temp = np.zeros(shape=(self.num_swsh, self.num_swsh_block))
         self.swsh_block_xst = np.zeros(shape=(self.num_swsh, self.num_swsh_block))
         self.swsh_adm_imag = np.zeros(shape=(self.num_swsh,))
+        self.swsh_adm_imag_prior = np.zeros(shape=(self.num_swsh,))
         self.swsh_pow_imag = np.zeros(shape=(self.num_swsh,))
 
     @timeit
     def set_prior_from_data_for_base(self):
 
+        self.bus_volt_ang_prior[:] = self.bus_volt_ang_0
+        self.bus_volt_mag_prior[:] = self.bus_volt_mag_0
         self.load_pow_real_prior[:] = self.load_pow_real_0
         self.gen_pow_real_prior[:] = self.gen_pow_real_0
+        self.gen_pow_imag_prior[:] = self.gen_pow_imag_0
         self.gen_xon_prior[:] = self.gen_xon_0
         self.gen_xsu_prior[:] = 0.0
         self.gen_xsd_prior[:] = 0.0
         self.line_xsw_prior[:] = self.line_xsw_0
         self.xfmr_xsw_prior[:] = self.xfmr_xsw_0
+        self.xfmr_tap_mag_prior[:] = self.xfmr_tap_mag_0
+        self.xfmr_tap_ang_prior[:] = self.xfmr_tap_ang_0
+        self.swsh_adm_imag_prior[:] = self.swsh_b_0
 
     @timeit
     def set_prior_from_base_for_ctgs(self):
@@ -1796,13 +1805,19 @@ class Evaluation:
         Do not call before each contigency.
         '''
 
+        self.bus_volt_ang_prior[:] = self.bus_volt_ang
+        self.bus_volt_mag_prior[:] = self.bus_volt_mag
         self.load_pow_real_prior[:] = self.load_pow_real
         self.gen_pow_real_prior[:] = self.gen_pow_real
+        self.gen_pow_imag_prior[:] = self.gen_pow_imag
         self.gen_xon_prior[:] = self.gen_xon
         self.gen_xsu_prior[:] = self.gen_xsu
         self.gen_xsd_prior[:] = self.gen_xsd
         self.line_xsw_prior[:] = self.line_xsw
         self.xfmr_xsw_prior[:] = self.xfmr_xsw
+        self.xfmr_tap_mag_prior[:] = self.xfmr_tap_mag
+        self.xfmr_tap_ang_prior[:] = self.xfmr_tap_ang
+        self.swsh_adm_imag_prior[:] = self.swsh_adm_imag
 
     @timeit
     def set_sol(self, sol):
@@ -3427,7 +3442,7 @@ class Evaluation:
         self.eval_infeas()
         #print_info(self.summary)
 
-        # delta to prior
+        # delta to prior - call at the end. it uses computed data
         self.eval_delta_to_prior()
 
     @timeit
@@ -3436,17 +3451,45 @@ class Evaluation:
         Compute deltas, as max abs over individual elements, called delta_to_prior
         Most important is deltas in bus theta, bus v, load t, gen p, gen q
         Gen x, line x, xfmr x are already considered in switching
+        todo: evaluate this only on components that are not outaged by the current case
+        but do count changes due to discretionary switching actions
         '''
 
-        #todo
-        self.summarize('bus_volt_mag_delta_to_prior', 0.0)
-        self.summarize('bus_volt_ang_delta_to_prior', 0.0)
-        self.summarize('load_t_delta_to_prior', 0.0)
-        self.summarize('gen_pow_real_delta_to_prior', 0.0)
-        self.summarize('gen_pow_imag_delta_to_prior', 0.0)
-        self.summarize('xfmr_tau_delta_to_prior', 0.0)
-        self.summarize('xfmr_phi_delta_to_prior', 0.0)
-        self.summarize('swsh_b_delta_to_prior', 0.0)
+        np.subtract(self.bus_volt_mag, self.bus_volt_mag_prior, out=self.bus_temp)
+        np.absolute(self.bus_temp, out=self.bus_temp)
+        self.summarize('bus_volt_mag_delta_to_prior', self.bus_temp, self.bus_key)
+
+        np.subtract(self.bus_volt_ang, self.bus_volt_ang_prior, out=self.bus_temp)
+        np.absolute(self.bus_temp, out=self.bus_temp)
+        self.summarize('bus_volt_ang_delta_to_prior', self.bus_temp, self.bus_key)
+
+        np.subtract(self.load_pow_real, self.load_pow_real_prior, out=self.load_temp)
+        np.absolute(self.load_temp, out=self.load_temp)
+        self.summarize('load_pow_real_delta_to_prior', self.load_temp, self.load_key)
+
+        np.subtract(self.gen_pow_real, self.gen_pow_real_prior, out=self.gen_temp)
+        np.absolute(self.gen_temp, out=self.gen_temp)
+        np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
+        self.summarize('gen_pow_real_delta_to_prior', self.gen_temp, self.gen_key)
+
+        np.subtract(self.gen_pow_imag, self.gen_pow_imag_prior, out=self.gen_temp)
+        np.absolute(self.gen_temp, out=self.gen_temp)
+        np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
+        self.summarize('gen_pow_imag_delta_to_prior', self.gen_temp, self.gen_key)
+
+        np.subtract(self.xfmr_tap_mag, self.xfmr_tap_mag_prior, out=self.xfmr_temp)
+        np.absolute(self.xfmr_temp, out=self.xfmr_temp)
+        np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
+        self.summarize('xfmr_tau_delta_to_prior', self.xfmr_temp, self.xfmr_key)
+
+        np.subtract(self.xfmr_tap_ang, self.xfmr_tap_ang_prior, out=self.xfmr_temp)
+        np.absolute(self.xfmr_temp, out=self.xfmr_temp)
+        np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp)
+        self.summarize('xfmr_phi_delta_to_prior', self.xfmr_temp, self.xfmr_key)
+
+        np.subtract(self.swsh_adm_imag, self.swsh_adm_imag_prior, out=self.swsh_temp)
+        np.absolute(self.swsh_temp, out=self.swsh_temp)
+        self.summarize('swsh_b_delta_to_prior', self.swsh_temp, self.swsh_key)
 
     @timeit
     def eval_infeas(self):
