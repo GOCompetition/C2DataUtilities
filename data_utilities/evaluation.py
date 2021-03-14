@@ -183,6 +183,8 @@ summary_keys = [
     'xfmr_tau_delta_to_prior',
     'xfmr_phi_delta_to_prior',
     'swsh_b_delta_to_prior',
+    'max_line_viol',
+    'max_xfmr_viol',
 ]
 summary_out = {
     'infeas':False,
@@ -415,6 +417,12 @@ summary2_keys = [
     "base_swsh_b_delta_to_prior",
     "ctg_swsh_b_delta_to_prior",
     "swsh_b_delta_to_prior",
+    "base_max_line_viol",
+    "ctg_max_line_viol",
+    "max_line_viol",
+    "base_max_xfmr_viol",
+    "ctg_max_xfmr_viol",
+    "max_xfmr_viol",
 ]
 
 check_summary_keys = True
@@ -733,7 +741,7 @@ class Evaluation:
         self.summary2['num_ctg_xfmr'] = len([i for i in range(self.num_ctg) if self.ctg_num_xfmrs_out[i] > 0])
         self.summary2['num_ctg_branch'] = self.summary2['num_ctg_line'] + self.summary2['num_ctg_xfmr']
 
-    @timit
+    @timeit
     def add_prior_point_imbalance_to_summary(self):
         '''
         TODO
@@ -1025,6 +1033,14 @@ class Evaluation:
         self.summary2['base_swsh_b_delta_to_prior'] = self.summary_all_cases['BASECASE']['swsh_b_delta_to_prior']['val']
         self.summary2['ctg_swsh_b_delta_to_prior'] = np.amax([self.summary_all_cases[k]['swsh_b_delta_to_prior']['val'] for k in ctg_labels], initial=0.0)
         self.summary2['swsh_b_delta_to_prior'] = max(self.summary2['base_swsh_b_delta_to_prior'], self.summary2['swsh_b_delta_to_prior'])
+
+        self.summary2['base_max_line_viol'] = self.summary_all_cases['BASECASE']['max_line_viol']['val']
+        self.summary2['ctg_max_line_viol'] = np.amax([self.summary_all_cases[k]['max_line_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['max_line_viol'] = max(self.summary2['base_max_line_viol'], self.summary2['ctg_max_line_viol'])
+
+        self.summary2['base_max_xfmr_viol'] = self.summary_all_cases['BASECASE']['max_xfmr_viol']['val']
+        self.summary2['ctg_max_xfmr_viol'] = np.amax([self.summary_all_cases[k]['max_xfmr_viol']['val'] for k in ctg_labels], initial=0.0)
+        self.summary2['max_xfmr_viol'] = max(self.summary2['base_max_xfmr_viol'], self.summary2['ctg_max_xfmr_viol'])
 
     @timeit
     def json_to_summary_all_cases(self, path):
@@ -3428,8 +3444,9 @@ class Evaluation:
         self.summarize('load_t_delta_to_prior', 0.0)
         self.summarize('gen_pow_real_delta_to_prior', 0.0)
         self.summarize('gen_pow_imag_delta_to_prior', 0.0)
-        self.summarize('xfmr_xst_imag_delta_to_prior', 0.0)
-        self.summarize('swsh_xst_imag_delta_to_prior', 0.0)
+        self.summarize('xfmr_tau_delta_to_prior', 0.0)
+        self.summarize('xfmr_phi_delta_to_prior', 0.0)
+        self.summarize('swsh_b_delta_to_prior', 0.0)
 
     @timeit
     def eval_infeas(self):
@@ -3601,6 +3618,8 @@ class Evaluation:
             self.line_curr_mag_max * self.line_dest_volt_mag,
             out=self.line_temp)
         np.clip(self.line_temp, a_min=0.0, a_max=None, out=self.line_pow_mag_max_viol)
+        max_line_viol = np.amax(self.line_pow_mag_max_viol, initial=0.0)
+        self.summarize('max_line_viol', max_line_viol)
 
     # todo speed up with inplace computation
     # Real and reactive power ﬂows into a transformer f at the origin and destination buses in a case k 
@@ -3652,7 +3671,7 @@ class Evaluation:
         # print('eval xfmr tap mag: {}'.format(self.xfmr_tap_mag))
         # print('eval xfmr tap ang: {}'.format(self.xfmr_tap_ang))
 
-    # Real and reactive power ﬂows into a transformer e at the origin and destination buses in a case k are subject to apparent current rating constraints. Any exceedance of these current rating constraints is expressed as a quantity s+ ek of apparent power
+    # Real and reactive power flows into a transformer e at the origin and destination buses in a case k are subject to apparent current rating constraints. Any exceedance of these current rating constraints is expressed as a quantity s+ ek of apparent power
     # Current exceedance appears in the objective with a cost coeﬃcient
     # C2 A1 S16 #73 - #74
     @timeit
@@ -3667,6 +3686,8 @@ class Evaluation:
             self.xfmr_pow_mag_max,
             out=self.xfmr_temp)
         np.clip(self.xfmr_temp, a_min=0.0, a_max=None, out=self.xfmr_pow_mag_max_viol)
+        max_xfmr_viol = np.amax(self.xfmr_pow_mag_max_viol, initial=0.0)
+        self.summarize('max_xfmr_viol', max_xfmr_viol)
 
     # todo - not sure if it is possible to do true in-place computation
     # of matrix-vector product with sparse matrix.
