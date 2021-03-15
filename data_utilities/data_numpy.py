@@ -13,7 +13,10 @@ import math
 import time
 import traceback
 
-import data_utilities.data as p_data
+try:
+    import data_utilities.data as p_data
+except:
+    import data as p_data
 import numpy as np
 #import pandas as pd
 #from cost_utils import CostEvaluator

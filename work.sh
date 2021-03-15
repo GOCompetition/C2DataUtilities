@@ -25,14 +25,14 @@
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
 
 # sandbox
-#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
+case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00014/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_003/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_004/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_005/
-case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00617/scenario_010/ # testing new eval output
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00617/scenario_010/ # testing new eval output
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_003/
@@ -222,11 +222,11 @@ sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1
 # set options
 strict_names=1
 refresh_data=1
-check_data=0
+check_data=1
 scrub_data=0
 check_scrubbed_data=0
-make_new_sol=0
-copy_sol=1
+make_new_sol=1
+copy_sol=0
 eval_sol=1
 do_submission=0
 eval_submission=0

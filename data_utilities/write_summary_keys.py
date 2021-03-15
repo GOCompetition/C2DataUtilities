@@ -6,7 +6,10 @@ python write_summary_keys <out_file_name>
 '''
 
 import argparse
-from data_utilities.evaluation import write_summary_keys
+try:
+    from data_utilities.evaluation import write_summary_keys
+except:
+    from evaluation import write_summary_keys
 
 def main(out_file_name):
 
