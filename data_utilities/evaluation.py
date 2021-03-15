@@ -423,6 +423,16 @@ summary2_keys = [
     "base_max_xfmr_viol",
     "ctg_max_xfmr_viol",
     "max_xfmr_viol",
+    "prior_max_bus_pow_real_over",
+    "prior_sum_bus_pow_real_over",
+    "prior_max_bus_pow_real_under",
+    "prior_sum_bus_pow_real_under",
+    "prior_bus_pow_real_imbalance",
+    "prior_max_bus_pow_imag_over",
+    "prior_sum_bus_pow_imag_over",
+    "prior_max_bus_pow_imag_under",
+    "prior_sum_bus_pow_imag_under",
+    "prior_bus_pow_imag_imbalance",
 ]
 
 check_summary_keys = True
@@ -3409,6 +3419,34 @@ class Evaluation:
         self.summarize('obj', self.obj)
 
     @timeit
+    def eval_prior_bus_pow(self):
+        '''evaluate the prior point power imbalance, add to summary2'''
+
+        self.set_sol_from_data()
+        self.eval_load_pow()
+        self.eval_fxsh_pow()
+        self.eval_line_pow()
+        self.eval_xfmr_tap()
+        self.eval_xfmr_imp_corr()
+        self.eval_xfmr_adm()
+        self.eval_xfmr_pow()
+        self.eval_swsh_adm()
+        self.eval_swsh_pow()
+        self.eval_bus_pow()
+        
+        self.summary2['prior_max_bus_pow_real_over'] = self.summary['max_bus_pow_real_over']['val']
+        self.summary2['prior_sum_bus_pow_real_over'] = self.summary['sum_bus_pow_real_over']['val']
+        self.summary2['prior_max_bus_pow_real_under'] = self.summary['max_bus_pow_real_under']['val']
+        self.summary2['prior_sum_bus_pow_real_under'] = self.summary['sum_bus_pow_real_under']['val']
+        self.summary2['prior_bus_pow_real_imbalance'] = self.summary['bus_pow_real_imbalance']['val']
+        
+        self.summary2['prior_max_bus_pow_imag_over'] = self.summary['max_bus_pow_imag_over']['val']
+        self.summary2['prior_sum_bus_pow_imag_over'] = self.summary['sum_bus_pow_imag_over']['val']
+        self.summary2['prior_max_bus_pow_imag_under'] = self.summary['max_bus_pow_imag_under']['val']
+        self.summary2['prior_sum_bus_pow_imag_under'] = self.summary['sum_bus_pow_imag_under']['val']
+        self.summary2['prior_bus_pow_imag_imbalance'] = self.summary['bus_pow_imag_imbalance']['val']
+
+    @timeit
     def eval_case(self):
         """evaluate a case solution"""
 
@@ -4791,6 +4829,11 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     # set prior solution values for base case evaluation
     e.set_prior_from_data_for_base()
+
+    # evaluate prior power imbalance
+    e.summary_written = False
+    e.summary = create_new_summary()
+    e.eval_prior_bus_pow()
     
     # base case solution evaluation
     case_start_time = time.time()

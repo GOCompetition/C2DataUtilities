@@ -21,7 +21,7 @@ import numpy as np
 #from data_utilities.evaluation import Evaluation, CaseSolution
 try:
     import data_utilities.data as data
-    from data_utilities.evaluation import Evaluation, CaseSolution
+    from data_utilities.evaluation import Evaluation, CaseSolution, create_new_summary
 except:
     import data
     from evaluation import Evaluation, CaseSolution
@@ -65,26 +65,10 @@ def main():
     s.init_arrays()
     e.set_data_for_base()
     e.set_prior_from_data_for_base()
-    #print('hello 2')
-    #e.summary_written = False
-    #e.summary = create_new_summary()
-    #s.set_read_dims()
-    #s.read(f'{solution_path}/solution_BASECASE.txt')
-    #s.set_arrays_from_dfs() # need to do something different here
-    #e.set_sol(s)
-    e.set_sol_from_data() # todo need to get xfmr_xst and swsh_block_xst
-    #e.round_sol()
-    e.eval_load_pow()
-    e.eval_fxsh_pow()
-    e.eval_line_pow()
-    e.eval_xfmr_tap()
-    e.eval_xfmr_imp_corr()
-    e.eval_xfmr_adm()
-    e.eval_xfmr_pow()
-    e.eval_swsh_adm()
-    e.eval_swsh_pow()
-    e.eval_bus_pow()
-    #print(e.bus_pow_real_imbalance)
+    e.summary_written = False
+    e.summary = create_new_summary()
+    e.eval_prior_bus_pow()
+
     bus_max_bus_pow_real_imbalance = np.argmax(np.absolute(e.bus_pow_real_imbalance))
     bus_max_bus_pow_imag_imbalance = np.argmax(np.absolute(e.bus_pow_imag_imbalance))
     max_bus_pow_real_imbalance = e.base_mva * e.bus_pow_real_imbalance[bus_max_bus_pow_real_imbalance]
