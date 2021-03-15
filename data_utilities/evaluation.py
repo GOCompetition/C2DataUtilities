@@ -428,7 +428,7 @@ summary2_keys = [
 check_summary_keys = True
 #<base/ctg>_<gen/line/xfmr>_switch_<up/down>_<actual/max>
 
-class Configuration():
+class Configuration:
 
     def __init__(self):
         
@@ -436,14 +436,27 @@ class Configuration():
         # but not cts variables
 
         self.proj_bus_v = False
-        self.proj_gen_x = True
+        self.proj_load_t = False # tmin/tmax
+        self.proj_load_p_ramp = False # ramping constraints on p imply constraints on t
         self.proj_gen_p = False # just pmin/pmax
         self.proj_gen_p_ramp = False # includes ramping constraints: project current p relative to fixed prior p
         self.proj_gen_q = False
+
+        # integer variables are rounded and projected anyway
+        # and we do not use the cfg params to control this
+        self.proj_gen_x = True
         self.proj_line_x = True
         self.proj_xfmr_x = True
         self.proj_xfmr_xst = True
         self.proj_swsh_xst = True
+
+        # test non-default settings
+        # self.proj_bus_v = True
+        # self.proj_load_t = True # tmin/tmax
+        # self.proj_load_p_ramp = True # ramping constraints on p imply constraints on t
+        # self.proj_gen_p = True # just pmin/pmax
+        # self.proj_gen_p_ramp = True # includes ramping constraints: project current p relative to fixed prior p
+        # self.proj_gen_q = True
 
 def get_summary_keys():
 
@@ -661,7 +674,7 @@ class Evaluation:
 
     def __init__(self):
 
-        self.config = Configuration()
+        self.cfg = Configuration()
         self.check_contingencies = True # set to false to check only the base case and then return
         self.line_switching_allowed = True
         self.xfmr_switching_allowed = True
@@ -3157,6 +3170,18 @@ class Evaluation:
         self.summarize('load_t_min_viol', self.load_temp, self.load_key, self.epsilon)
 
     @timeit
+    def proj_load_t(self):
+
+        if self.cfg.proj_load_t:
+            np.clip(self.load_t, a_min=self.load_t_min, a_max=self.load_t_max, out=self.load_t)
+        if self.cfg.proj_load_p_ramp:
+            #np.multiply(self.load_ramp_up_max, self.delta_r, out=self.load_temp)
+            #np.add(self.load_temp, self.load_pow_real_prior, out=self.load_temp)
+            # CAUTION: need to project t based on ramp, then evaluate p and q
+            # todo
+            pass
+
+    @timeit
     def eval_load_ramp_viol(self):
         # C2 A1 S #40,41
 
@@ -3388,9 +3413,11 @@ class Evaluation:
         """evaluate a case solution"""
 
         # buses
+        self.proj_bus_volt_mag()
         self.eval_bus_volt_mag_viol()
 
         # loads
+        self.proj_load_t()
         self.eval_load_t_viol()
         self.eval_load_pow()
         self.eval_load_ramp_viol()
@@ -3404,6 +3431,7 @@ class Evaluation:
         self.eval_gen_xsusd()
         self.eval_gen_xsusd_qual()
         self.eval_gen_xsusd_not_both()
+        self.proj_gen_pow()
         self.eval_gen_pow_viol()
         self.eval_gen_ramp_viol()
         self.eval_gen_cost()
@@ -3516,6 +3544,12 @@ class Evaluation:
         #self.bus_volt_mag_min_viol = np.maximum(0.0, self.bus_volt_mag_min - self.bus_volt_mag)
         #self.bus_volt_mag_max_viol = np.maximum(0.0, self.bus_volt_mag - self.bus_volt_mag_max)
 
+    @timeit
+    def proj_bus_volt_mag(self):
+
+        if self.cfg.proj_bus_v:
+            np.clip(self.bus_volt_mag, a_min=self.bus_volt_mag_min, a_max=self.bus_volt_mag_max, out=self.bus_volt_mag)
+        
     # CHALLENGE2
     # Compute load real and reactive power consumption variables pjk, qjk
     # C2 A1 S8 #38 #39
@@ -3596,6 +3630,32 @@ class Evaluation:
         np.absolute(self.gen_temp, out=self.gen_temp)
         q_0_if_x_0_viol = np.amax(self.gen_temp)
         self.summarize('gen_pow_imag_0_if_x_0_viol', q_0_if_x_0_viol)
+
+    @timeit
+    def proj_gen_pow(self):
+
+        if self.cfg.proj_gen_p:
+            np.clip(self.gen_pow_real, a_min=self.gen_pow_real_min, a_max=self.gen_pow_real_max, out=self.gen_pow_real)
+            np.multiply(self.gen_pow_real, self.gen_xon, out=self.gen_pow_real)
+        if self.cfg.proj_gen_p_ramp:
+            # max
+            np.multiply(self.gen_ramp_up_max, self.delta_r, out=self.gen_temp)
+            np.add(self.gen_temp, self.gen_pow_real_prior, out=self.gen_temp)
+            np.multiply(self.gen_temp, self.gen_xon, out=self.gen_temp)
+            np.multiply(self.gen_pow_real_min, self.gen_xsu, out=self.gen_temp2)
+            np.add(self.gen_temp, self.gen_temp2, out=self.gen_temp)
+            np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
+            np.minimum(self.gen_pow_real, self.gen_temp, out=self.gen_pow_real)
+            # min
+            np.multiply(self.gen_ramp_down_max, self.delta_r, out=self.gen_temp)
+            np.subtract(self.gen_pow_real_prior, self.gen_temp, out=self.gen_temp)
+            np.subtract(self.gen_xon, self.gen_xsu, out=self.gen_temp2)
+            np.multiply(self.gen_temp, self.gen_temp2, out=self.gen_temp)
+            np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp)
+            np.maximum(self.gen_pow_real, self.gen_temp, out=self.gen_pow_real)
+        if self.cfg.proj_gen_q:
+            np.clip(self.gen_pow_imag, a_min=self.gen_pow_imag_min, a_max=self.gen_pow_imag_max, out=self.gen_pow_imag)
+            np.multiply(self.gen_pow_imag, self.gen_xon, out=self.gen_pow_imag)
 
     # Real and reactive power ﬂows into a line e at the origin and destination buses in a case k 
     # Compute line and transformer real and reactive power ﬂow variables poek, pd ek, qo ek, qd ek, pofk, pdfk, qofk, qd fk
