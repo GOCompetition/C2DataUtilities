@@ -793,7 +793,10 @@ class Evaluation:
         # top level objective and feasibility
         self.summary2['base_obj'] = self.summary_all_cases['BASECASE']['obj']['val']
         self.summary2['ctg_obj'] = np.sum([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels]) / self.num_ctg
-        self.summary2['worst_case_ctg_obj'] = np.amin([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels], initial=0.0)
+        if len(ctg_labels) > 0:
+            self.summary2['worst_case_ctg_obj'] = np.amin([self.summary_all_cases[k]['obj']['val'] for k in ctg_labels])
+        else:
+            self.summary2['worst_case_ctg_obj'] = 0.0
         self.summary2['obj'] = self.summary2['base_obj'] + self.summary2['ctg_obj']
         self.summary2['worst_case_obj'] = self.summary2['base_obj'] + self.summary2['worst_case_ctg_obj']
 
