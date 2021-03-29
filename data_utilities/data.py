@@ -75,6 +75,7 @@ do_check_bmin_le_binit_le_bmax = True # this is doable
 #do_combine_switched_shunt_blocks_steps = True # generally want this to be false
 do_fix_swsh_binit = True # now this sets binit to the closest feasible value of binit
 do_fix_xfmr_tau_theta_init = True # sets windv1/windv2 or ang1 to closest feasible value if cod1 == 1 or == 3
+max_num_ctgs = 1000000 # maximum number of contingencies
 do_scrub_ctg_labels = True # set to True to replace ctg labels with anonymous strings
 pg_qg_stat_mode = 1 # 0: do not scrub, 1: set pg=0 and qg=0, 2: set stat=1
 swsh_binit_feas_tol = 1e-4
@@ -272,6 +273,47 @@ def extract_number(token):
     out = out.split('/')[0]
     return out
 
+def check_ctg_label_err(label, max_num):
+    
+    err = 0 # no error
+    if not label.startswith('CTG_'):
+        err = 1 # does not start with "CTG_"
+        return err
+    len_label = len(label)
+    if not label[4:].isdigit():
+        err = 2 # characters after "CTG_" are not all digits
+        return err
+    try:
+        num = get_ctg_num(label)
+    except:
+        err = 3 # failed to convert to integer
+        return err
+    if num > max_num:
+        err = 4 # contingency number too large
+        return err
+    return err # err = 0, no error
+
+def get_ctg_num(label):
+    
+    return int(label[4:])
+    
+def get_ctg_label_err_from_code(code):
+    
+    err = ''
+    if code == 0:
+        err = 'no error'
+    elif code == 1:
+        err = 'needs to start with "CTG_"'
+    elif code == 2:
+        err = 'characters after "CTG_" need to be digits'
+    elif code == 3:
+        err = 'failed to convert to integer, report to developers'
+    elif code == 4:
+        err = 'contingency number too large'
+    else:
+        err = 'unknown error code: {}'.format(code)
+    return err
+        
 class Data:
     '''In physical units, i.e. data convention, i.e. input and output data files'''
 
@@ -2396,6 +2438,7 @@ class Con:
 
     def check(self):
 
+        self.check_too_many_contingencies()
         for r in self.get_contingencies():
             r.check()
         self.check_for_duplicate_outaged_generators(scrub_mode=False)
@@ -2408,37 +2451,55 @@ class Con:
         self.check_for_duplicate_outaged_branches(scrub_mode=True)
         self.scrub_ctg_labels(scrub_mode=True)
 
+    def check_too_many_contingencies(self):
+
+        ctgs = self.get_contingencies()
+        num_ctgs = len(ctgs)
+        if num_ctgs > max_num_ctgs:
+            alert(
+                {'data_type': 'Con',
+                 'error_message': 'too many contingencies',
+                 'diagnostics': {'num_ctgs': num_ctgs, 'max_num_ctgs': max_num_ctgs}})
+
     def scrub_ctg_labels(self, scrub_mode=False):
 
         if do_scrub_ctg_labels:
-            ctgs = self.get_contingencies()
-            num_ctgs = len(ctgs)
-            num_digits = max(1, len(str(num_ctgs)))
-            ctg_number = {ctgs[i]:i for i in range(num_ctgs)}
-            ctg_label = {ctgs[i]:ctgs[i].label for i in range(num_ctgs)}
-            label_format_str = 'CTG_%0' + str(num_digits) + 'u'
-            ctg_new_label = {ctgs[i]:(label_format_str % i) for i in range(num_ctgs)}
-            ctgs_with_label_change = [c for c in ctgs if ctg_new_label[c] != ctg_label[c]]
-            if len(ctgs_with_label_change) > 0:
+            max_ctg_num = max_num_ctgs - 1
+            num_ctg_digits = len(str(max_ctg_num))
+            ctg = self.get_contingencies()
+            num_ctg = len(ctg)
+            ctg_label = [c.label for c in ctg]
+            ctg_label_err = [check_ctg_label_err(l, max_ctg_num) for l in ctg_label]
+            ctg_num = [
+                (get_ctg_num(ctg_label[i])
+                 if ctg_label_err[i] == 0
+                 else None)
+                for i in range(num_ctg)]
+            ctg_num_in_use = sorted(list(set([ctg_num[i] for i in range(num_ctg) if ctg_label_err[i] == 0])))
+            ctg_num_not_in_use = sorted(list(set(range(num_ctg)).difference(set(ctg_num_in_use))))
+            indices_of_ctgs_with_err = [i for i in range(num_ctg) if ctg_label_err[i] > 0]
+            if len(indices_of_ctgs_with_err) > 0:
+                i = indices_of_ctgs_with_err[0]
                 if scrub_mode:
-                    alert(
-                        {'data_type':
-                             'Con',
-                         'error_message':
-                             'anonymizing contingency labels',
-                         'diagnostics':
-                             [{'old label': ctg_label[c], 'new label': ctg_new_label[c]} for c in ctgs_with_label_change]})
-                    self.contingencies = {ctg_new_label[c]:c for c in ctgs}
-                    for k, v in self.contingencies.items():
-                        v.label = k
+                    error_message = 'anonymizing contingency labels'
                 else:
-                    alert(
-                        {'data_type':
-                             'Con',
-                         'error_message':
-                             'apply scrubber to anonymize contingency labels',
-                         'diagnostics':
-                             [{'old label': ctg_label[c], 'new label': ctg_new_label[c]} for c in ctgs_with_label_change]})
+                    error_message = 'apply scrubber to anonymize contingency labels'
+                alert(
+                    {'data_type': 'Con',
+                     'error_message': error_message,
+                     'diagnostics': {
+                         'num_ctgs_with_label_errs': len(indices_of_ctgs_with_err),
+                         'example': {
+                             'label': ctg_label[i],
+                             'error': get_ctg_label_err_from_code(ctg_label_err[i])}}})
+            if scrub_mode:
+                if len(indices_of_ctgs_with_err) > 0:
+                    counter = 0
+                    label_format_str = 'CTG_%0' + str(num_ctg_digits) + 'u'
+                    for i in indices_or_ctgs_with_err:
+                        num = ctg_num_not_in_use[counter]
+                        ctg_label[i] = (label_format_str % num)
+                    self.contingencies = {ctg_label[i]:ctg[i] for i in range(num_ctg)}
                     
     def check_for_duplicate_outaged_generators(self, scrub_mode=False):
         '''Each contingency outages exactly one device, either a generator or a branch.
