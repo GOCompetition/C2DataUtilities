@@ -2496,7 +2496,7 @@ class Con:
                 if len(indices_of_ctgs_with_err) > 0:
                     counter = 0
                     label_format_str = 'CTG_%0' + str(num_ctg_digits) + 'u'
-                    for i in indices_or_ctgs_with_err:
+                    for i in indices_of_ctgs_with_err:
                         num = ctg_num_not_in_use[counter]
                         ctg_label[i] = (label_format_str % num)
                     self.contingencies = {ctg_label[i]:ctg[i] for i in range(num_ctg)}

@@ -18,7 +18,7 @@
 #case_dir=./test_data/ieee14/scenario_7/
 #case_dir=./test_data/ieee14/scenario_8/
 #case_dir=./test_data/ieee14/scenario_9/
-case_dir=./test_data/ieee14/scenario_10/
+#case_dir=./test_data/ieee14/scenario_10/
 #case_dir=./test_data/ieee14/scenario_11/
 #case_dir=./test_data/ieee14/scenario_12/
 
@@ -168,6 +168,7 @@ case_dir=./test_data/ieee14/scenario_10/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/scrubbed/UW6/SOUTH14kSB/scenario_003/
 #case_dir=/pic/dtn/go/Jessica/GO\ 2/Trial\ 2/GOTx2000/GOTx2000_2001_3505/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial2/mar25/scrubbed/pop/GOTx12K_4003_Mar24/scenario_001/
+case_dir=/pic/dtn/go/Steve/C2/T2/Source/TAMU/GOTx600_4003_Mar26/scenario_001/
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
@@ -231,8 +232,8 @@ check_data=1
 scrub_data=1
 check_scrubbed_data=1
 make_new_sol=0
-copy_sol=1
-eval_sol=1
+copy_sol=0
+eval_sol=0
 do_submission=0
 eval_submission=0
 division=1
