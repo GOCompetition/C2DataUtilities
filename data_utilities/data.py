@@ -2463,30 +2463,30 @@ class Con:
 
     def scrub_ctg_labels(self, scrub_mode=False):
 
-        #print('hello in scrub_ctg_labels. scrub_mode: {}'.format(scrub_mode))
+        #print('debug in scrub_ctg_labels. scrub_mode: {}'.format(scrub_mode))
         if do_scrub_ctg_labels:
             max_ctg_num = max_num_ctgs - 1
             num_ctg_digits = len(str(max_ctg_num))
             ctg = self.get_contingencies()
             num_ctg = len(ctg)
-            #print('hello do_scrub_ctg_labels: {}, max_num_ctgs: {}, max_ctg_num: {}, num_ctg_digits: {}, num_ctg: {}'.format(
+            #print('debug do_scrub_ctg_labels: {}, max_num_ctgs: {}, max_ctg_num: {}, num_ctg_digits: {}, num_ctg: {}'.format(
             #    do_scrub_ctg_labels, max_num_ctgs, max_ctg_num, num_ctg_digits, num_ctg))
             ctg_label = [c.label for c in ctg]
-            #print('hello ctg_label: {}'.format(ctg_label))
+            #print('debug ctg_label: {}'.format(ctg_label))
             ctg_label_err = [check_ctg_label_err(l, max_ctg_num) for l in ctg_label]
-            #print('hello ctg_label_err: {}'.format(ctg_label_err))
+            #print('debug ctg_label_err: {}'.format(ctg_label_err))
             ctg_num = [
                 (get_ctg_num(ctg_label[i])
                  if ctg_label_err[i] == 0
                  else None)
                 for i in range(num_ctg)]
-            #print('hello ctg_num: {}'.format(ctg_num))
+            #print('debug ctg_num: {}'.format(ctg_num))
             ctg_num_in_use = sorted(list(set([ctg_num[i] for i in range(num_ctg) if ctg_label_err[i] == 0])))
-            #print('hello ctg_num_in_use: {}'.format(ctg_num_in_use))
+            #print('debug ctg_num_in_use: {}'.format(ctg_num_in_use))
             ctg_num_not_in_use = sorted(list(set(range(num_ctg)).difference(set(ctg_num_in_use))))
-            #print('hello ctg_num_not_in_use: {}'.format(ctg_num_not_in_use))
+            #print('debug ctg_num_not_in_use: {}'.format(ctg_num_not_in_use))
             indices_of_ctgs_with_err = [i for i in range(num_ctg) if ctg_label_err[i] > 0]
-            #print('hello indices_of_ctgs_with_err: {}'.format(indices_of_ctgs_with_err))
+            #print('debug indices_of_ctgs_with_err: {}'.format(indices_of_ctgs_with_err))
             if len(indices_of_ctgs_with_err) > 0:
                 i0 = indices_of_ctgs_with_err[0]
                 if scrub_mode:
@@ -2509,7 +2509,7 @@ class Con:
                         num = ctg_num_not_in_use[counter]
                         ctg_label[i] = (label_format_str % num)
                         counter += 1
-                    #print('hello ctg_label: {}'.format(ctg_label))
+                    #print('debug ctg_label: {}'.format(ctg_label))
                     self.contingencies = {ctg_label[i]:ctg[i] for i in range(num_ctg)}
                     for k, v in self.contingencies.items():
                         v.label = k

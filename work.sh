@@ -168,8 +168,8 @@
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/UWMAD_GO2/trial2/mar04_01/scrubbed/UW6/SOUTH14kSB/scenario_003/
 #case_dir=/pic/dtn/go/Jessica/GO\ 2/Trial\ 2/GOTx2000/GOTx2000_2001_3505/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial2/mar25/scrubbed/pop/GOTx12K_4003_Mar24/scenario_001/
-case_dir=/pic/dtn/go/Steve/C2/T2/Source/TAMU/GOTx600_4003_Mar26/scenario_001/
-#case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial2/mar29/source/base/GOTx12K_4003_Mar26/scenario_004/
+#case_dir=/pic/dtn/go/Steve/C2/T2/Source/TAMU/GOTx600_4003_Mar26/scenario_001/
+case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial2/mar29/source/base/GOTx12K_4003_Mar26/scenario_004/
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
