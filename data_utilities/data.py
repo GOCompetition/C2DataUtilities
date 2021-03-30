@@ -276,7 +276,7 @@ def extract_number(token):
 def check_ctg_label_err(label, max_num):
     
     err = 0 # no error
-    if not label.startswith('CTG_'):
+    if not label.upper().startswith('CTG_'):
         err = 1 # does not start with "CTG_"
         return err
     len_label = len(label)
@@ -2463,23 +2463,32 @@ class Con:
 
     def scrub_ctg_labels(self, scrub_mode=False):
 
+        #print('hello in scrub_ctg_labels. scrub_mode: {}'.format(scrub_mode))
         if do_scrub_ctg_labels:
             max_ctg_num = max_num_ctgs - 1
             num_ctg_digits = len(str(max_ctg_num))
             ctg = self.get_contingencies()
             num_ctg = len(ctg)
+            #print('hello do_scrub_ctg_labels: {}, max_num_ctgs: {}, max_ctg_num: {}, num_ctg_digits: {}, num_ctg: {}'.format(
+            #    do_scrub_ctg_labels, max_num_ctgs, max_ctg_num, num_ctg_digits, num_ctg))
             ctg_label = [c.label for c in ctg]
+            #print('hello ctg_label: {}'.format(ctg_label))
             ctg_label_err = [check_ctg_label_err(l, max_ctg_num) for l in ctg_label]
+            #print('hello ctg_label_err: {}'.format(ctg_label_err))
             ctg_num = [
                 (get_ctg_num(ctg_label[i])
                  if ctg_label_err[i] == 0
                  else None)
                 for i in range(num_ctg)]
+            #print('hello ctg_num: {}'.format(ctg_num))
             ctg_num_in_use = sorted(list(set([ctg_num[i] for i in range(num_ctg) if ctg_label_err[i] == 0])))
+            #print('hello ctg_num_in_use: {}'.format(ctg_num_in_use))
             ctg_num_not_in_use = sorted(list(set(range(num_ctg)).difference(set(ctg_num_in_use))))
+            #print('hello ctg_num_not_in_use: {}'.format(ctg_num_not_in_use))
             indices_of_ctgs_with_err = [i for i in range(num_ctg) if ctg_label_err[i] > 0]
+            #print('hello indices_of_ctgs_with_err: {}'.format(indices_of_ctgs_with_err))
             if len(indices_of_ctgs_with_err) > 0:
-                i = indices_of_ctgs_with_err[0]
+                i0 = indices_of_ctgs_with_err[0]
                 if scrub_mode:
                     error_message = 'anonymizing contingency labels'
                 else:
@@ -2490,8 +2499,8 @@ class Con:
                      'diagnostics': {
                          'num_ctgs_with_label_errs': len(indices_of_ctgs_with_err),
                          'example': {
-                             'label': ctg_label[i],
-                             'error': get_ctg_label_err_from_code(ctg_label_err[i])}}})
+                             'label': ctg_label[i0],
+                             'error': get_ctg_label_err_from_code(ctg_label_err[i0])}}})
             if scrub_mode:
                 if len(indices_of_ctgs_with_err) > 0:
                     counter = 0
@@ -2499,7 +2508,11 @@ class Con:
                     for i in indices_of_ctgs_with_err:
                         num = ctg_num_not_in_use[counter]
                         ctg_label[i] = (label_format_str % num)
+                        counter += 1
+                    #print('hello ctg_label: {}'.format(ctg_label))
                     self.contingencies = {ctg_label[i]:ctg[i] for i in range(num_ctg)}
+                    for k, v in self.contingencies.items():
+                        v.label = k
                     
     def check_for_duplicate_outaged_generators(self, scrub_mode=False):
         '''Each contingency outages exactly one device, either a generator or a branch.
