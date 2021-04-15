@@ -1311,8 +1311,8 @@ class Raw:
         components_to_remove = [
             r for i in buses_id_to_remove
             for r in bus_id_component_map[i]]
-        components_to_remove_key = [
-            (r.i, r.j, r.ckt) for r in components_to_remove]
+        components_to_remove_key = sorted(
+            list(set([(r.i, r.j, r.ckt) for r in components_to_remove]))) # use set to prevent deleting the same branch twice if both fbus and tbus are out.
         for k in components_to_remove_key:
             alert(
                 {'data_type':
@@ -1352,8 +1352,8 @@ class Raw:
         components_to_remove = [
             r for i in buses_id_to_remove
             for r in bus_id_component_map[i]]
-        components_to_remove_key = [
-            (r.i, r.j, r.ckt) for r in components_to_remove]
+        components_to_remove_key = sorted(
+            list(set([(r.i, r.j, r.ckt) for r in components_to_remove]))) # use set to prevent deleting the same branch twice if both fbus and tbus are out.
         for k in components_to_remove_key:
             alert(
                 {'data_type':
