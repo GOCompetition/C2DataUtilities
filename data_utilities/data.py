@@ -77,6 +77,7 @@ do_fix_swsh_binit = True # now this sets binit to the closest feasible value of 
 do_fix_xfmr_tau_theta_init = True # sets windv1/windv2 or ang1 to closest feasible value if cod1 == 1 or == 3
 max_num_ctgs = 1000000 # maximum number of contingencies
 do_scrub_ctg_labels = True # set to True to replace ctg labels with anonymous strings
+do_scrub_unused_long_strings = True
 pg_qg_stat_mode = 1 # 0: do not scrub, 1: set pg=0 and qg=0, 2: set stat=1
 swsh_binit_feas_tol = 1e-4
 swsh_bmin_bmax_tol = 1e-8
@@ -313,6 +314,13 @@ def get_ctg_label_err_from_code(code):
     else:
         err = 'unknown error code: {}'.format(code)
     return err
+
+def scrub_unused_long_string(in_str):
+
+    out_str = in_str
+    if do_scrub_unused_long_strings:
+        out_str = in_str.replace(',', '.')
+    return out_str
         
 class Data:
     '''In physical units, i.e. data convention, i.e. input and output data files'''
@@ -1740,7 +1748,7 @@ class Raw:
         # values of None then are written as empty fields, which is what we want
 
         out_str = StringIO()
-        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
+        writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE, escapechar="\\")
         
         if write_values_in_unused_fields:
             rows = [
@@ -1755,7 +1763,20 @@ class Raw:
             rows = [
                 [r.i, None, None, None, r.area, None, None, r.vm, r.va, r.nvhi, r.nvlo, r.evhi, r.evlo]
                 for r in self.get_buses()]
+
+        # debugging
+        # for r in rows:
+        #     try:
+        #         writer.writerows([r])
+        #     except:
+        #         print('error/exception in construct_bus_section writerows. problem row:')
+        #         print(r)
+        #         print('end of problem row')
+        #         #raise()
+        # end debugging
+
         writer.writerows(rows)
+
         writer = csv.writer(out_str, lineterminator="\n", quoting=csv.QUOTE_NONE)
         writer.writerows([['0 / END OF BUS DATA BEGIN LOAD DATA']]) # no comma allowed without escape character
         #out_str.write('0 / END OF BUS DATA, BEGIN LOAD DATA\n')
@@ -2897,7 +2918,7 @@ class Bus:
 
     def scrub(self):
 
-        pass
+        self.name = scrub_unused_long_string(self.name)
 
     def check(self):
 
