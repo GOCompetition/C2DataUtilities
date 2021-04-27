@@ -20,7 +20,7 @@
 #case_dir=./test_data/ieee14/scenario_9/
 #case_dir=./test_data/ieee14/scenario_10/
 #case_dir=./test_data/ieee14/scenario_11/
-#case_dir=./test_data/ieee14/scenario_12/
+case_dir=./test_data/ieee14/scenario_12/
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
@@ -170,7 +170,13 @@
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial2/mar25/scrubbed/pop/GOTx12K_4003_Mar24/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/T2/Source/TAMU/GOTx600_4003_Mar26/scenario_001/
 #case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial2/mar29/source/base/GOTx12K_4003_Mar26/scenario_004/
-case_dir=/people/holz501/gocomp/c2/data/komal/2021-04-14/
+#case_dir=/people/holz501/gocomp/c2/data/komal/2021-04-14/
+#case_dir=/people/holz501/gocomp/c2/data/TAMU_ind1/
+#case_dir=/people/holz501/gocomp/c2/data/TAMU_ind2/
+#case_dir=/pic/dtn/go/Steve/C2/T2/Source/TAMU_BASE/WECC_base/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/T2/scrubbed/TAMU/SPP_10_210419/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/T1/scrubbed/production/C2T1N08028/scenario_013/
+#case_dir=/pic/dtn/go/Ahmad/scenario_185/
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
@@ -226,6 +232,7 @@ case_dir=/people/holz501/gocomp/c2/data/komal/2021-04-14/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/hhijazi/51-1613964238_3/C2S6N00617_output10/
 #sol_dir="/pic/dtn/go/Jessica/GO\ 2/Trial\ 2/GOTx2000/GOTx2000_2001_3505/sol/" # spaces in path name !!!!!! not good !!!!!
 #sol_dir=./tmpsol/sol9/
+#sol_dir=/pic/dtn/go/Ahmad/scenario_185/
 
 # set options
 strict_names=1
@@ -233,9 +240,9 @@ refresh_data=1
 check_data=1
 scrub_data=1
 check_scrubbed_data=1
-make_new_sol=0
+make_new_sol=1
 copy_sol=0
-eval_sol=0
+eval_sol=1
 do_submission=0
 eval_submission=0
 division=1

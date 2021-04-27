@@ -249,7 +249,9 @@ class Data:
 
         # closed-open status in operating point prior to base case
         self.line_xsw_0 = np.array([r.st for r in lines])
-        
+
+        self.line_imp_real = np.array([r.r for r in lines])
+        self.line_imp_imag = np.array([r.x for r in lines])
         self.line_adm_real = np.array([r.r / (r.r**2.0 + r.x**2.0) for r in lines])
         self.line_adm_imag = np.array([-r.x / (r.r**2.0 + r.x**2.0) for r in lines])
         self.line_adm_ch_imag = np.array([r.b for r in lines])
@@ -318,6 +320,8 @@ class Data:
         
         # series admittance (conductance and susceptance) from data
         # impedance correction divides these by impedance correction factor
+        self.xfmr_imp_real_0 = np.array([r.r12 for r in xfmrs])
+        self.xfmr_imp_imag_0 = np.array([r.x12 for r in xfmrs])
         self.xfmr_adm_real_0 = np.array([r.r12 / (r.r12**2.0 + r.x12**2.0) for r in xfmrs])
         self.xfmr_adm_imag_0 = np.array([-r.x12 / (r.r12**2.0 + r.x12**2.0) for r in xfmrs])
         
