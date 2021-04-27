@@ -3126,10 +3126,18 @@ class Evaluation:
         # C2 A1 S13 #66 #67
 
         out = 1.0
-        for i in range(len(t_points) - 1):
-            if t_points[i] is not None and t_points[i + 1] is not None:
-                if t_points[i] <= t_val and t_val <= t_points[i + 1]:
+        n_points = min(len(t_points), len(f_points))
+        n_points = len([i for i in range(n_points) if t_points[i] is not None and f_points[i] is not None])
+        # t may fall outside [tmin, tmax] due to floating point errors
+        if t_val <= t_points[0]:
+            out = f_points[0]
+        elif t_points[n_points - 1] <= t_val:
+            out = f_points[n_points - 1]
+        else:
+            for i in range(n_points - 1):
+                if t_val < t_points[i + 1]:
                     out = f_points[i] + (t_val - t_points[i]) * (f_points[i + 1] - f_points[i]) / (t_points[i + 1] - t_points[i])
+                    break
         return out
 
     @timeit
