@@ -1254,6 +1254,7 @@ class Raw:
         self.scrub_loads()
         self.scrub_fixed_shunts()
         self.scrub_nontransformer_branches()
+        self.check_transformer_impedance_correction_tables(scrub_mode=True)
         self.scrub_transformers()
         self.scrub_generators()
         self.scrub_switched_shunts()
@@ -1266,12 +1267,18 @@ class Raw:
         self.check_fixed_shunts()
         self.check_generators()
         self.check_nontransformer_branches()
+        self.check_transformer_impedance_correction_tables(scrub_mode=False) # need to do this before transformers
         self.check_transformers()
         #self.check_areas()
         self.check_switched_shunts()
         self.check_unique_branch_per_i_j_ckt()
         # todo: check buses > 0, bus fields of loads, fixed shunts, generators, nontransformer branches, transformers, areas, switched shunts are in the set of buses
         # todo : check impedance correction tables
+
+    def check_transformer_impedance_correction_tables(self, scrub_mode=False):
+
+        for r in self.get_transformer_impedance_correction_tables():
+            r.check(scrub_mode)
 
     def add_gen_emergency_capacity(self):
         '''Add emergency capacity to each generator.
@@ -1337,6 +1344,8 @@ class Raw:
         self.check_transformers_buses_exist(scrub_mode=False)
         for r in self.get_transformers():
             r.check()
+        self.check_transformers_impedance_correction_table_exists(scrub_mode=False)
+        self.check_transformers_impedance_correction_table_covers_control_range(scrub_mode=False)
 
     def scrub_transformers(self):
 
@@ -1345,6 +1354,70 @@ class Raw:
             print('scrubbing all xfmr tau/theta init values')
         for r in self.get_transformers():
             r.scrub()
+        self.check_transformers_impedance_correction_table_exists(scrub_mode=True)
+        self.check_transformers_impedance_correction_table_covers_control_range(scrub_mode=True)
+
+    def check_transformers_impedance_correction_table_exists(self, scrub_mode=False):
+
+        xfmrs = self.get_transformers()
+        xfmrs = [r for r in xfmrs if r.tab1 != 0]
+        tab1 = sorted(list(set([r.tab1 for r in xfmrs])))
+        tab1_xfmr_map = {t:[] for t in tab1}
+        for r in xfmrs:
+            tab1_xfmr_map[r.tab1].append(r)
+        tict_keys = self.transformer_impedance_correction_tables.keys()
+        tab1_not_tict = sorted(list(set(tab1).difference(set(tict_keys))))
+        xfmrs_tab1_not_tict = [r for t in tab1_not_tict for r in tab1_xfmr_map[t]]
+        if len(xfmrs_tab1_not_tict) > 0:
+            if not scrub_mode:
+                alert(
+                    {'data_type':
+                         'Raw',
+                     'error_message':
+                         'found transformers with nonzero tab1 referring to nonexistent transformer impedance correction table. scrubber will set tab1 = 0',
+                     'diagnostics': {'[(i, j, ckt, tab1)]': [(r.i, r.j, r.ckt, r.tab1) for r in xfmrs_tab1_not_tict]}})
+            else:
+                alert(
+                    {'data_type':
+                         'Raw',
+                     'error_message':
+                         'found transformers with nonzero tab1 referring to nonexistent transformer impedance correction table. setting tab1 = 0',
+                     'diagnostics': {'[(i, j, ckt, tab1)]': [(r.i, r.j, r.ckt, r.tab1) for r in xfmrs_tab1_not_tict]}})
+                for r in xfmrs_tab1_not_tict:
+                    r.tab1 = 0
+
+    def check_transformers_impedance_correction_table_covers_control_range(self, scrub_mode=False):
+
+        pu_tol = 1e-4
+        adjust = 1e-6
+        rad_tol = pu_tol
+        deg_tol = 180.0 / math.pi * rad_tol
+        for r in self.get_transformers():
+            if r.tab1 > 0 and (r.tab1 in self.transformer_impedance_correction_tables.keys()) and r.cod1 in [-3, -1, 1, 3]:
+                tict = self.transformer_impedance_correction_tables[r.tab1]
+                n = tict.tict_point_count
+                assert(n >= 2)
+                tmax = tict.t[n - 1]
+                tmin = tict.t[0]
+                tol = pu_tol if r.cod1 in [-1, 1] else deg_tol
+                if (not (r.rma1 + tol + adjust < tmax) or not (tmin < r.rmi1 - tol - adjust)):
+                    alert(
+                        {'data_type':
+                             'Raw',
+                         'error_message':
+                             'found transformer with impedance correction table not covering control range. {}'.format(
+                                'adjusting impedance correction table' if scrub_mode else 'scrubber will adjust correction table'),
+                         'diagnostics':
+                             {'i': r.i, 'j': r.j, 'ckt': r.ckt, 'cod1': r.cod1, 'tab1': r.tab1, 'rma1': r.rma1, 'rmi1': r.rmi1,
+                              'tmax': tmax, 'tmin': tmin, 'pu_tol': pu_tol, 'tol': tol, 'tol_adjust': adjust}})
+                    if scrub_mode:
+                        if not (r.rma1 + tol + adjust < tmax):
+                            attr_name = 't{}'.format(n)
+                            setattr(tict, attr_name, r.rma1 + tol + 2.0 * adjust)
+                            tict.t[n - 1] = getattr(tict, attr_name)
+                        if not tmin < r.rmi1 - tol - adjust:
+                            tict.t1 = r.rmi1 - tol - 2.0 * adjust
+                            tict.t[0] = tict.t1
 
     def check_transformers_buses_exist(self, scrub_mode=False):
 
@@ -4216,15 +4289,20 @@ class TransformerImpedanceCorrectionTable:
 
         self.t = []
         self.f = []
+        self.tict_point_count = 0
 
     def read_from_row(self, row):
 
         row = pad_row(row, 23)
         self.i = parse_token(row[0], int, default=None)
-        self.t1 = parse_token(row[1], float, default=0.0)
-        self.f1 = parse_token(row[2], float, default=0.0)
-        self.t2 = parse_token(row[3], float, default=0.0)
-        self.f2 = parse_token(row[4], float, default=0.0)
+        #self.t1 = parse_token(row[1], float, default=0.0)
+        #self.f1 = parse_token(row[2], float, default=0.0)
+        #self.t2 = parse_token(row[3], float, default=0.0)
+        #self.f2 = parse_token(row[4], float, default=0.0)
+        self.t1 = parse_token(row[1] if 1 < len(row) else None, float, default=0.0)
+        self.f1 = parse_token(row[2] if 2 < len(row) else None, float, default=0.0)
+        self.t2 = parse_token(row[3] if 3 < len(row) else None, float, default=0.0)
+        self.f2 = parse_token(row[4] if 4 < len(row) else None, float, default=0.0)
         self.t3 = parse_token(row[5] if 5 < len(row) else None, float, default=0.0)
         self.f3 = parse_token(row[6] if 6 < len(row) else None, float, default=0.0)
         self.t4 = parse_token(row[7] if 7 < len(row) else None, float, default=0.0)
@@ -4255,6 +4333,93 @@ class TransformerImpedanceCorrectionTable:
     
         self.t = [ self.t1, self.t2, self.t3, self.t4, self.t5, self.t6, self.t7, self.t8, self.t9, self.t10, self.t11 ]
         self.f = [ self.f1, self.f2, self.f3, self.f4, self.f5, self.f6, self.f7, self.f8, self.f9, self.f10, self.f11 ]
+
+    def check(self, scrub_mode=False):
+
+        self.check_point_count_ge_2(scrub_mode)
+        self.check_i_gt_0(scrub_mode)
+        self.check_t_increasing(scrub_mode)
+
+    def check_point_count_ge_2(self, scrub_mode=False):
+
+        if self.tict_point_count < 2:
+            alert(
+                {'data_type': 'TransformerImpedanceCorrectionTable',
+                 'error_message': 'fails num points >= 2. {}'.format(
+                        'adding points' if scrub_mode else
+                        'scrubber will add points'),
+                 'diagnostics': {
+                     'i': self.i,
+                     't1': self.t1, 'f1': self.f1,
+                     't2': self.t2, 'f2': self.f2,
+                     't3': self.t3, 'f3': self.f3,
+                     't4': self.t4, 'f4': self.f4,
+                     't5': self.t5, 'f5': self.f5,
+                     't6': self.t6, 'f6': self.f6,
+                     't7': self.t7, 'f7': self.f7,
+                     't8': self.t8, 'f8': self.f8,
+                     't9': self.t9, 'f9': self.f9,
+                     't10': self.t10, 'f10': self.f10,
+                     't11': self.t11, 'f11': self.f11}})
+            if scrub_mode:
+                if self.tict_point_count == 1:
+                    self.t2 = self.t1 + 1.0
+                    self.f2 = self.f1
+                    self.tict_point_count = 2
+                    self.t[1] = self.t2
+                    self.f[1] = self.f2
+                else:
+                    self.t1 = 0.0
+                    self.f1 = 1.0
+                    self.t2 = 1.0
+                    self.f2 = 1.0
+                    self.tict_point_count = 2
+                    self.t[0] = self.t1
+                    self.f[0] = self.f1
+                    self.t[1] = self.t2
+                    self.f[1] = self.f2
+
+    def check_i_gt_0(self, scrub_mode=False):
+
+        if self.i <= 0:
+            alert(
+                {'data_type': 'TransformerImpedanceCorrectionTable',
+                 'error_message': 'fails i > 0. scrubber does not fix this',
+                'diagnostics': {
+                    'i': self.i,
+                    't1': self.t1, 'f1': self.f1,
+                    't2': self.t2, 'f2': self.f2,
+                    't3': self.t3, 'f3': self.f3,
+                    't4': self.t4, 'f4': self.f4,
+                    't5': self.t5, 'f5': self.f5,
+                    't6': self.t6, 'f6': self.f6,
+                    't7': self.t7, 'f7': self.f7,
+                    't8': self.t8, 'f8': self.f8,
+                    't9': self.t9, 'f9': self.f9,
+                    't10': self.t10, 'f10': self.f10,
+                    't11': self.t11, 'f11': self.f11}})
+    
+    def check_t_increasing(self, scrub_mode=False):
+
+        for i in range(self.tict_point_count - 1):
+            if self.t[i] >= self.t[i + 1]:
+                alert(
+                    {'data_type': 'TransformerImpedanceCorrectionTable',
+                     'error_message': 'fails t increasing. scrubber does not fix this',
+                     'diagnostics': {
+                            'i': self.i,
+                            't1': self.t1, 'f1': self.f1,
+                            't2': self.t2, 'f2': self.f2,
+                            't3': self.t3, 'f3': self.f3,
+                            't4': self.t4, 'f4': self.f4,
+                            't5': self.t5, 'f5': self.f5,
+                            't6': self.t6, 'f6': self.f6,
+                            't7': self.t7, 'f7': self.f7,
+                            't8': self.t8, 'f8': self.f8,
+                            't9': self.t9, 'f9': self.f9,
+                            't10': self.t10, 'f10': self.f10,
+                            't11': self.t11, 'f11': self.f11}})
+                break
             
 class Area:
 

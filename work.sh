@@ -20,7 +20,8 @@
 #case_dir=./test_data/ieee14/scenario_9/
 #case_dir=./test_data/ieee14/scenario_10/
 #case_dir=./test_data/ieee14/scenario_11/
-case_dir=./test_data/ieee14/scenario_12/
+#case_dir=./test_data/ieee14/scenario_12/
+#case_dir=./test_data/ieee14/scenario_13/ # test transformer impedance correction table check/scrub
 
 # Originals
 #case_dir=/pic/dtn/go/Jesse/C2N00014/scenario_02/
@@ -34,6 +35,8 @@ case_dir=./test_data/ieee14/scenario_12/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_004/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00594/scenario_005/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00617/scenario_010/ # testing new eval output
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N00617/scenario_001/
+#case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S7N00617/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_002/
 #case_dir=/pic/dtn/go/Steve/C2/sandbox/C2S6N02000/scenario_003/
@@ -177,6 +180,7 @@ case_dir=./test_data/ieee14/scenario_12/
 #case_dir=/pic/dtn/go/Steve/C2/T2/scrubbed/TAMU/SPP_10_210419/scenario_001/
 #case_dir=/pic/dtn/go/Steve/C2/T1/scrubbed/production/C2T1N08028/scenario_013/
 #case_dir=/pic/dtn/go/Ahmad/scenario_185/
+case_dir=/pic/projects/goc/loadbalancing/src/challenge2-eval-repo/data/TAMU/C2/trial2/feb17_01/scrubbed/pop/GOTx600_v2/scenario_001/
 
 #sol_dir=./tmpsol/sol7/
 #sol_dir=/pic/projects/goc/submission-manager/submission-manager-tmp/llmagos/393-1607136894_c2t1_2/C2T1N00500_output52/
