@@ -113,8 +113,17 @@ def run():
     args_summary = "{}/GOCFeasibility.csv".format(output_path)
     args_detail = "{}/{}_DetailedSolution.csv".format(output_path, args.model_scenario_number)
 
-    line_switching_allowed = True if args.scoring_method == '3' or args.scoring_method == '4' else None
-    xfmr_switching_allowed = True if args.scoring_method == '3' or args.scoring_method == '4' else None
+    if (args.scoring_method == '3' or args.scoring_method == '4'):
+        line_switching_allowed = True
+        xfmr_switching_allowed = True
+    elif (args.scoring_method == '1' or args.scoring_method == '2'):
+        line_switching_allowed = False
+        xfmr_switching_allowed = False
+    else:
+        line_switching_allowed = None
+        xfmr_switching_allowed = None
+    #line_switching_allowed = True if args.scoring_method == '3' or args.scoring_method == '4' else None
+    #xfmr_switching_allowed = True if args.scoring_method == '3' or args.scoring_method == '4' else None
 
     obj=MAXOBJ
 

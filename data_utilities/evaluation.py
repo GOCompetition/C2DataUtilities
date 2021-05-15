@@ -3018,6 +3018,13 @@ class Evaluation:
         #print(self.line_xsu)
         #print(self.line_xsd)
 
+        # debug
+        # for i in range(self.num_line):
+        #     if self.line_xsu[i] > 0.0 or self.line_xsd[i] > 0.0:
+        #         print('line switching: [index: {}, i: {}, j: {}, ckt: {}, x: {}, x_prior: {}, stat: {}, xsu: {}, xsd: {}, sw_qual: {}, sw_allowed: {}]'.format(
+        #                 i, self.line_i[i], self.line_j[i], self.line_ckt[i], self.line_xsw[i], self.line_xsw_prior[i],
+        #                 self.line_xsw_0[i], self.line_xsu[i], self.line_xsd[i], self.line_sw_qual[i], self.line_switching_allowed))
+
         self.summarize('line_switch_up_actual', self.line_xsu.sum())
         self.summarize('line_switch_down_actual', self.line_xsd.sum())
 
@@ -5267,8 +5274,17 @@ def main():
         arg_datapath = Path(sys.argv[-2])
         arg_basepath = Path(sys.argv[-1])
 
-    line_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
-    xfmr_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
+    if (arg_division == '3' or arg_division == '4'):
+        line_switching_allowed = True
+        xfmr_switching_allowed = True
+    elif (arg_division == '1' or arg_division == '2'):
+        line_switching_allowed = False
+        xfmr_switching_allowed = False
+    else:
+        line_switching_allowed = None
+        xfmr_switching_allowed = None
+    #line_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
+    #xfmr_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
     check_contingencies = True # set to False to check just the base case
 
     run_main(arg_datapath, arg_basepath, line_switching_allowed, xfmr_switching_allowed, check_contingencies)
