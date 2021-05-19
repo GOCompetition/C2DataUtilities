@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # C2DataUtilities test data
-#case_dir=./test_data/ieee14/scenario_1/
+case_dir=./test_data/ieee14/scenario_1/
 #case_dir=./test_data/ieee14/scenario_2/
 #case_dir=./test_data/ieee14/scenario_3/
 #case_dir=./test_data/ieee14/scenario_4/
@@ -18,12 +18,15 @@
 #sol_dir=./tmpsol/sol7/
 
 # set options
+use_orig=1
+use_scrub=0
+use_mod=0
 strict_names=1
 refresh_data=1
-modify_data=0
 check_data=1
-scrub_data=1
-check_scrubbed_data=1
+scrub_data=0
+modify_data=0
+check_data_again=1
 make_new_sol=0
 copy_sol=0
 eval_sol=0
@@ -34,15 +37,22 @@ num_proc=1
 
 py_dir=./data_utilities/
 work_dir=./tmp/
-raw1="${work_dir}/case.raw"
+# original data
+raw1="${work_dir}/case.orig.raw"
+sup1="${work_dir}/case.orig.json"
+con1="${work_dir}/case.orig.con"
+# scrubbed data
 raw2="${work_dir}/case.scrubbed.raw"
-raw3="${work_dir}/case.mod.raw"
-sup1="${work_dir}/case.json"
 sup2="${work_dir}/case.scrubbed.json"
-sup3="${work_dir}/case.mod.json"
-con1="${work_dir}/case.con"
 con2="${work_dir}/case.scrubbed.con"
+# modified data
+raw3="${work_dir}/case.mod.raw"
+sup3="${work_dir}/case.mod.json"
 con3="${work_dir}/case.mod.con"
+# data to use in solution and evaluation
+raw="${work_dir}/case.raw"
+sup="${work_dir}/case.json"
+con="${work_dir}/case.con"
 
 echo "case: ${case_dir}"
 
@@ -95,15 +105,6 @@ then
     fi
 fi
 
-# modify data
-if [ $modify_data -gt 0 ]
-then
-    echo "modify data"
-    python ${py_dir}modify_data.py "$raw1" "$sup1" "$con1" "$raw3" "$sup3" "$con3"
-else
-    echo "skip modify data"
-fi
-
 # check data
 if [ $check_data -gt 0 ]
 then
@@ -120,21 +121,47 @@ then
     python ${py_dir}scrub_data.py "$raw1" "$sup1" "$con1" "$raw2" "$sup2" "$con2"
 else
     echo "skip scrub data"
-    if [ $refresh_data -gt 0 ]
-    then
-	cp "$raw1" "$raw2"
-	cp "$sup1" "$sup2"
-	cp "$con1" "$con2"
-    fi
 fi
 
-# check scrubbed data
-if [ $check_scrubbed_data -gt 0 ]
+# modify data
+if [ $modify_data -gt 0 ]
 then
-    echo "check scrubbed data"
-    python ${py_dir}check_data.py "$raw2" "$sup2" "$con2"
+    echo "modify data"
+    python ${py_dir}modify_data.py "$raw1" "$sup1" "$con1" "$raw3" "$sup3" "$con3"
 else
-    echo "skip check scrubbed data"
+    echo "skip modify data"
+fi
+
+# which data to use
+if [ $use_orig -gt 0 ]
+then
+    echo "using original data"
+    cp "$raw1" "$raw"
+    cp "$sup1" "$sup"
+    cp "$con1" "$con"
+fi
+if [ $use_scrub -gt 0 ]
+then
+    echo "using scrubbed data"
+    cp "$raw2" "$raw"
+    cp "$sup2" "$sup"
+    cp "$con2" "$con"
+fi
+if [ $use_mod -gt 0 ]
+then
+    echo "using modified data"
+    cp "$raw3" "$raw"
+    cp "$sup3" "$sup"
+    cp "$con3" "$con"
+fi
+
+# check data again
+if [ $check_data_again -gt 0 ]
+then
+    echo "check data again"
+    python ${py_dir}check_data.py "$raw" "$sup" "$con"
+else
+    echo "skip check data again"
 fi
 
 # construct infeasibility solution
@@ -142,7 +169,7 @@ if [ $make_new_sol -gt 0 ]
 then
     echo "construct new infeasibility solution"
     rm ${work_dir}/solution_*.txt
-    python ${py_dir}construct_infeasibility_solution.py "$raw2" "$sup2" "$con2" "$work_dir"
+    python ${py_dir}construct_infeasibility_solution.py "$raw" "$sup" "$con" "$work_dir"
 else
     echo "skip construct new infeasibility solution"
 fi
@@ -181,8 +208,8 @@ then
     reserved=reserved
     timelimit=300
     network=network
-    python MyPython1.py "$con2" "$sup2" "$raw2" $reserved $timelimit $division $network
-    python MyPython2.py "$con2" "$sup2" "$raw2" $reserved $timelimit $division $network
+    python MyPython1.py "$con" "$sup" "$raw" $reserved $timelimit $division $network
+    python MyPython2.py "$con" "$sup" "$raw" $reserved $timelimit $division $network
 else
     echo "skip submission with infeasibility solution"
 fi
