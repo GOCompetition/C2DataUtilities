@@ -59,7 +59,7 @@ def main():
     print("check data time: %f" % time_elapsed)
 
     start_time = time.time()
-    p.modify()
+    p.modify(load_mode='max') # max, min, 1, given. if using given, need to supply values also. todo later
     end_time = time.time()
     print("modify data time: %f" % (end_time - start_time))
 

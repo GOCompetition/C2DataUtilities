@@ -394,9 +394,14 @@ class Data:
         self.check_gen_cost_domain(scrub_mode=True)
         self.check_load_cost_domain(scrub_mode=True)
 
-    def modify(self):
+    def modify(self, load_mode=None, load_values=None):
 
-        print('modifying')
+        #print('modifying')
+        self.modify_load_t_min_max(mode=load_mode, values=load_values)
+        #self.modify_load_t_min_max(mode='max', values=None)
+        #self.modify_load_t_min_max(mode='min', values=None)
+        #self.modify_load_t_min_max(mode='1', values=None)
+        #self.modify_load_t_min_max(mode='given', values=None)
 
     def print_summary(self):
 
@@ -459,6 +464,43 @@ class Data:
                 'pmax_tol': cost_domain_tol,
                 'cblocks': cblocks}
             self.check_cost_domain(cblocks, key, cblocks_total_pmax, pmax, cost_domain_tol, 'Load', diagnostics, scrub_mode=scrub_mode)
+
+    def modify_load_t_min_max(self, mode=None, values=None):
+        
+        deltar = self.sup.sup_jsonobj['systemparameters']['deltar']
+        for r in self.raw.get_loads():
+            tmax = self.sup.loads[r.i, r.id]['tmax']
+            tmin = self.sup.loads[r.i, r.id]['tmin']
+            prumax = self.sup.loads[r.i, r.id]['prumax']
+            prdmax = self.sup.loads[r.i, r.id]['prdmax']
+            feas_t_max = tmax
+            feas_t_min = tmin
+            if r.pl > 0.0:
+                feas_t_max = min(feas_t_max, 1.0 + deltar * prumax / r.pl)
+                feas_t_min = max(feas_t_min, 1.0 - deltar * prdmax / r.pl)
+                assert(feas_t_max >= feas_t_min)
+            if mode == 'max':
+                tfix = tmax
+            elif mode == 'min':
+                tfix = tmin
+            elif mode == '1':
+                tfix = 1.0
+            elif mode is None:
+                tfix = 1.0
+            #elif mode == 'given':
+            #    pass
+            #    tfix = ??
+            else:
+                print('mode: {} not implemented yet'.format(mode))
+                assert(False)
+            if tfix > feas_t_max:
+                tfix = feas_t_max
+            if tfix < feas_t_min:
+                tfix = feas_t_min
+            print('i: {}, id: {}, pl: {}, tmax: {}, tmin: {}'.format(r.i, r.id, r.pl, self.sup.loads[r.i, r.id]['tmax'], self.sup.loads[r.i, r.id]['tmin']))
+            self.sup.loads[r.i, r.id]['tmax'] = tfix
+            self.sup.loads[r.i, r.id]['tmin'] = tfix
+            print('i: {}, id: {}, pl: {}, tmax: {}, tmin: {}'.format(r.i, r.id, r.pl, self.sup.loads[r.i, r.id]['tmax'], self.sup.loads[r.i, r.id]['tmin']))
 
     def check_cost_domain(self, cblocks, key, cblocks_total_pmax, pmax, tol, data_type, diagnostics, scrub_mode=False):
 
