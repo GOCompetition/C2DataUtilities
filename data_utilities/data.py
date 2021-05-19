@@ -394,6 +394,10 @@ class Data:
         self.check_gen_cost_domain(scrub_mode=True)
         self.check_load_cost_domain(scrub_mode=True)
 
+    def modify(self):
+
+        print('modifying')
+
     def print_summary(self):
 
         print("buses: %u" % len(self.raw.buses))

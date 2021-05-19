@@ -1,32 +1,23 @@
 #!/bin/sh
 
-# C2DataUtilities test data
-case_dir=./test_data/ieee14/scenario_1/
-#case_dir=./test_data/ieee14/scenario_2/
-#case_dir=./test_data/ieee14/scenario_3/
-#case_dir=./test_data/ieee14/scenario_4/
-#case_dir=./test_data/ieee14/scenario_5/
-#case_dir=./test_data/ieee14/scenario_6/
-#case_dir=./test_data/ieee14/scenario_7/
-#case_dir=./test_data/ieee14/scenario_8/
-#case_dir=./test_data/ieee14/scenario_9/
-#case_dir=./test_data/ieee14/scenario_10/
-#case_dir=./test_data/ieee14/scenario_11/
-#case_dir=./test_data/ieee14/scenario_12/
-#case_dir=./test_data/ieee14/scenario_13/ # test transformer impedance correction table check/scrub
+# syntax:
+# $ source work.sh <case_dir> <sol_dir>
+#
+# e.g.
+# $ source work.sh ./test_data/ieee14/scenario_1/ ./tmpsol/sol1/
+#
+# case_dir is always needed
+# sol_dir is only needed if using copy_sol=1
 
-#sol_dir=./tmpsol/sol7/
+case_dir=$1
+sol_dir=$2
 
 # set options
-use_orig=1
-use_scrub=0
-use_mod=0
 strict_names=1
 refresh_data=1
 check_data=1
-scrub_data=0
-modify_data=0
-check_data_again=1
+scrub_data=1
+modify_data=1
 make_new_sol=0
 copy_sol=0
 eval_sol=0
@@ -34,6 +25,16 @@ do_submission=0
 eval_submission=0
 division=1
 num_proc=1
+
+# if modify then use modify
+# if scrub and not modify then use scrub
+# if not scrub then use orig
+# need to scrub if modifying 
+# need to check again if scrubbing or modifying
+use_orig=0
+use_scrub=0
+use_mod=1
+check_data_again=1
 
 py_dir=./data_utilities/
 work_dir=./tmp/
@@ -127,7 +128,7 @@ fi
 if [ $modify_data -gt 0 ]
 then
     echo "modify data"
-    python ${py_dir}modify_data.py "$raw1" "$sup1" "$con1" "$raw3" "$sup3" "$con3"
+    python ${py_dir}modify_data.py "$raw2" "$sup2" "$con2" "$raw3" "$sup3" "$con3"
 else
     echo "skip modify data"
 fi
@@ -158,10 +159,10 @@ fi
 # check data again
 if [ $check_data_again -gt 0 ]
 then
-    echo "check data again"
+    echo "check data final"
     python ${py_dir}check_data.py "$raw" "$sup" "$con"
 else
-    echo "skip check data again"
+    echo "skip check data final"
 fi
 
 # construct infeasibility solution
