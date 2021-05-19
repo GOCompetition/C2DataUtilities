@@ -20,6 +20,7 @@
 # set options
 strict_names=1
 refresh_data=1
+modify_data=0
 check_data=1
 scrub_data=1
 check_scrubbed_data=1
@@ -35,10 +36,13 @@ py_dir=./data_utilities/
 work_dir=./tmp/
 raw1="${work_dir}/case.raw"
 raw2="${work_dir}/case.scrubbed.raw"
+raw3="${work_dir}/case.mod.raw"
 sup1="${work_dir}/case.json"
 sup2="${work_dir}/case.scrubbed.json"
+sup3="${work_dir}/case.mod.json"
 con1="${work_dir}/case.con"
 con2="${work_dir}/case.scrubbed.con"
+con3="${work_dir}/case.mod.con"
 
 echo "case: ${case_dir}"
 
@@ -89,6 +93,15 @@ then
             cp "$i" "$con1"
 	done
     fi
+fi
+
+# modify data
+if [ $modify_data -gt 0 ]
+then
+    echo "modify data"
+    python ${py_dir}modify_data.py "$raw1" "$sup1" "$con1" "$raw3" "$sup3" "$con3"
+else
+    echo "skip modify data"
 fi
 
 # check data
