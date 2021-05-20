@@ -40,6 +40,7 @@ def main():
     parser.add_argument('raw_out', help='raw_out')
     parser.add_argument('sup_out', help='sup_out')
     parser.add_argument('con_out', help='con_out')
+    parser.add_argument('load_mode', help='load_mode')
     
     args = parser.parse_args()
 
@@ -59,7 +60,7 @@ def main():
     print("check data time: %f" % time_elapsed)
 
     start_time = time.time()
-    p.modify(load_mode='max') # max, min, 1, given. if using given, need to supply values also. todo later
+    p.modify(load_mode=args.load_mode) # max, min, 1, given. if using given, need to supply values also. todo later
     end_time = time.time()
     print("modify data time: %f" % (end_time - start_time))
 

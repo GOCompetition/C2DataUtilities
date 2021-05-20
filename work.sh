@@ -1,43 +1,118 @@
 #!/bin/sh
 
 # syntax:
-# $ source work.sh <case_dir> <sol_dir>
+# $ ./work.sh <flags>
 #
 # e.g.
-# $ source work.sh ./test_data/ieee14/scenario_1/ ./tmpsol/sol1/
+# $ ./work.sh -c ./test_data/ieee14/scenario_1/ -s ./tmpsol/sol1/
 #
-# case_dir is always needed
-# sol_dir is only needed if using copy_sol=1
+# c: case_dir - if present copy case from there
+# s: sol_dir - if present copy a solution from there
+# r scrub_data
+# m: modify_mode - if present, do modify
+# i: use prior operating point solver to make a new solution
+# p: do a platform submission of the prior operating point solver to make a new solution
+# e: evaluate solution
+# d: division
+# n: num_proc
+# w: work directory
 
-case_dir=$1
-sol_dir=$2
-
-# set options
-strict_names=1
-refresh_data=1
-check_data=1
-scrub_data=1
-modify_data=1
+# default values of flag arguments
+case_dir=./test_data/ieee14/scenario_1
+sol_dir=
+scrub_data=0
+modify_load_mode=
+modify_data=0
 make_new_sol=0
 copy_sol=0
-eval_sol=0
 do_submission=0
-eval_submission=0
+eval_sol=0
 division=1
 num_proc=1
+work_dir=./tmp/
+
+print_usage() {
+  echo "Usage:"
+  echo "$ ./work.sh <flags>"
+  echo ""
+  echo "flags:"
+  echo "-h : help"
+  echo "-c <case_dir> : if present copy case from there"
+  echo "-s <sol_dir> : if present copy a solution from there"
+  echo "-r : scrub_data"
+  echo "-l <modify_load_mode> : if present, do modify with this mode"
+  echo "-i : use prior operating point solver to make a new solution"
+  echo "-p : do a platform submission of the prior operating point solver to make a new solution"
+  echo "-e : evaluate solution"
+  echo "-d <division> : division = 1, 2, 3, 4"
+  echo "-n <num_proc> : number of processes in eval, > 1 requires MPI"
+  echo "-w <work_dir> : work directory. data, solutions, output files land here"
+}
+
+while getopts 'hc:s:rl:iednw' flag; do
+  case "${flag}" in
+    h) print_usage
+       exit ;;
+    c) case_dir="${OPTARG}" ;;
+    s) sol_dir="${OPTARG}" ;;
+    r) scrub_data=1 ;;
+    l) modify_load_mode="${OPTARG}" ;;
+    i) make_new_sol=1 ;;
+    p) do_submission=1 ;;
+    e) eval_sol=1 ;;
+    d) division=${OPTARG} ;;
+    n) num_proc=${OPTARG} ;;
+    w) work_dir=${OPTARG} ;;
+    *) print_usage
+       exit 1 ;;
+  esac
+done
+
+# case_dir=$1 # c
+# sol_dir=$2 # s
+
+# # set options
+# scrub_data=1
+# modify_data=1
+# make_new_sol=0
+# copy_sol=0
+# eval_sol=0
+# division=1
+# num_proc=1
 
 # if modify then use modify
 # if scrub and not modify then use scrub
 # if not scrub then use orig
 # need to scrub if modifying 
 # need to check again if scrubbing or modifying
-use_orig=0
-use_scrub=0
-use_mod=1
-check_data_again=1
+strict_names=1
+refresh_data=1
+
+if [ ! -z $modify_load_mode ]
+then
+    scrub_data=1
+    modify_data=1
+fi
+
+if [ $eval_sol -gt 0 ]
+then
+    make_new_sol=1
+fi
+
+if [ $do_submission -gt 0 ]
+then
+    make_new_sol=0
+    copy_sol=0
+fi
+
+if [ ! -z $sol_dir ]
+then
+    copy_sol=1
+    make_new_sol=0
+    do_submission=0
+fi
 
 py_dir=./data_utilities/
-work_dir=./tmp/
 # original data
 raw1="${work_dir}/case.orig.raw"
 sup1="${work_dir}/case.orig.json"
@@ -62,8 +137,10 @@ then
     mkdir "$work_dir"
 fi
 
-# clean up the directory - todo just remove everything, right?
-rm $work_dir/*.eval.log
+# clean up the directory
+# just remove everything
+# need to copy anything you need from work_dir before calling this script
+rm $work_dir/*
 
 # copy to here
 if [ $refresh_data -gt 0 ]
@@ -75,9 +152,9 @@ then
     if [ $strict_names -gt 0 ]
     then
 	echo "find case: strict names"
-	cp "${case_dir}case.raw" "$raw1"
-	cp "${case_dir}case.json" "$sup1"
-	cp "${case_dir}case.con" "$con1"
+	cp "${case_dir}/case.raw" "$raw"
+	cp "${case_dir}/case.json" "$sup"
+	cp "${case_dir}/case.con" "$con"
     else
 	echo "find case: arbitrary names"
 	cp "$case_dir"/*.raw "$work_dir"
@@ -91,78 +168,71 @@ then
 	for i in $work_dir*.raw; do
 	    [ -f "$i" ] || break
 	    #echo "$i"
-            cp "$i" "$raw1"
+            cp "$i" "$raw"
 	done
 	for i in "$work_dir"*.json; do
 	    [ -f "$i" ] || break
 	    #echo "$i"
-            cp "$i" "$sup1"
+            cp "$i" "$sup"
 	done
 	for i in "$work_dir"*.con; do
 	    [ -f "$i" ] || break
 	    #echo "$i"
-            cp "$i" "$con1"
+            cp "$i" "$con"
 	done
     fi
 fi
 
-# check data
-if [ $check_data -gt 0 ]
-then
-    echo "check data"
-    python ${py_dir}check_data.py "$raw1" "$sup1" "$con1"
-else
-    echo "skip check data"
-fi
+# save copy of original data - and check
+echo "final data file used in sol and evals:"
+echo "$raw"
+echo "$sup"
+echo "$con"
+echo "copy data"
+cp "$raw" "$raw1"
+cp "$sup" "$sup1"
+cp "$con" "$con1"
+echo "original (copied) files:"
+echo "$raw1"
+echo "$sup1"
+echo "$con1"
+echo "check original data"
+python ${py_dir}check_data.py "$raw1" "$sup1" "$con1"
 
-# scrub data
+# scrub data - and check
 if [ $scrub_data -gt 0 ]
 then
     echo "scrub data"
-    python ${py_dir}scrub_data.py "$raw1" "$sup1" "$con1" "$raw2" "$sup2" "$con2"
+    python ${py_dir}scrub_data.py "$raw" "$sup" "$con" "$raw2" "$sup2" "$con2"
+    echo "scrubbed files:"
+    echo "$raw2"
+    echo "$sup2"
+    echo "$con2"
+    cp "$raw2" "$raw"
+    cp "$sup2" "$sup"
+    cp "$con2" "$con"
+    echo "check scrubbed data"
+    python ${py_dir}check_data.py "$raw2" "$sup2" "$con2"
 else
     echo "skip scrub data"
 fi
 
-# modify data
+# modify data - and check
 if [ $modify_data -gt 0 ]
 then
     echo "modify data"
-    python ${py_dir}modify_data.py "$raw2" "$sup2" "$con2" "$raw3" "$sup3" "$con3"
-else
-    echo "skip modify data"
-fi
-
-# which data to use
-if [ $use_orig -gt 0 ]
-then
-    echo "using original data"
-    cp "$raw1" "$raw"
-    cp "$sup1" "$sup"
-    cp "$con1" "$con"
-fi
-if [ $use_scrub -gt 0 ]
-then
-    echo "using scrubbed data"
-    cp "$raw2" "$raw"
-    cp "$sup2" "$sup"
-    cp "$con2" "$con"
-fi
-if [ $use_mod -gt 0 ]
-then
-    echo "using modified data"
+    python ${py_dir}modify_data.py "$raw" "$sup" "$con" "$raw3" "$sup3" "$con3" "$modify_load_mode"
+    echo "modified files:"
+    echo "$raw3"
+    echo "$sup3"
+    echo "$con3"
     cp "$raw3" "$raw"
     cp "$sup3" "$sup"
     cp "$con3" "$con"
-fi
-
-# check data again
-if [ $check_data_again -gt 0 ]
-then
-    echo "check data final"
-    python ${py_dir}check_data.py "$raw" "$sup" "$con"
+    echo "check modified data"
+    python ${py_dir}check_data.py "$raw3" "$sup3" "$con3"
 else
-    echo "skip check data final"
+    echo "skip modify data"
 fi
 
 # construct infeasibility solution
@@ -185,7 +255,22 @@ else
     echo "skip copy stored solution"
 fi
 
-# evaluate infeasibility solution
+# do submission with infeasibility solution
+if [ $do_submission -gt 0 ]
+then
+    echo "do submission with infeasibility solution"
+    rm ./solution_*.txt
+    reserved=reserved
+    timelimit=300
+    network=network
+    python MyPython1.py "$con" "$sup" "$raw" $reserved $timelimit $division $network
+    python MyPython2.py "$con" "$sup" "$raw" $reserved $timelimit $division $network
+    mv ./solution_*.txt "$work_dir"
+else
+    echo "skip submission with infeasibility solution"
+fi
+
+# evaluate solution
 if [ $eval_sol -gt 0 ]
 then
     echo "evaluate solution"
@@ -200,35 +285,3 @@ then
 else
     echo "skip evaluate solution"
 fi
-
-# do submission with infeasibility solution
-if [ $do_submission -gt 0 ]
-then
-    echo "do submission with infeasibility solution"
-    rm ./solution_*.txt
-    reserved=reserved
-    timelimit=300
-    network=network
-    python MyPython1.py "$con" "$sup" "$raw" $reserved $timelimit $division $network
-    python MyPython2.py "$con" "$sup" "$raw" $reserved $timelimit $division $network
-else
-    echo "skip submission with infeasibility solution"
-fi
-
-# evaluate infeasibility solution
-if [ $eval_submission -gt 0 ]
-then
-    echo "evaluate submission with infeasibility solution"
-    if [ $num_proc -gt 1 ]
-    then
-	echo "using mpi, np=$num_proc"
-	mpirun -np $num_proc python ${py_dir}evaluation.py $division "$work_dir" ./
-    else
-	echo "using serial method"
-	python ${py_dir}evaluation.py $division "$work_dir" ./
-    fi
-else
-    echo "skip evaluate submission with infeasibility solution"
-fi
-
-
