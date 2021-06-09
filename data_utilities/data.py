@@ -394,10 +394,9 @@ class Data:
         self.check_gen_cost_domain(scrub_mode=True)
         self.check_load_cost_domain(scrub_mode=True)
 
-    def modify(self, load_mode=None, load_values=None):
+    def modify(self, load_mode=None, case_sol=None):
 
-        #print('modifying')
-        self.modify_load_t_min_max(mode=load_mode, values=load_values)
+        self.modify_load_t_min_max(mode=load_mode, case_sol=case_sol)
         #self.modify_load_t_min_max(mode='max', values=None)
         #self.modify_load_t_min_max(mode='min', values=None)
         #self.modify_load_t_min_max(mode='1', values=None)
@@ -465,9 +464,26 @@ class Data:
                 'cblocks': cblocks}
             self.check_cost_domain(cblocks, key, cblocks_total_pmax, pmax, cost_domain_tol, 'Load', diagnostics, scrub_mode=scrub_mode)
 
-    def modify_load_t_min_max(self, mode=None, values=None):
+    def modify_load_t_min_max(self, mode=None, case_sol=None):
         
         deltar = self.sup.sup_jsonobj['systemparameters']['deltar']
+        
+        # careful in case some loads have st=0 and therefore are not in case_sol
+        if mode == 'given':
+            t_given = {(r.i, r.id): 0.0 for r in self.raw.get_loads()}
+            #print('t_given 1: {}'.format(t_given))
+            t_given.update(
+                {k: case_sol.load_t[v] for k, v in case_sol.load_map.items()})
+            #print('t_given 2: {}'.format(t_given))
+
+        # load_i = list(self.load_df.i.values)
+        # #load_id = map(clean_string, list(self.load_df.id.values))
+        # load_id = list(self.load_df.id.values)
+        # load_key = zip(load_i, load_id)
+        # load_index = [self.load_map[k] for k in load_key]
+        # self.load_t[:] = 0.0
+        # self.load_t[load_index] = self.load_df.t.values
+
         for r in self.raw.get_loads():
             tmax = self.sup.loads[r.i, r.id]['tmax']
             tmin = self.sup.loads[r.i, r.id]['tmin']
@@ -487,9 +503,12 @@ class Data:
                 tfix = 1.0
             elif mode is None:
                 tfix = 1.0
-            #elif mode == 'given':
-            #    pass
-            #    tfix = ??
+            elif mode == 'given':
+                tfix = t_given[r.i, r.id]
+                #pass
+                #tfix = ??
+                #print('mode: {} not implemented yet'.format(mode))
+                #assert(False)
             else:
                 print('mode: {} not implemented yet'.format(mode))
                 assert(False)

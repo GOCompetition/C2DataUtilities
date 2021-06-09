@@ -11,10 +11,10 @@ execfile("modify_data.py")
 
 modifications supported:
 1. Fix load tmin and tmax to a given value, then project to ensure feasibility
-   a. = original tmin
-   b. = original tmax
-   c. = 1.0
-   d. = values read in from a file (formatted as a case solution file?)
+   4. = original tmin
+   2. = original tmax
+   5. = 1.0
+   3. = values read in from a file (formatted as a case solution file?)
 
 modifications proposed:
 2. set all generators suqual and sdqual to 0
@@ -27,8 +27,10 @@ import time
 # gocomp imports
 try:
     import data_utilities.data as data
+    from data_utilities.evaluation import Evaluation, CaseSolution
 except:
     import data
+    from evaluation import Evaluation, CaseSolution
     
 def main():
 
@@ -41,6 +43,7 @@ def main():
     parser.add_argument('sup_out', help='sup_out')
     parser.add_argument('con_out', help='con_out')
     parser.add_argument('load_mode', help='load_mode')
+    parser.add_argument('case_sol', help='case_sol')
     
     args = parser.parse_args()
 
@@ -59,8 +62,35 @@ def main():
     time_elapsed = time.time() - start_time
     print("check data time: %f" % time_elapsed)
 
+    # check prior point power balance, etc.
+    # some checks should not be done,
+    # e.g. pmin, pmax, tmin, tmax, as thes change from prior to base
+    # set up evaluation
     start_time = time.time()
-    p.modify(load_mode=args.load_mode) # max, min, 1, given. if using given, need to supply values also. todo later
+    case_sol = None
+    do_load_base_case_sol = False
+    print('hello world 1')
+    if args.load_mode in ['given']:
+        do_load_base_case_sol = True
+    if do_load_base_case_sol:
+        e = Evaluation()
+        e.set_data(p, convert_units=False)
+        case_sol = CaseSolution()
+        case_sol.set_array_dims(e)
+        case_sol.set_maps(e)
+        case_sol.init_arrays()
+        case_sol.set_read_dims()
+        case_sol.read(args.case_sol)
+        case_sol.set_arrays_from_dfs()
+        case_sol.round()
+    end_time = time.time()
+    print("load solution time: %f" % (end_time - start_time))
+
+    start_time = time.time()
+    print('modifying')
+    print('load_mode: {}'.format(args.load_mode))
+    print('case_sol: {}'.format(args.case_sol))
+    p.modify(load_mode=args.load_mode, case_sol=case_sol) # max, min, 1, given. if using given, need to supply values also. todo later
     end_time = time.time()
     print("modify data time: %f" % (end_time - start_time))
 

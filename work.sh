@@ -50,7 +50,7 @@ print_usage() {
 }
 
 while getopts 'hc:s:rl:iednw' flag; do
-  case "${flag}" in
+  case ${flag} in
     h) print_usage
        exit ;;
     c) case_dir="${OPTARG}" ;;
@@ -94,22 +94,15 @@ then
     modify_data=1
 fi
 
-if [ $eval_sol -gt 0 ]
-then
-    make_new_sol=1
-fi
-
 if [ $do_submission -gt 0 ]
 then
     make_new_sol=0
     copy_sol=0
 fi
 
-if [ ! -z $sol_dir ]
+if [ $make_new_sol -gt 0 ]
 then
-    copy_sol=1
-    make_new_sol=0
-    do_submission=0
+    copy_sol=0
 fi
 
 py_dir=./data_utilities/
@@ -221,7 +214,7 @@ fi
 if [ $modify_data -gt 0 ]
 then
     echo "modify data"
-    python ${py_dir}modify_data.py "$raw" "$sup" "$con" "$raw3" "$sup3" "$con3" "$modify_load_mode"
+    python ${py_dir}modify_data.py "$raw" "$sup" "$con" "$raw3" "$sup3" "$con3" "$modify_load_mode" "${sol_dir}/solution_BASECASE.txt"
     echo "modified files:"
     echo "$raw3"
     echo "$sup3"

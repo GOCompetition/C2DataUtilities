@@ -1600,15 +1600,16 @@ class Evaluation:
             (self.num_bus, self.num_swsh))
 
     @timeit
-    def set_data_gen_cost_params(self, data):
+    def set_data_gen_cost_params(self, data, convert_units=True):
 
         #print_info('pcblocks:')
         #print_info(self.data.sup.sup_jsonobj['pcblocks'])
-        data.sup.convert_generator_cblock_units(self.base_mva)
-        data.sup.convert_load_cblock_units(self.base_mva)
-        data.sup.convert_pcblock_units(self.base_mva)
-        data.sup.convert_qcblock_units(self.base_mva)
-        data.sup.convert_scblock_units(self.base_mva)
+        if convert_units:
+            data.sup.convert_generator_cblock_units(self.base_mva)
+            data.sup.convert_load_cblock_units(self.base_mva)
+            data.sup.convert_pcblock_units(self.base_mva)
+            data.sup.convert_qcblock_units(self.base_mva)
+            data.sup.convert_scblock_units(self.base_mva)
         #print_info('pcblocks:')
         #print_info(self.data.sup.sup_jsonobj['pcblocks'])
 
@@ -1652,7 +1653,7 @@ class Evaluation:
         self.ctg_num_xfmrs_out = [len(self.ctg_xfmrs_out[i]) for i in range(self.num_ctg)]
 
     @timeit
-    def set_data(self, data):
+    def set_data(self, data, convert_units=True):
         ''' set values from the data object
         convert to per unit (p.u.) convention'''
 
@@ -1665,7 +1666,7 @@ class Evaluation:
         self.set_data_line_params(data)
         self.set_data_xfmr_params(data)
         self.set_data_swsh_params(data)
-        self.set_data_gen_cost_params(data)
+        self.set_data_gen_cost_params(data, convert_units=convert_units)
         self.set_cost_evaluators()
         self.set_data_ctg_params(data)
 
@@ -4144,6 +4145,16 @@ class CaseSolution:
             for k,v in sections.items():
                 if v == 0:
                     print_alert('{} missing in {}'.format(k,file_name))
+
+    @timeit
+    def round(self):
+        #The commitment variables xon gk, the start up indicators xsu gk, and the shut down indicators xsd gk, are binary variables
+
+        np.around(self.gen_xon, out=self.gen_xon)
+        np.around(self.line_xsw, out=self.line_xsw)
+        np.around(self.xfmr_xsw, out=self.xfmr_xsw)
+        np.around(self.xfmr_xst, out=self.xfmr_xst)
+        np.around(self.swsh_xst, out=self.swsh_xst)
 
     @timeit
     # todo
