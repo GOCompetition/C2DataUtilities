@@ -28,11 +28,15 @@ cost_function_default_cost = 1.0e6
 
 # set defaults here
 # used in do_force_defaults
-#systemparameters_default = {
-#    "delta": 1.0,
-#    "deltactg": 1.0,
-#    "deltar": 0.1666667,
-#    "deltarctg": 0.16666667}
+do_check_delta_default = True
+do_check_deltactg_default = True
+do_check_deltar_default = False
+do_check_deltarctg_default = False
+delta_tol = 1.0/3600.0
+delta_default = 5.0/60.0
+deltactg_default = 5.0/60.0
+deltar_default = 5.0/60.0
+deltarctg_default = 5.0/60.0
 load_prumaxctg_default_equals_prumax = True
 load_prdmaxctg_default_equals_prdmax = True
 generator_prumaxctg_default_equals_prumax = True
@@ -178,7 +182,16 @@ class Sup:
         self.sup_jsonobj[cblocks_string] = cblocks
 
     def scrub_delta(self, scrub_info):
-        self.sup_jsonobj['systemparameters']['delta'] = 1.0
+        self.sup_jsonobj['systemparameters']['delta'] = delta_default
+
+    def scrub_deltactg(self, scrub_info):
+        self.sup_jsonobj['systemparameters']['deltactg'] = deltactg_default
+
+    def scrub_deltar(self, scrub_info):
+        self.sup_jsonobj['systemparameters']['deltar'] = deltar_default
+
+    def scrub_deltarctg(self, scrub_info):
+        self.sup_jsonobj['systemparameters']['deltarctg'] = deltarctg_default
 
     def scrub_load_tmin_tmax(self, scrub_info):
         scrub_info['load']['tmin'] = 0.0
@@ -330,21 +343,37 @@ class Sup:
                 scrub_info = {"handler": self.scrub_delta}
                 message = context + "{key} must be greater than zero".format(key=key)
                 self.assert_continue(condition, message, scrub_info)
+                if do_check_delta_default:
+                    condition = abs(system_parameters[key] - delta_default) <= delta_tol
+                    message = context + "{key} should be equal to {default} except with intentional justification. Current value: {val}, tolerance: {tol}. Scrubbing does not remove this warning.".format(key=key, default=delta_default, val=system_parameters[key], tol=delta_tol)
+                    self.assert_continue(condition, message)
 
             if key == "deltactg":
                 condition = system_parameters[key] > 0.0
                 message = context + "{key} must be greater than zero".format(key=key)
                 self.assert_continue(condition, message)
+                if do_check_deltactg_default:
+                    condition = abs(system_parameters[key] - deltactg_default) <= delta_tol
+                    message = context + "{key} should be equal to {default} except with intentional justification. Current value: {val}, tolerance: {tol}. Scrubbing does not remove this warning.".format(key=key, default=deltactg_default, val=system_parameters[key], tol=delta_tol)
+                    self.assert_continue(condition, message)
 
             if key == "deltar":
                 condition = system_parameters[key] > 0.0
                 message = context + "{key} must be greater than zero".format(key=key)
                 self.assert_continue(condition, message)
+                if do_check_deltar_default:
+                    condition = abs(system_parameters[key] - deltar_default) <= delta_tol
+                    message = context + "{key} should be equal to {default} except with intentional justification. Current value: {val}, tolerance: {tol}. Scrubbing does not remove this warning.".format(key=key, default=deltar_default, val=system_parameters[key], tol=delta_tol)
+                    self.assert_continue(condition, message)
 
             if key == "deltarctg":
                 condition = system_parameters[key] > 0.0
                 message = context + "{key} must be greater than zero".format(key=key)
                 self.assert_continue(condition, message)
+                if do_check_deltarctg_default:
+                    condition = abs(system_parameters[key] - deltarctg_default) <= delta_tol
+                    message = context + "{key} should be equal to {default} except with intentional justification. Current value: {val}, tolerance: {tol}. Scrubbing does not remove this warning.".format(key=key, default=deltarctg_default, val=system_parameters[key], tol=delta_tol)
+                    self.assert_continue(condition, message)
 
     def check_load(self, load):
         context = "{} [bus {}]: ".format(inspect.stack()[0][3], load["bus"])
@@ -618,11 +647,6 @@ class Sup:
     def force_defaults(self):
         '''
         TODO refine this
-        systemparameters_default = {
-            "delta": 1.0,
-            "deltactg": 1.0,
-            "deltar": 0.1666667,
-            "deltarctg": 0.16666667}
         load_prumaxctg_default_equals_prumax = True
         load_prdmaxctg_default_equals_prdmax = True
         generator_prumaxctg_default_equals_prumax = True
