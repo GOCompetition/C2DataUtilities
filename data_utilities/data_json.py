@@ -350,8 +350,9 @@ class Sup:
 
             if key == "deltactg":
                 condition = system_parameters[key] > 0.0
+                scrub_info = {"handler": self.scrub_deltactg}
                 message = context + "{key} must be greater than zero".format(key=key)
-                self.assert_continue(condition, message)
+                self.assert_continue(condition, message, scrub_info)
                 if do_check_deltactg_default:
                     condition = abs(system_parameters[key] - deltactg_default) <= delta_tol
                     message = context + "{key} should be equal to {default} except with intentional justification. Current value: {val}, tolerance: {tol}. Scrubbing does not remove this warning.".format(key=key, default=deltactg_default, val=system_parameters[key], tol=delta_tol)
@@ -359,8 +360,9 @@ class Sup:
 
             if key == "deltar":
                 condition = system_parameters[key] > 0.0
+                scrub_info = {"handler": self.scrub_deltar}
                 message = context + "{key} must be greater than zero".format(key=key)
-                self.assert_continue(condition, message)
+                self.assert_continue(condition, message, scrub_info)
                 if do_check_deltar_default:
                     condition = abs(system_parameters[key] - deltar_default) <= delta_tol
                     message = context + "{key} should be equal to {default} except with intentional justification. Current value: {val}, tolerance: {tol}. Scrubbing does not remove this warning.".format(key=key, default=deltar_default, val=system_parameters[key], tol=delta_tol)
@@ -368,8 +370,9 @@ class Sup:
 
             if key == "deltarctg":
                 condition = system_parameters[key] > 0.0
+                scrub_info = {"handler": self.scrub_deltarctg}
                 message = context + "{key} must be greater than zero".format(key=key)
-                self.assert_continue(condition, message)
+                self.assert_continue(condition, message, scrub_info)
                 if do_check_deltarctg_default:
                     condition = abs(system_parameters[key] - deltarctg_default) <= delta_tol
                     message = context + "{key} should be equal to {default} except with intentional justification. Current value: {val}, tolerance: {tol}. Scrubbing does not remove this warning.".format(key=key, default=deltarctg_default, val=system_parameters[key], tol=delta_tol)
