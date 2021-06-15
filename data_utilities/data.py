@@ -573,7 +573,8 @@ class Data:
             new_cblocks = sorted(cblocks, key=(lambda x: x['c']))
             new_cblocks[num_cblocks - 1]['pmax'] += (shortfall + 1.0)
         elif max([b['pmax'] for b in cblocks]) > pmax + tol + 1:
-            new_cblocks = [{'pmax': pmax + tol + 1.0, 'c': b['c']} for b in cblocks]
+            #new_cblocks = [{'pmax': pmax + tol + 1.0, 'c': b['c']} for b in cblocks] # bug: this resets pmax of all blocks, potentially expanding some of them
+            new_cblocks = [{'pmax': min(pmax + tol + 0.5, b['pmax']), 'c': b['c']} for b in cblocks] # bug fix: this resets pmax only for blocks that have too large pmax
         
         if data_type == 'Load':
             self.sup.loads[key]['cblocks'] = new_cblocks
