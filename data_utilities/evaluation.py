@@ -4955,11 +4955,15 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     sol_ctg_path = f"{solution_path}/solution_*.txt"
     solution_files = glob.glob( str( sol_ctg_path)  )
     solution2_files = [ solution_file for solution_file in solution_files if "BASECASE" not in solution_file]
+
+    # check base case solution file exists
     base_case_solution_files = [solution_file for solution_file in solution_files if "BASECASE" in solution_file]
     print_alert(
         'Expected 1 BASECASE solution file, Encountered {} BASECASE solution files, files found: {}'.format(
             len(base_case_solution_files), base_case_solution_files),
         check_passed=(len(base_case_solution_files) == 1))
+    if len(base_case_solution_files) != 1:
+        e.summary2['solutions_exist'] = False
     
     #self.ctg_label#?????
     #print(solution2_files)
@@ -4967,16 +4971,25 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         Path(solution_file).resolve().stem.replace("solution_","")
         for solution_file in solution2_files]
     ctg_labels_in_con = e.ctg_label
+
+    # check contingency solution files exist
     ctg_labels_in_con_not_in_sol = sorted(list(set(ctg_labels_in_con).difference(set(ctg_labels_in_sol))))
     print_alert(
         'Expected 0 contingencies in CON not in solution_*.txt, found {}: {}'.format(
             len(ctg_labels_in_con_not_in_sol), ctg_labels_in_con_not_in_sol),
         check_passed=(len(ctg_labels_in_con_not_in_sol) == 0))
+    if len(ctg_labels_in_con_not_in_sol) > 0:
+        e.summary2['solutions_exist'] = False
+
+    # check no extra solution files
+    # do not need to return infeasible if extra solution files. it is just strange
     ctg_labels_in_sol_not_in_con = sorted(list(set(ctg_labels_in_sol).difference(set(ctg_labels_in_con))))
     print_alert(
         'Expected 0 contingencies in solution_*.txt not in CON, found {}: {}'.format(
             len(ctg_labels_in_sol_not_in_con), ctg_labels_in_sol_not_in_con),
         check_passed=(len(ctg_labels_in_sol_not_in_con) == 0))
+    #if len(ctg_labels_in_sol_not_in_con) > 0:
+    #    e.summary2['solutions_exist'] = False
 
     #with open(str(con_name)) as f:
     #   expected = sum('CONTINGENCY' in line for line in f)
@@ -4991,13 +5004,9 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     except:
         pass
 
-    #solutions_exist = (expected == found)
-    e.summary2['solutions_exist'] = (found == e.num_ctg)
-
     if e.summary2['solutions_exist'] == False:
         if process_rank == 0:
             print_info(f'Some solution files are missing. Exiting...')
-        # todo - which ones? need to check that the solutions found are exactly the ones that are expected
         #return (None, 1, e.summary2['solutions_exist'], e.summary_all_cases, e.summary2)   
         rval = (None, 1, e.summary2['solutions_exist'], e.summary_all_cases)   
         print('returning obj: {}, infeas: {}, sol_exist: {}'.format(rval[0], rval[1], rval[2]))
