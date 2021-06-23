@@ -119,6 +119,7 @@ summary_keys = [
     'total_xfmr_limit_cost',
     'total_xfmr_switch_cost',
     'min_total_load_benefit',
+    'max_total_load_benefit',
     'bus_volt_mag_max_viol',
     'bus_volt_mag_min_viol',
     'bus_pow_real_imbalance',
@@ -207,6 +208,7 @@ summary2_keys = [
     "total_line_cost",
     "total_xfmr_cost",
     "min_total_load_benefit",
+    "max_total_load_benefit",
     "base_gen_switch_up_actual",
     "base_gen_switch_up_max",
     "base_gen_switch_down_actual",
@@ -286,6 +288,8 @@ summary2_keys = [
     "total_xfmr_switch_cost",
     "base_min_total_load_benefit",
     "ctg_min_total_load_benefit",
+    "base_max_total_load_benefit",
+    "ctg_max_total_load_benefit",
     "base_max_bus_pow_real_over",
     "ctg_max_bus_pow_real_over",
     "max_bus_pow_real_over",
@@ -867,6 +871,10 @@ class Evaluation:
         self.summary2['base_min_total_load_benefit'] = self.summary_all_cases['BASECASE']['min_total_load_benefit']['val']
         self.summary2['ctg_min_total_load_benefit'] = np.sum([self.summary_all_cases[k]['min_total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg
         self.summary2['min_total_load_benefit'] = self.summary2['base_min_total_load_benefit'] + self.summary2['ctg_min_total_load_benefit']
+
+        self.summary2['base_max_total_load_benefit'] = self.summary_all_cases['BASECASE']['max_total_load_benefit']['val']
+        self.summary2['ctg_max_total_load_benefit'] = np.sum([self.summary_all_cases[k]['max_total_load_benefit']['val'] for k in ctg_labels]) / self.num_ctg
+        self.summary2['max_total_load_benefit'] = self.summary2['base_max_total_load_benefit'] + self.summary2['ctg_max_total_load_benefit']
 
         # switching
         self.summary2['base_gen_switch_up_actual'] = self.summary_all_cases['BASECASE']['gen_switch_up_actual']['val']
@@ -3249,16 +3257,25 @@ class Evaluation:
 
         self.summarize('load_benefit', self.load_benefit, self.load_key)
         self.summarize('min_total_load_benefit', self.min_total_load_benefit * self.delta) # apply delta here
+        self.summarize('max_total_load_benefit', self.max_total_load_benefit * self.delta) # apply delta here
 
     @timeit
-    def eval_min_total_load_benefit(self):
+    def eval_min_max_total_load_benefit(self):
         # call this only in the base case
         # report it in every case
         # apply delta in each case not here
+        # note, this does not account for ramping constraints
 
         np.multiply(self.load_pow_real_0, self.load_t_min, out=self.load_temp)
         self.load_cost_evaluator.eval_benefit(self.load_temp, self.load_benefit)
         self.min_total_load_benefit = float(np.sum(self.load_benefit))
+
+        # 2021-06-23 adding max total load benefit
+        np.multiply(self.load_pow_real_0, self.load_t_max, out=self.load_temp)
+        self.load_cost_evaluator.eval_benefit(self.load_temp, self.load_benefit)
+        self.max_total_load_benefit = float(np.sum(self.load_benefit))
+
+        # todo 2021-06-23 account for ramping
 
     @timeit
     def eval_gen_ramp_viol(self):
@@ -4836,7 +4853,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
         e.xfmr_switching_allowed = xfmr_switching_allowed
     e.set_data(p)
     e.set_sol_initialize()
-    e.eval_min_total_load_benefit()
+    e.eval_min_max_total_load_benefit()
 
     #print_alert('done setting evaluation data',raise_exception=False)
     print_info('done setting evaluation data')
