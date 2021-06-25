@@ -5015,11 +5015,22 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     if log_fileobject is not None:
        log_fileobject.close()
 
-
+    # now we can assume we have a solution file for every contingency in the CON file
+    # but there might be solution files for nonexistent contingencies
+    # get the files with labels corresponding to real contingencies
+    label_to_sol_file_dict = {
+        Path(solution_file).resolve().stem.replace("solution_",""):solution_file
+        for solution_file in solution2_files}
+    sol_files_with_label_in_con = [
+        label_to_sol_file_dict[label]
+        for label in ctg_labels_in_con]
 
     #start_time = time.time()
 
     #CHALLENGE2 - Contingencies will be spread across provided processors
+
+    # use only the solution files corresponding to real contingencies
+    solution2_files = sol_files_with_label_in_con
 
     contingency_labels = [Path(solution_file).resolve().stem.replace("solution_","")  for solution_file in solution2_files if not 'BASECASE' in solution_file]   
     contingency_list = { p[0]: { 'label':p[0], 'path':p[1]} for p in zip(contingency_labels, solution2_files)  }
