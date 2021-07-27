@@ -58,7 +58,7 @@ def main():
     e = Evaluation()
     e.set_data(p)
     e.set_sol_initialize()
-    e.eval_min_total_load_benefit()
+    e.eval_min_max_total_load_benefit()
     s = CaseSolution()
     s.set_array_dims(e)
     s.set_maps(e)
