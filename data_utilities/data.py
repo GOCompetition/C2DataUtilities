@@ -394,9 +394,9 @@ class Data:
         self.check_gen_cost_domain(scrub_mode=True)
         self.check_load_cost_domain(scrub_mode=True)
 
-    def modify(self, load_mode=None, case_sol=None):
+    def modify(self, load_mode=None, case_sol=None, load_min_max_interp=None):
 
-        self.modify_load_t_min_max(mode=load_mode, case_sol=case_sol)
+        self.modify_load_t_min_max(mode=load_mode, case_sol=case_sol, load_min_max_interp=load_min_max_interp)
         #self.modify_load_t_min_max(mode='max', values=None)
         #self.modify_load_t_min_max(mode='min', values=None)
         #self.modify_load_t_min_max(mode='1', values=None)
@@ -464,7 +464,7 @@ class Data:
                 'cblocks': cblocks}
             self.check_cost_domain(cblocks, key, cblocks_total_pmax, pmax, cost_domain_tol, 'Load', diagnostics, scrub_mode=scrub_mode)
 
-    def modify_load_t_min_max(self, mode=None, case_sol=None):
+    def modify_load_t_min_max(self, mode=None, case_sol=None, load_min_max_interp=None):
         
         deltar = self.sup.sup_jsonobj['systemparameters']['deltar']
         
@@ -509,6 +509,11 @@ class Data:
                 #tfix = ??
                 #print('mode: {} not implemented yet'.format(mode))
                 #assert(False)
+            elif mode == 'minmax':
+                if load_min_max_interp is None:
+                    print('modify_load error with mode: {}, load_min_max_interp: {}'.format(mode, load_min_max_iterp))
+                else:
+                    tfix = tmin + (tmax - tmin) * float(load_min_max_interp)
             else:
                 print('mode: {} not implemented yet'.format(mode))
                 assert(False)

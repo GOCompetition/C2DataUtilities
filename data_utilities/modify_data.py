@@ -15,6 +15,7 @@ modifications supported:
    2. = original tmax
    5. = 1.0
    3. = values read in from a file (formatted as a case solution file?)
+   ?  = tmin + mu * (tmax - tmin) for a specified mu
 
 modifications proposed:
 2. set all generators suqual and sdqual to 0
@@ -44,6 +45,7 @@ def main():
     parser.add_argument('con_out', help='con_out')
     parser.add_argument('load_mode', help='load_mode')
     parser.add_argument('case_sol', help='case_sol')
+    parser.add_argument('load_min_max_interp', help='load_min_max_interp')
     
     args = parser.parse_args()
 
@@ -80,7 +82,9 @@ def main():
         case_sol.set_maps(e)
         case_sol.init_arrays()
         case_sol.set_read_dims()
+        print('hello world 2. case_sol: {}'.format(args.case_sol))
         case_sol.read(args.case_sol)
+        print('hello world 3')
         case_sol.set_arrays_from_dfs()
         case_sol.round()
     end_time = time.time()
@@ -90,7 +94,8 @@ def main():
     print('modifying')
     print('load_mode: {}'.format(args.load_mode))
     print('case_sol: {}'.format(args.case_sol))
-    p.modify(load_mode=args.load_mode, case_sol=case_sol) # max, min, 1, given. if using given, need to supply values also. todo later
+    print('load_min_max_interp: {}'.format(args.load_min_max_interp))
+    p.modify(load_mode=args.load_mode, case_sol=case_sol, load_min_max_interp=args.load_min_max_interp) # max, min, 1, given. if using given, need to supply values also. todo later
     end_time = time.time()
     print("modify data time: %f" % (end_time - start_time))
 

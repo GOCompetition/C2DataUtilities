@@ -7,8 +7,8 @@
 # $ ./work.sh -c ./test_data/ieee14/scenario_1/ -s ./tmpsol/sol1/
 #
 # c: case_dir - if present copy case from there
-# s: sol_dir - if present copy a solution from there
-# r scrub_data
+# s: sol_dir - if present copy a solution from there - need to edit work.sh copy_sol=0 to =1 by hand for now
+# r: scrub_data
 # m: modify_mode - if present, do modify
 # i: use prior operating point solver to make a new solution
 # p: do a platform submission of the prior operating point solver to make a new solution
@@ -16,6 +16,7 @@
 # d: division
 # n: num_proc
 # w: work directory
+# x: output a table of solution changes to this file in CSV format
 
 # default values of flag arguments
 case_dir=./test_data/ieee14/scenario_1
@@ -24,12 +25,13 @@ scrub_data=0
 modify_load_mode=
 modify_data=0
 make_new_sol=0
-copy_sol=0 # need to edit this by hand for now
+copy_sol=1 # need to edit this by hand for now
 do_submission=0
 eval_sol=0
 division=1
 num_proc=1
 work_dir=./tmp/
+load_min_max_interp=0
 
 print_usage() {
   echo "Usage:"
@@ -37,7 +39,7 @@ print_usage() {
   echo ""
   echo "flags:"
   echo "-h : help"
-  echo "-c <case_dir> : if present copy case from there"
+  echo "-c <case_dir> : if present copy case from there - need to edit work.sh copy_sol=0 to =1 by hand for now"
   echo "-s <sol_dir> : if present copy a solution from there"
   echo "-r : scrub_data"
   echo "-l <modify_load_mode> : if present, do modify with this mode"
@@ -47,9 +49,10 @@ print_usage() {
   echo "-d <division> : division = 1, 2, 3, 4"
   echo "-n <num_proc> : number of processes in eval, > 1 requires MPI"
   echo "-w <work_dir> : work directory. data, solutions, output files land here"
+  echo "-t <load_min_max_interp> : interpolation parameter between load tmin and tmax when modify_load_mode=='minmax'"
 }
 
-while getopts 'hc:s:rl:iednw' flag; do
+while getopts 'hc:s:rl:ied:n:w:t:' flag; do
   case ${flag} in
     h) print_usage
        exit ;;
@@ -63,10 +66,15 @@ while getopts 'hc:s:rl:iednw' flag; do
     d) division=${OPTARG} ;;
     n) num_proc=${OPTARG} ;;
     w) work_dir=${OPTARG} ;;
+    t) load_min_max_interp=${OPTARG} ;;
     *) print_usage
        exit 1 ;;
   esac
 done
+
+echo "case_dir: $case_dir"
+echo "sol_dir: $sol_dir"
+echo "division: $division"
 
 # case_dir=$1 # c
 # sol_dir=$2 # s
@@ -214,7 +222,7 @@ fi
 if [ $modify_data -gt 0 ]
 then
     echo "modify data"
-    python ${py_dir}modify_data.py "$raw" "$sup" "$con" "$raw3" "$sup3" "$con3" "$modify_load_mode" "${sol_dir}/solution_BASECASE.txt"
+    python ${py_dir}modify_data.py "$raw" "$sup" "$con" "$raw3" "$sup3" "$con3" "$modify_load_mode" "${sol_dir}/solution_BASECASE.txt" "$load_min_max_interp"
     echo "modified files:"
     echo "$raw3"
     echo "$sup3"

@@ -601,6 +601,7 @@ def print_alert(message,  raise_exception = stop_on_errors, check_passed = None,
             if not evaluation.summary_written:
                 #evaluation.write_detail(eval_out_path, active_case, detail_csv=True)
                 evaluation.write_detail(eval_out_path, active_case, detail_json=True)
+                evaluation.write_sol_change(eval_out_path, active_case)
                 evaluation.summary_written = True
 
                 # todo 1
@@ -702,6 +703,8 @@ class Evaluation:
         #self.obj_cumulative = 0.0
         #self.obj_all_cases = {}
         self.detail_csv_header_done = False
+        self.sol_change = pd.DataFrame()
+        #self.sol_change_all_cases = {}
 
         '''
         self.base_gen_switch_up_actual = 0.0
@@ -740,6 +743,7 @@ class Evaluation:
         self.write_detail_all_cases_json(path)
         self.write_detail_all_cases_csv(path)
         #self.json_to_csv(path)
+        self.write_sol_change_all_cases(path) # needs to read a bunch of individual case sol_change_files, append them, and write the big one
 
     @timeit
     def add_case_info_to_summary(self):
@@ -1204,6 +1208,20 @@ class Evaluation:
             writer = csv.writer(outfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for k in summary2_keys:
                 writer.writerow([k, self.summary2[k]])
+
+    def write_sol_change_all_cases(self, path):
+
+        case_sol_change_files = [f for f in glob.glob(str('{}/sol_change_*.csv'.format(path)))]
+        case_sol_change = [pd.read_csv(f, sep='\t') for f in case_sol_change_files]
+        case_sol_change = pd.concat(case_sol_change, axis=0, ignore_index=True, copy=False)
+        case_sol_change.to_csv('{}/sol_change.csv'.format(path), sep='\t', index=False)
+
+    def write_sol_change(self, path, case):
+
+        # write a single-case sol_change file for the indicated case from the current sol_change df
+        self.sol_change['case'] = case
+        self.sol_change['base'] = (case == 'BASECASE')
+        self.sol_change.to_csv('{}/sol_change_{}.csv'.format(path, case), sep='\t', index=False)
 
     def write_detail(self, path, case, detail_csv=False, detail_json=False):
 
@@ -2967,8 +2985,21 @@ class Evaluation:
         #The start up and shut down indicators xsu gk, xsd gk, are deﬁned by changes in the commitment status xon gk relative to the prior commitment status
         #C2 A1 S5 #78 TO #80
 
+        # get change
         np.subtract(self.gen_xon, self.gen_xon_prior, out=self.gen_temp) # diff to prior
         np.multiply(self.gen_temp, self.gen_service_status, out=self.gen_temp) # 0 if out of service anyway
+
+        # record changes
+        change_indices = np.nonzero(self.gen_temp)[0]
+        self.gen_change = pd.DataFrame({
+                'type': 'gen',
+                'bus1': [self.gen_i[i] for i in change_indices],
+                #'bus2': [],
+                'id': [self.gen_id[i] for i in change_indices],
+                'var': 'x',
+                'change': self.gen_temp[change_indices]})
+
+        # split to su and sd
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_xsu) # positive part
         np.negative(self.gen_temp, out=self.gen_temp)
         np.clip(self.gen_temp, a_min=0.0, a_max=None, out=self.gen_xsd) # negative part
@@ -3019,8 +3050,21 @@ class Evaluation:
         #print_info('debug: {}'.format(self.line_xsw_prior))
         #print_info('debug: {}'.format(self.line_sw_qual))
 
+        # change
         np.subtract(self.line_xsw, self.line_xsw_prior, out=self.line_temp)
         np.multiply(self.line_temp, self.line_service_status, out=self.line_temp) # 0 if out of service anyway
+
+        # record changes
+        change_indices = np.nonzero(self.line_temp)[0]
+        self.line_change = pd.DataFrame({
+                'type': 'line',
+                'bus1': [self.line_i[i] for i in change_indices],
+                'bus2': [self.line_j[i] for i in change_indices],
+                'id': [self.line_ckt[i] for i in change_indices],
+                'var': 'x',
+                'change': self.line_temp[change_indices]})
+
+        # get pos-neg
         np.clip(self.line_temp, a_min=0.0, a_max=None, out=self.line_xsu) # positive part
         np.negative(self.line_temp, out=self.line_temp)
         np.clip(self.line_temp, a_min=0.0, a_max=None, out=self.line_xsd) # negative part
@@ -3057,8 +3101,21 @@ class Evaluation:
     def eval_xfmr_xsw_qual(self):
         # C2 A1 S6 #86
 
+        # get change
         np.subtract(self.xfmr_xsw, self.xfmr_xsw_prior, out=self.xfmr_temp)
         np.multiply(self.xfmr_temp, self.xfmr_service_status, out=self.xfmr_temp) # 0 if out of service anyway
+
+        # record changes
+        change_indices = np.nonzero(self.xfmr_temp)[0]
+        self.xfmr_change = pd.DataFrame({
+                'type': 'xfmr',
+                'bus1': [self.xfmr_i[i] for i in change_indices],
+                'bus2': [self.xfmr_j[i] for i in change_indices],
+                'id': [self.xfmr_ckt[i] for i in change_indices],
+                'var': 'x',
+                'change': self.xfmr_temp[change_indices]})
+
+        # get pos-neg
         np.clip(self.xfmr_temp, a_min=0.0, a_max=None, out=self.xfmr_xsu) # positive part
         np.negative(self.xfmr_temp, out=self.xfmr_temp)
         np.clip(self.xfmr_temp, a_min=0.0, a_max=None, out=self.xfmr_xsd) # negative part
@@ -3546,6 +3603,18 @@ class Evaluation:
 
         # delta to prior - call at the end. it uses computed data
         self.eval_delta_to_prior()
+
+        # compile changes
+        self.compile_sol_change()
+
+    @timeit
+    def compile_sol_change(self):
+
+        self.sol_change = pd.concat(
+            [self.gen_change,
+             self.line_change,
+             self.xfmr_change],
+            axis=0)
 
     @timeit
     def eval_delta_to_prior(self):
@@ -4908,6 +4977,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     # write summary
     if not e.summary_written:
         e.write_detail(eval_out_path, active_case, detail_json=True)
+        e.write_sol_change(eval_out_path, active_case)
         if USE_MPI:
             #e.write_detail(eval_out_path,
             # if using MPI, write out each case as a single row in its own file as eval_detail_<case_label>.csv
@@ -5113,6 +5183,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
             # write summary
             if not e.summary_written:
                 e.write_detail(eval_out_path, active_case, detail_json=True)
+                e.write_sol_change(eval_out_path, active_case)
                 #e.write_detail(eval_out_path, active_case, detail_csv=True)
                 e.summary_written = True
 
@@ -5216,6 +5287,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
                     #with open(eval_out_path + '/' + active_case + '.tmp', mode='w') as tmp_out_file:
                     #    tmp_out_file.write('test')
                     e.write_detail(eval_out_path, active_case, detail_json=True)
+                    e.write_sol_change(eval_out_path, active_case)
                     #self.write_detail(eval_out_path, active_case, detail_csv=True)
 
                 except:
