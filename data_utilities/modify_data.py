@@ -46,6 +46,7 @@ def main():
     parser.add_argument('load_mode', help='load_mode')
     parser.add_argument('case_sol', help='case_sol')
     parser.add_argument('load_min_max_interp', help='load_min_max_interp')
+    parser.add_argument('load_min_max_tol', help='load_min_max_tol')
     
     args = parser.parse_args()
 
@@ -95,7 +96,8 @@ def main():
     print('load_mode: {}'.format(args.load_mode))
     print('case_sol: {}'.format(args.case_sol))
     print('load_min_max_interp: {}'.format(args.load_min_max_interp))
-    p.modify(load_mode=args.load_mode, case_sol=case_sol, load_min_max_interp=args.load_min_max_interp) # max, min, 1, given. if using given, need to supply values also. todo later
+    print('load_min_max_tol: {}'.format(args.load_min_max_tol))
+    p.modify(load_mode=args.load_mode, case_sol=case_sol, load_min_max_interp=args.load_min_max_interp, load_min_max_tol=args.load_min_max_tol) # max, min, 1, given. if using given, need to supply values also. todo later
     end_time = time.time()
     print("modify data time: %f" % (end_time - start_time))
 

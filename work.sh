@@ -17,6 +17,7 @@
 # n: num_proc
 # w: work directory
 # x: output a table of solution changes to this file in CSV format
+# z: 
 
 # default values of flag arguments
 case_dir=./test_data/ieee14/scenario_1
@@ -32,6 +33,7 @@ division=1
 num_proc=1
 work_dir=./tmp/
 load_min_max_interp=0
+load_min_max_tol=0
 
 print_usage() {
   echo "Usage:"
@@ -50,9 +52,10 @@ print_usage() {
   echo "-n <num_proc> : number of processes in eval, > 1 requires MPI"
   echo "-w <work_dir> : work directory. data, solutions, output files land here"
   echo "-t <load_min_max_interp> : interpolation parameter between load tmin and tmax when modify_load_mode=='minmax'"
+  echo "-z <load_min_max_tol> : tolerance on load fixed t implemented as tmin = tfix - tol, tmax = tfix + tol"
 }
 
-while getopts 'hc:s:rl:ied:n:w:t:' flag; do
+while getopts 'hc:s:rl:ied:n:w:t:z:' flag; do
   case ${flag} in
     h) print_usage
        exit ;;
@@ -67,6 +70,7 @@ while getopts 'hc:s:rl:ied:n:w:t:' flag; do
     n) num_proc=${OPTARG} ;;
     w) work_dir=${OPTARG} ;;
     t) load_min_max_interp=${OPTARG} ;;
+    z) load_min_max_tol=${OPTARG} ;;
     *) print_usage
        exit 1 ;;
   esac
@@ -222,7 +226,7 @@ fi
 if [ $modify_data -gt 0 ]
 then
     echo "modify data"
-    python ${py_dir}modify_data.py "$raw" "$sup" "$con" "$raw3" "$sup3" "$con3" "$modify_load_mode" "${sol_dir}/solution_BASECASE.txt" "$load_min_max_interp"
+    python ${py_dir}modify_data.py "$raw" "$sup" "$con" "$raw3" "$sup3" "$con3" "$modify_load_mode" "${sol_dir}/solution_BASECASE.txt" "$load_min_max_interp" "$load_min_max_tol"
     echo "modified files:"
     echo "$raw3"
     echo "$sup3"

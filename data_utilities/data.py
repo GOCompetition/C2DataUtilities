@@ -394,9 +394,9 @@ class Data:
         self.check_gen_cost_domain(scrub_mode=True)
         self.check_load_cost_domain(scrub_mode=True)
 
-    def modify(self, load_mode=None, case_sol=None, load_min_max_interp=None):
+    def modify(self, load_mode=None, case_sol=None, load_min_max_interp=None, load_min_max_tol=None):
 
-        self.modify_load_t_min_max(mode=load_mode, case_sol=case_sol, load_min_max_interp=load_min_max_interp)
+        self.modify_load_t_min_max(mode=load_mode, case_sol=case_sol, load_min_max_interp=load_min_max_interp, load_min_max_tol=load_min_max_tol)
         #self.modify_load_t_min_max(mode='max', values=None)
         #self.modify_load_t_min_max(mode='min', values=None)
         #self.modify_load_t_min_max(mode='1', values=None)
@@ -464,8 +464,11 @@ class Data:
                 'cblocks': cblocks}
             self.check_cost_domain(cblocks, key, cblocks_total_pmax, pmax, cost_domain_tol, 'Load', diagnostics, scrub_mode=scrub_mode)
 
-    def modify_load_t_min_max(self, mode=None, case_sol=None, load_min_max_interp=None):
-        
+    def modify_load_t_min_max(self, mode=None, case_sol=None, load_min_max_interp=0.0, load_min_max_tol=0.0):
+
+        load_min_max_interp = float(load_min_max_interp)
+        load_min_max_tol = float(load_min_max_tol)
+
         deltar = self.sup.sup_jsonobj['systemparameters']['deltar']
         
         # careful in case some loads have st=0 and therefore are not in case_sol
@@ -483,6 +486,8 @@ class Data:
         # load_index = [self.load_map[k] for k in load_key]
         # self.load_t[:] = 0.0
         # self.load_t[load_index] = self.load_df.t.values
+
+        print('hello 10, mode: {}, load_min_max_tol: {}'.format(mode, load_min_max_tol))
 
         for r in self.raw.get_loads():
             tmax = self.sup.loads[r.i, r.id]['tmax']
@@ -517,14 +522,27 @@ class Data:
             else:
                 print('mode: {} not implemented yet'.format(mode))
                 assert(False)
+
+            # project fixed value to feas
             if tfix > feas_t_max:
                 tfix = feas_t_max
             if tfix < feas_t_min:
                 tfix = feas_t_min
+
+            # add tolerance
+            tfixmax = tfix + load_min_max_tol
+            tfixmin = tfix - load_min_max_tol
+            if tfixmax > feas_t_max:
+                tfixmax = feas_t_max
+            if tfixmin < feas_t_min:
+                tfixmin = feas_t_min
+
+            print('i: {}, id: {}, pl: {}, tmax: {}, tmin: {}, tfixmax: {}, tfixmin: {}, feas_t_max: {}, feas_t_min: {}'.format(r.i, r.id, r.pl, self.sup.loads[r.i, r.id]['tmax'], self.sup.loads[r.i, r.id]['tmin'], tfixmax, tfixmin, feas_t_max, feas_t_min))
+            self.sup.loads[r.i, r.id]['tmax'] = tfixmax
+            self.sup.loads[r.i, r.id]['tmin'] = tfixmin
             print('i: {}, id: {}, pl: {}, tmax: {}, tmin: {}'.format(r.i, r.id, r.pl, self.sup.loads[r.i, r.id]['tmax'], self.sup.loads[r.i, r.id]['tmin']))
-            self.sup.loads[r.i, r.id]['tmax'] = tfix
-            self.sup.loads[r.i, r.id]['tmin'] = tfix
-            print('i: {}, id: {}, pl: {}, tmax: {}, tmin: {}'.format(r.i, r.id, r.pl, self.sup.loads[r.i, r.id]['tmax'], self.sup.loads[r.i, r.id]['tmin']))
+
+        print('hello 11')
 
     def check_cost_domain(self, cblocks, key, cblocks_total_pmax, pmax, tol, data_type, diagnostics, scrub_mode=False):
 
