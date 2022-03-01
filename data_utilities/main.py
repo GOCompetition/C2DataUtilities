@@ -87,6 +87,7 @@ def run():
 
     # todo 3/1/2022
     # add eval_variant argument
+    # test commit hello world
     eval_variant = None # normal evaluation
     eval_variant = 'C2V1' # do not round integer variables
 
