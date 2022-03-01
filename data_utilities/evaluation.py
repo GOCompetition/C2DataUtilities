@@ -3954,7 +3954,7 @@ class CaseSolution:
 # todo extract this to another module
 # e.g. evaluate_solution.py, evaluate_solution_serial.py, evaluate_solution_mpi.py, etc.
 @timeit
-def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary_name=None, detail_name=None, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
+def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary_name=None, detail_name=None, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None, do_round_sol=True):
 
     # todo - remove
     if debug:
@@ -4101,7 +4101,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
     # copy solution into evaluation
     e.set_sol(sb)
-    e.round_sol()
+    if do_round_sol:
+        e.round_sol()
 
     # and evaluate...
     e.eval_case()
@@ -4299,7 +4300,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
                 # copy solution into evaluation
                 e.set_sol(sc)
-                e.round_sol()
+                if do_round_sol:
+                    e.round_sol()
 
                 # and evaluate...
                 e.eval_case()
@@ -4410,7 +4412,8 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
 
                     # copy solution into evaluation
                     e.set_sol(sc)
-                    e.round_sol()
+                    if do_round_sol:
+                        e.round_sol()
 
                     # and evaluate...
                     e.eval_case()
@@ -4464,7 +4467,7 @@ def run(raw_name, con_name, sup_name, solution_path=None, ctg_name=None, summary
     return rval
 
 
-def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None):
+def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr_switching_allowed=None, check_contingencies=None, eval_variant=None):
 
     global active_case
     global active_solution_path
@@ -4506,8 +4509,13 @@ def run_main(data_basepath, solution_basepath, line_switching_allowed=None, xfmr
     print_info(f'Setting data path to {data_basepath}')
     print_info(f'Setting solution path to {solution_basepath}')
 
+    if eval_variant is None:
+        do_round_sol = True
+    elif eval_variant == 'C2V1':
+        do_round_sol = False
+
     try:
-        return run(raw_name, con_name, sup_name,solution_basepath, ctg_name, summary_name, detail_name, line_switching_allowed, xfmr_switching_allowed, check_contingencies)
+        return run(raw_name, con_name, sup_name,solution_basepath, ctg_name, summary_name, detail_name, line_switching_allowed, xfmr_switching_allowed, check_contingencies, do_round_sol)
     except:
         var = traceback.format_exc()
         traceback.print_exc()
@@ -4545,7 +4553,9 @@ def main():
     #xfmr_switching_allowed = True if arg_division == '3' or arg_division == '4' else None
     check_contingencies = True # set to False to check just the base case
 
-    run_main(arg_datapath, arg_basepath, line_switching_allowed, xfmr_switching_allowed, check_contingencies)
+    eval_variant = None
+    #eval_variant = 'C2V1'
+    run_main(arg_datapath, arg_basepath, line_switching_allowed, xfmr_switching_allowed, check_contingencies, eval_variant)
 
 if __name__ == "__main__":
     main()

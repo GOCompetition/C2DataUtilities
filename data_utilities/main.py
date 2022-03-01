@@ -85,6 +85,11 @@ def run():
     parser.add_argument('code2_runtime_goal_sec', help='code2 runtime goal', action="store", nargs='?')
     parser.add_argument('is_sensitive', help='Is the dataset sensitive? yes=1, no=0', action="store", nargs='?')
 
+    # todo 3/1/2022
+    # add eval_variant argument
+    eval_variant = None # normal evaluation
+    eval_variant = 'C2V1' # do not round integer variables
+
     #parser.add_argument('out', help='path name of the .csv file to write')
     
     args = parser.parse_args()
@@ -156,7 +161,7 @@ def run():
             args_summary = "{}/GOCFeasibility_base.csv".format(output_path)
             args_detail = "{}/{}_DetailedSolution_base.csv".format(output_path, args.model_scenario_number)
             
-            (obj, infeas, solutions_exist, summary_all_cases) = evaluation.run_main(scenario_path,  args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False)
+            (obj, infeas, solutions_exist, summary_all_cases) = evaluation.run_main(scenario_path,  args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=False, eval_variant=eval_variant)
             if solutions_exist == False or obj == None:
                 raise Exception ("Missing solution or obj is None")
 
@@ -197,7 +202,7 @@ def run():
     try:
 
         #if solutions_exist:
-        (obj, infeas, solutions_exist,summary_all_cases) = evaluation.run_main(scenario_path, args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True)
+        (obj, infeas, solutions_exist,summary_all_cases) = evaluation.run_main(scenario_path, args_sol1, line_switching_allowed, xfmr_switching_allowed, check_contingencies=True, eval_variant=eval_variant)
 
 
         if process_rank == 0 and solutions_exist != False:
