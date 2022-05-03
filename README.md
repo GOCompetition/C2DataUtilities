@@ -1,7 +1,8 @@
 # C2DataUtilities
 
 GO Competition Challenge 2 Utility Codes.
-Routines to process input and solution files for dataset checking and solution scoring
+Challenge 3 Utility Codes are under development and will appear as C3DataUtilities here.
+Routines to process input and solution files for dataset checking and solution scoring.
 
 # data_utilities Python package
 
