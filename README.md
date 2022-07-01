@@ -1,8 +1,10 @@
 # C2DataUtilities
 
 GO Competition Challenge 2 Utility Codes.
-Challenge 3 Utility Codes are under development and will appear as C3DataUtilities here.
 Routines to process input and solution files for dataset checking and solution scoring.
+
+GO Competition Challenge 3 Utility Codes are under development and will appear as C3DataUtilities.
+
 
 # data_utilities Python package
 
