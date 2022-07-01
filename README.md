@@ -2,6 +2,7 @@
 
 GO Competition Challenge 2 Utility Codes.
 Routines to process input and solution files for dataset checking and solution scoring.
+See license.txt for public domain license.
 
 GO Competition Challenge 3 Utility Codes are under development and will appear as C3DataUtilities.
 
